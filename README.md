@@ -67,3 +67,52 @@ export default tseslint.config([
   },
 ])
 ```
+
+# Sound & Light Show - Pyramids of Giza
+
+A modern web application for booking tickets to the Sound and Light Show at the Pyramids of Giza.
+
+## Required Assets
+
+### Gallery Images
+The following images need to be added to the `/public/gallery/` directory:
+
+- `pyramids-night.jpg` - Pyramids illuminated at night during the show
+- `sphinx-lights.jpg` - Sphinx with colorful light projections
+- `audience.jpg` - Audience enjoying the show
+- `projection.jpg` - Detailed light projections on monuments
+
+Please ensure all images are:
+- High quality (minimum 1920x1080px)
+- Optimized for web (compressed JPG/WebP)
+- Properly licensed for commercial use
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Features
+
+- Modern, responsive design with dark theme
+- Interactive seat selection
+- Multi-language support
+- Business portal for travel agencies
+- Real-time availability checking
+- Secure payment processing (simulated)
+
+## Technologies
+
+- React
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Vite

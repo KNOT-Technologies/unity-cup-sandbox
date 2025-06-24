@@ -2,22 +2,24 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import About from './pages/About';
-import Contact from './pages/Contact';
+import Tickets from './pages/Tickets';
+import Checkout from './pages/Checkout';
+import BusinessPortal from './pages/BusinessPortal';
 
-function App() {
+const App = () => {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-900">
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/tickets" element={<Tickets />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/business-portal" element={<BusinessPortal />} />
         </Routes>
       </div>
     </Router>
   );
-}
+};
 
 export default App;

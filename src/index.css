@@ -3,7 +3,48 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    @apply antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-900 text-gray-300 leading-relaxed;
+  }
+
+  /* Base typography styles */
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-serif font-bold tracking-wide leading-tight;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-serif font-semibold tracking-wide leading-tight;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-serif font-semibold tracking-wide leading-tight;
+  }
+
+  p {
+    @apply font-sans text-base md:text-lg leading-relaxed;
+  }
+
+  /* Button base styles */
+  button, .button {
+    @apply font-sans font-medium tracking-wide transition-all duration-300;
+  }
+
+  /* Form element base styles */
+  input, select, textarea {
+    @apply font-sans text-base leading-relaxed;
+  }
+
+  /* Link base styles */
+  a {
+    @apply font-sans transition-colors duration-300;
   }
 }
