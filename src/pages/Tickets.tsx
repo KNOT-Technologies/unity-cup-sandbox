@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import DatePicker from '../components/tickets/DatePicker';
 import ShowTimeSelector from '../components/tickets/ShowTimeSelector';
 import SeatMap from '../components/tickets/SeatMap';
@@ -15,6 +16,7 @@ interface TranslationPreference {
 }
 
 const Tickets = () => {
+  const navigate = useNavigate();
   const [userType, setUserType] = useState<UserType>('tourist');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>();
@@ -48,7 +50,7 @@ const Tickets = () => {
     localStorage.setItem('selectedSeats', JSON.stringify(selectedSeats));
     localStorage.setItem('userType', userType);
     localStorage.setItem('translationPreference', JSON.stringify(translationPreference));
-    window.location.href = '/checkout';
+    navigate('/checkout');
   };
 
   return (
@@ -94,6 +96,7 @@ const Tickets = () => {
                 onRemoveSeat={handleSeatRemove}
                 className="max-h-[calc(100vh-10rem)] overflow-y-auto"
                 onProceedToCheckout={handleProceedToCheckout}
+                translationPreference={translationPreference}
               />
             </div>
           </div>

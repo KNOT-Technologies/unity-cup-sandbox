@@ -3,26 +3,24 @@ import { motion } from 'framer-motion';
 import { Headphones } from 'lucide-react';
 
 const TOP_20_LANGUAGES = [
-  'English',
-  'Mandarin Chinese',
-  'Hindi',
-  'Spanish',
   'French',
-  'Modern Arabic',
-  'Bengali',
+  'German',
+  'Italian',
   'Portuguese',
   'Russian',
-  'Urdu',
-  'Indonesian',
-  'German',
-  'Japanese',
-  'Swahili',
+  'Spanish',
   'Turkish',
+  'Bengali',
+  'Hindi',
+  'Indonesian',
+  'Japanese',
   'Korean',
-  'Vietnamese',
+  'Mandarin Chinese',
+  'Swahili',
   'Tamil',
-  'Italian',
-  'Thai'
+  'Thai',
+  'Urdu',
+  'Vietnamese'
 ];
 
 interface TranslationSelectorProps {

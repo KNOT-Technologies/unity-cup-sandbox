@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Wallet, QrCode, Clock, Shield, ArrowLeft } from 'lucide-react';
+import { CreditCard, Wallet, QrCode, Clock, Shield, ArrowLeft, Users, Ticket, Plus } from 'lucide-react';
 import type { SelectedSeat, UserType } from '../types/tickets';
 
 interface PaymentMethod {
   id: string;
   name: string;
-  icon: typeof CreditCard;
+  icon: string;
   description: string;
 }
 
@@ -15,24 +15,222 @@ interface TranslationPreference {
   language?: string;
 }
 
+interface GuestInfo {
+  id: string;
+  name: string;
+  nationality: string;
+}
+
+// Comprehensive list of countries
+const nationalities = [
+  'Afghanistan',
+  'Albania',
+  'Algeria',
+  'Andorra',
+  'Angola',
+  'Antigua and Barbuda',
+  'Argentina',
+  'Armenia',
+  'Australia',
+  'Austria',
+  'Azerbaijan',
+  'Bahamas',
+  'Bahrain',
+  'Bangladesh',
+  'Barbados',
+  'Belarus',
+  'Belgium',
+  'Belize',
+  'Benin',
+  'Bhutan',
+  'Bolivia',
+  'Bosnia and Herzegovina',
+  'Botswana',
+  'Brazil',
+  'Brunei',
+  'Bulgaria',
+  'Burkina Faso',
+  'Burundi',
+  'Cambodia',
+  'Cameroon',
+  'Canada',
+  'Cape Verde',
+  'Central African Republic',
+  'Chad',
+  'Chile',
+  'China',
+  'Colombia',
+  'Comoros',
+  'Congo',
+  'Costa Rica',
+  'Croatia',
+  'Cuba',
+  'Cyprus',
+  'Czech Republic',
+  'Denmark',
+  'Djibouti',
+  'Dominica',
+  'Dominican Republic',
+  'East Timor',
+  'Ecuador',
+  'Egypt',
+  'El Salvador',
+  'Equatorial Guinea',
+  'Eritrea',
+  'Estonia',
+  'Eswatini',
+  'Ethiopia',
+  'Fiji',
+  'Finland',
+  'France',
+  'Gabon',
+  'Gambia',
+  'Georgia',
+  'Germany',
+  'Ghana',
+  'Greece',
+  'Grenada',
+  'Guatemala',
+  'Guinea',
+  'Guinea-Bissau',
+  'Guyana',
+  'Haiti',
+  'Honduras',
+  'Hungary',
+  'Iceland',
+  'India',
+  'Indonesia',
+  'Iran',
+  'Iraq',
+  'Ireland',
+  'Israel',
+  'Italy',
+  'Jamaica',
+  'Japan',
+  'Jordan',
+  'Kazakhstan',
+  'Kenya',
+  'Kiribati',
+  'Korea, North',
+  'Korea, South',
+  'Kuwait',
+  'Kyrgyzstan',
+  'Laos',
+  'Latvia',
+  'Lebanon',
+  'Lesotho',
+  'Liberia',
+  'Libya',
+  'Liechtenstein',
+  'Lithuania',
+  'Luxembourg',
+  'Madagascar',
+  'Malawi',
+  'Malaysia',
+  'Maldives',
+  'Mali',
+  'Malta',
+  'Marshall Islands',
+  'Mauritania',
+  'Mauritius',
+  'Mexico',
+  'Micronesia',
+  'Moldova',
+  'Monaco',
+  'Mongolia',
+  'Montenegro',
+  'Morocco',
+  'Mozambique',
+  'Myanmar',
+  'Namibia',
+  'Nauru',
+  'Nepal',
+  'Netherlands',
+  'New Zealand',
+  'Nicaragua',
+  'Niger',
+  'Nigeria',
+  'North Macedonia',
+  'Norway',
+  'Oman',
+  'Pakistan',
+  'Palau',
+  'Palestine',
+  'Panama',
+  'Papua New Guinea',
+  'Paraguay',
+  'Peru',
+  'Philippines',
+  'Poland',
+  'Portugal',
+  'Qatar',
+  'Romania',
+  'Russia',
+  'Rwanda',
+  'Saint Kitts and Nevis',
+  'Saint Lucia',
+  'Saint Vincent and the Grenadines',
+  'Samoa',
+  'San Marino',
+  'Sao Tome and Principe',
+  'Saudi Arabia',
+  'Senegal',
+  'Serbia',
+  'Seychelles',
+  'Sierra Leone',
+  'Singapore',
+  'Slovakia',
+  'Slovenia',
+  'Solomon Islands',
+  'Somalia',
+  'South Africa',
+  'South Sudan',
+  'Spain',
+  'Sri Lanka',
+  'Sudan',
+  'Suriname',
+  'Sweden',
+  'Switzerland',
+  'Syria',
+  'Taiwan',
+  'Tajikistan',
+  'Tanzania',
+  'Thailand',
+  'Togo',
+  'Tonga',
+  'Trinidad and Tobago',
+  'Tunisia',
+  'Turkey',
+  'Turkmenistan',
+  'Tuvalu',
+  'Uganda',
+  'Ukraine',
+  'United Arab Emirates',
+  'United Kingdom',
+  'United States',
+  'Uruguay',
+  'Uzbekistan',
+  'Vanuatu',
+  'Vatican City',
+  'Venezuela',
+  'Vietnam',
+  'Yemen',
+  'Zambia',
+  'Zimbabwe'
+].sort();
+
 const paymentMethods: PaymentMethod[] = [
   {
     id: 'credit-card',
     name: 'Credit Card',
-    icon: CreditCard,
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
     description: 'Pay securely with your credit card'
   },
   {
-    id: 'wallet',
-    name: 'Digital Wallet',
-    icon: Wallet,
-    description: 'Apple Pay, Google Pay, or other digital wallets'
-  },
-  {
-    id: 'qr',
-    name: 'QR Code',
-    icon: QrCode,
-    description: 'Scan QR code to pay with your phone'
+    id: 'apple-pay',
+    name: 'Apple Pay',
+    icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.0444 6.3773c-.9048-1.1488-2.3813-1.2897-2.8987-1.2897-1.2336 0-2.4362.7371-3.0918 1.2336-.5607.4508-.8738.8427-.8738.8427s-.2821-.3719-.7989-.7678c-.5297-.3719-1.5157-.9358-2.7578-.9358-2.1025 0-4.0586 1.7048-4.0586 4.5894 0 2.0235.7678 4.1375 1.7048 5.6222.9358 1.4678 2.0235 3.1088 3.5286 3.1088 1.3126 0 1.8423-.8738 3.4187-.8738 1.5157 0 1.9842.8738 3.3708.8738 1.5157 0 2.7268-1.8423 3.6624-3.3088.6086-.9358 1.0457-1.9213 1.3126-2.5299-3.4187-1.2897-3.9794-6.1519-.5183-7.5687z"/><path d="M14.4297 3.0185c.8427-1.0767 1.4678-2.5918 1.3126-4.1375-1.4678.0629-3.1718 1.0148-4.1375 2.2176-.8738 1.0457-1.6419 2.5918-1.4368 4.0746 1.5767.0629 3.2347-.8738 4.2617-2.1547z"/></svg>`,
+    description: 'Quick and secure checkout with Apple Pay'
   }
 ];
 
@@ -41,6 +239,7 @@ const Checkout = () => {
   const [userType, setUserType] = useState<UserType>('tourist');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('credit-card');
   const [email, setEmail] = useState('');
+  const [guestInfo, setGuestInfo] = useState<GuestInfo[]>([]);
   const [translationPreference, setTranslationPreference] = useState<TranslationPreference>({
     needed: false
   });
@@ -52,19 +251,42 @@ const Checkout = () => {
     const storedTranslation = localStorage.getItem('translationPreference');
     
     if (storedSeats && storedUserType) {
-      setSelectedSeats(JSON.parse(storedSeats));
+      const parsedSeats = JSON.parse(storedSeats);
+      setSelectedSeats(parsedSeats);
       setUserType(storedUserType);
       if (storedTranslation) {
         setTranslationPreference(JSON.parse(storedTranslation));
       }
+      // Initialize guest info array based on number of seats
+      setGuestInfo(parsedSeats.map((seat: SelectedSeat) => ({
+        id: seat.id,
+        name: '',
+        nationality: ''
+      })));
     } else {
       // Redirect back to tickets page if no seats are selected
       window.location.href = '/tickets';
     }
   }, []);
 
+  const handleGuestInfoChange = (id: string, field: 'name' | 'nationality', value: string) => {
+    setGuestInfo(prev => prev.map(guest => 
+      guest.id === id ? { ...guest, [field]: value } : guest
+    ));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all guest information is filled
+    const allGuestsFilled = guestInfo.every(guest => 
+      guest.name.trim() !== '' && guest.nationality.trim() !== ''
+    );
+    if (!allGuestsFilled) {
+      alert('Please fill in all guest information');
+      return;
+    }
+
     setLoading(true);
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -80,9 +302,8 @@ const Checkout = () => {
 
   const total = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
   const currency = userType === 'tourist' ? '$' : 'EGP';
-  const processingFee = total * 0.05; // 5% processing fee
   const translationFee = translationPreference.needed ? (userType === 'tourist' ? 10 : 150) : 0;
-  const subtotal = total + processingFee + translationFee;
+  const subtotal = total + (translationFee * selectedSeats.length);
 
   return (
     <div className="min-h-screen bg-black text-white pt-32 pb-16">
@@ -92,7 +313,7 @@ const Checkout = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={() => window.history.back()}
-          className="flex items-center space-x-2 text-gray-400 hover:text-yellow-400 
+          className="flex items-center space-x-2 text-white/60 hover:text-amber-400 
             transition-colors duration-300 mb-8 group"
         >
           <ArrowLeft className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-300" />
@@ -106,91 +327,286 @@ const Checkout = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-800/50 p-6">
-              <h1 className="text-2xl font-medium mb-6">Checkout</h1>
+            <div className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 
+              hover:border-amber-500/20 transition-all duration-500 
+              hover:shadow-2xl hover:shadow-amber-500/5
+              relative before:absolute before:inset-0 
+              before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
+              before:rounded-2xl before:opacity-0 hover:before:opacity-100 
+              before:transition-opacity before:duration-500 before:pointer-events-none
+              p-6">
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="relative">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                      backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                      <CreditCard className="w-5 h-5 text-amber-400" />
+                    </div>
+                  </div>
+                  <h1 className="text-xl font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                    Checkout
+                  </h1>
+                </div>
 
-              {/* Contact Information */}
-              <div className="mb-8">
-                <h2 className="text-lg font-medium mb-4">Contact Information</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 
-                        focus:ring-yellow-500/50 focus:border-transparent transition-all duration-300"
-                      placeholder="your@email.com"
-                      required
-                    />
-                    <p className="text-sm text-gray-500 mt-2">
-                      Your tickets will be sent to this email address
-                    </p>
+                {/* Contact Information */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="relative">
+                      <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                      <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                        backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                        <Users className="w-5 h-5 text-amber-400" />
+                      </div>
+                    </div>
+                    <h2 className="text-lg font-medium text-white/90">Contact Information</h2>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Primary Email */}
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-white/60 mb-2">
+                        Primary Email Address
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-gray-800/30 border border-gray-700/30 rounded-xl px-4 py-3
+                          text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                          focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
+                        placeholder="your@email.com"
+                        required
+                      />
+                      <p className="text-sm text-white/40 mt-2">
+                        Your tickets will be sent to this email address
+                      </p>
+                    </div>
+
+                    {/* Guest Information */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-medium text-white/90">Guest Information</h3>
+                        <span className="text-sm text-white/40">
+                          {guestInfo.length} {guestInfo.length === 1 ? 'ticket' : 'tickets'}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {guestInfo.map((guest, index) => {
+                          const seat = selectedSeats.find(seat => seat.id === guest.id);
+                          return (
+                            <div key={guest.id} className="bg-gray-800/30 rounded-xl border border-gray-700/30 p-4
+                              hover:border-amber-500/20 transition-all duration-300">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-white/90 text-sm">
+                                    Ticket {index + 1}
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+                                    ${seat?.zone === 'vip' 
+                                      ? 'bg-amber-500/20 text-amber-400'
+                                      : 'bg-blue-400/20 text-blue-400'
+                                    }`}
+                                  >
+                                    {seat?.zone.toUpperCase()}
+                                  </span>
+                                </div>
+                                <span className="text-white/40 text-sm">
+                                  Row {seat?.row}, Seat {seat?.number}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label htmlFor={`guest-name-${guest.id}`} className="block text-xs font-medium text-white/60 mb-1">
+                                    Full Name
+                                  </label>
+                                  <input
+                                    type="text"
+                                    id={`guest-name-${guest.id}`}
+                                    value={guest.name}
+                                    onChange={(e) => handleGuestInfoChange(guest.id, 'name', e.target.value)}
+                                    placeholder="Guest full name"
+                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-3 py-2
+                                      text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                                      focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300
+                                      text-sm"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label htmlFor={`guest-nationality-${guest.id}`} className="block text-xs font-medium text-white/60 mb-1">
+                                    Nationality
+                                  </label>
+                                  <select
+                                    id={`guest-nationality-${guest.id}`}
+                                    value={guest.nationality}
+                                    onChange={(e) => handleGuestInfoChange(guest.id, 'nationality', e.target.value)}
+                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-3 py-2
+                                      text-white focus:outline-none focus:ring-2 
+                                      focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300
+                                      text-sm appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik02IDcuNEwwIDEuNEwxLjQgMEw2IDQuNkwxMC42IDBMMTI7IDEuNEw2IDcuNFoiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNCIvPgo8L3N2Zz4K')]
+                                      bg-no-repeat bg-[center_right_1rem]"
+                                    required
+                                  >
+                                    <option value="" disabled>Select nationality</option>
+                                    {nationalities.map(nationality => (
+                                      <option key={nationality} value={nationality}>
+                                        {nationality}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Payment Method Selection */}
-              <div className="mb-8">
-                <h2 className="text-lg font-medium mb-4">Payment Method</h2>
-                <div className="space-y-3">
-                  {paymentMethods.map((method) => {
-                    const Icon = method.icon;
-                    return (
-                      <button
+                {/* Payment Method Selection */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="relative">
+                      <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                      <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                        backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                        <CreditCard className="w-5 h-5 text-amber-400" />
+                      </div>
+                    </div>
+                    <h2 className="text-lg font-medium text-white/90">Payment Method</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {paymentMethods.map((method) => (
+                      <label
                         key={method.id}
-                        onClick={() => setSelectedPaymentMethod(method.id)}
-                        className={`w-full p-4 rounded-xl border ${
-                          selectedPaymentMethod === method.id
-                            ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400'
-                            : 'border-gray-700/50 text-gray-300 hover:bg-gray-800/50'
-                        } transition-all duration-300 text-left group`}
+                        className={`relative flex items-center p-4 cursor-pointer
+                          bg-gray-800/30 border rounded-xl transition-all duration-300
+                          ${selectedPaymentMethod === method.id
+                            ? 'border-amber-500/50 bg-amber-500/5'
+                            : 'border-gray-700/30 hover:border-amber-500/20'
+                          }`}
                       >
-                        <div className="flex items-center space-x-4">
-                          <Icon className={`w-5 h-5 ${
-                            selectedPaymentMethod === method.id ? 'text-yellow-400' : 'text-gray-400'
-                          }`} />
+                        <input
+                          type="radio"
+                          name="payment-method"
+                          value={method.id}
+                          checked={selectedPaymentMethod === method.id}
+                          onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                          className="hidden"
+                        />
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="relative flex-shrink-0">
+                            <div 
+                              className={`w-6 h-6 flex items-center justify-center rounded-lg
+                                ${selectedPaymentMethod === method.id
+                                  ? 'text-amber-400'
+                                  : 'text-white/60'
+                                }`}
+                              dangerouslySetInnerHTML={{ __html: method.icon }}
+                            />
+                          </div>
                           <div>
-                            <div className="font-medium">{method.name}</div>
-                            <div className="text-sm text-gray-500">{method.description}</div>
+                            <h3 className="text-sm font-medium text-white/90">{method.name}</h3>
+                            <p className="text-xs text-white/60">{method.description}</p>
+                          </div>
+                          <div className={`ml-auto w-4 h-4 rounded-full border-2 transition-colors duration-300
+                            ${selectedPaymentMethod === method.id
+                              ? 'border-amber-500 bg-amber-500'
+                              : 'border-gray-600'
+                            }`}
+                          >
+                            {selectedPaymentMethod === method.id && (
+                              <div className="w-full h-full rounded-full bg-white transform scale-[0.4]" />
+                            )}
                           </div>
                         </div>
-                      </button>
-                    );
-                  })}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Security Notice */}
-              <div className="flex items-center space-x-3 text-sm text-gray-400 mb-8">
-                <Shield className="w-5 h-5" />
-                <span>Your payment information is encrypted and secure</span>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading || !email}
-                onClick={handleSubmit}
-                className={`w-full bg-yellow-400 text-gray-900 py-4 px-6 rounded-xl font-medium
-                  transition-all duration-300 relative overflow-hidden group
-                  ${loading ? 'cursor-not-allowed opacity-80' : 'hover:bg-yellow-500 hover:shadow-[0_0_15px_rgba(250,204,21,0.4)]'}
-                  focus:outline-none focus:ring-2 focus:ring-yellow-400/60`}
-              >
-                <span className={`inline-flex items-center ${loading ? 'invisible' : ''}`}>
-                  Complete Purchase
-                </span>
-                {loading && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                {/* Payment Details */}
+                {selectedPaymentMethod === 'credit-card' && (
+                  <div className="space-y-4 mb-8">
+                    <div>
+                      <label htmlFor="card-number" className="block text-sm font-medium text-white/60 mb-2">
+                        Card Number
+                      </label>
+                      <input
+                        type="text"
+                        id="card-number"
+                        className="w-full bg-gray-800/30 border border-gray-700/30 rounded-xl px-4 py-3
+                          text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                          focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
+                        placeholder="1234 5678 9012 3456"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="expiry" className="block text-sm font-medium text-white/60 mb-2">
+                          Expiry Date
+                        </label>
+                        <input
+                          type="text"
+                          id="expiry"
+                          className="w-full bg-gray-800/30 border border-gray-700/30 rounded-xl px-4 py-3
+                            text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                            focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
+                          placeholder="MM/YY"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cvv" className="block text-sm font-medium text-white/60 mb-2">
+                          CVV
+                        </label>
+                        <input
+                          type="text"
+                          id="cvv"
+                          className="w-full bg-gray-800/30 border border-gray-700/30 rounded-xl px-4 py-3
+                            text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                            focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
+                          placeholder="123"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
-              </button>
+
+                {/* Security Notice */}
+                <div className="flex items-center space-x-3 text-sm text-white/60 mb-8">
+                  <Shield className="w-5 h-5 text-amber-400" />
+                  <span>Your payment information is encrypted and secure</span>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading || !email}
+                  onClick={handleSubmit}
+                  className={`w-full bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 
+                    py-3 rounded-xl font-medium shadow-lg shadow-amber-500/20
+                    hover:shadow-xl hover:shadow-amber-500/30 
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    transition-all duration-300 relative`}
+                >
+                  <span className={`inline-flex items-center ${loading ? 'invisible' : ''}`}>
+                    Complete Purchase
+                  </span>
+                  {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
           </motion.div>
 
@@ -199,73 +615,126 @@ const Checkout = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:sticky lg:top-[144px] h-fit"
+            className="lg:sticky lg:top-32"
           >
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-800/50 p-6">
-              <h2 className="text-xl font-medium mb-6">Order Summary</h2>
+            <div className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 
+              hover:border-amber-500/20 transition-all duration-500 
+              hover:shadow-2xl hover:shadow-amber-500/5
+              relative before:absolute before:inset-0 
+              before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
+              before:rounded-2xl before:opacity-0 hover:before:opacity-100 
+              before:transition-opacity before:duration-500 before:pointer-events-none
+              p-6">
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="relative">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                      backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                      <Ticket className="w-5 h-5 text-amber-400" />
+                    </div>
+                  </div>
+                  <h2 className="text-xl font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                    Order Summary
+                  </h2>
+                </div>
 
-              {/* Selected Tickets */}
-              <div className="space-y-4 mb-6">
-                {selectedSeats.map((seat) => (
-                  <div
-                    key={seat.id}
-                    className="flex items-start justify-between p-3 rounded-lg border border-gray-800/50
-                      bg-gray-800/30"
-                  >
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">Row {seat.row}, Seat {seat.number}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full
-                          ${seat.zone === 'vip' 
-                            ? 'bg-yellow-400/20 text-yellow-400'
-                            : 'bg-blue-400/20 text-blue-400'
-                          }`}
-                        >
-                          {seat.zone.toUpperCase()}
-                        </span>
+                {/* Order Summary */}
+                <div className="bg-gray-800/30 rounded-xl border border-gray-700/20 p-5 space-y-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="relative">
+                      <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                      <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                        backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                        <Ticket className="w-5 h-5 text-amber-400" />
                       </div>
-                      <div className="text-sm text-gray-400 mt-1 capitalize">{seat.ticketType}</div>
                     </div>
-                    <span className="text-yellow-400 font-medium">
-                      {currency} {seat.price}
-                    </span>
+                    <h2 className="text-lg font-medium text-white/90">Order Summary</h2>
                   </div>
-                ))}
 
-                {translationPreference.needed && (
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-800/50">
-                    <div>
-                      <p className="font-medium">Translation Headphones</p>
-                      <p className="text-sm text-gray-400">{translationPreference.language}</p>
+                  <div className="space-y-3">
+                    {selectedSeats.map((seat) => (
+                      <div key={seat.id} className="bg-gray-800/30 rounded-lg border border-gray-700/30 p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+                                ${seat.zone === 'vip' 
+                                  ? 'bg-amber-500/20 text-amber-400'
+                                  : 'bg-blue-400/20 text-blue-400'
+                                }`}
+                              >
+                                {seat.zone.toUpperCase()}
+                              </span>
+                              <span className="text-white/90">
+                                Row {seat.row}, Seat {seat.number}
+                              </span>
+                            </div>
+                            <div className="text-sm text-white/60 mt-0.5">
+                              {seat.ticketType === 'adult' ? 'Adult' : 'Child'} Ticket
+                            </div>
+                          </div>
+                          <span className="text-amber-400 font-medium">
+                            {currency} {seat.price}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {translationPreference.needed && (
+                      <>
+                        <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent"></div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                                backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                                <Plus className="w-5 h-5 text-amber-400" />
+                              </div>
+                            </div>
+                            <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                              Add-ons
+                            </h3>
+                          </div>
+
+                          <div className="bg-gray-800/30 rounded-lg border border-gray-700/30 p-3">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-white/90">Translation Headphones</div>
+                                <div className="text-sm text-white/60 mt-0.5">
+                                  {translationPreference.language} (x{selectedSeats.length})
+                                </div>
+                              </div>
+                              <span className="text-amber-400 font-medium">
+                                {currency} {translationFee * selectedSeats.length}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent"></div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-white/60">
+                      <span>Tickets Subtotal</span>
+                      <span>{currency} {total}</span>
                     </div>
-                    <p className="font-medium">{currency} {translationFee}</p>
+                    {translationPreference.needed && (
+                      <div className="flex justify-between text-white/60">
+                        <span>Translation Service</span>
+                        <span>{currency} {translationFee * selectedSeats.length}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-medium pt-2">
+                      <span className="text-white">Total</span>
+                      <span className="text-amber-400">{currency} {subtotal.toFixed(2)}</span>
+                    </div>
                   </div>
-                )}
-              </div>
-
-              {/* Price Breakdown */}
-              <div className="border-t border-gray-800/50 pt-4 space-y-3">
-                <div className="flex justify-between text-gray-300">
-                  <span>Subtotal</span>
-                  <span>{currency} {subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <span>Processing Fee</span>
-                  <span>{currency} {processingFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-medium pt-3 border-t border-gray-800/50">
-                  <span>Total</span>
-                  <span className="text-yellow-400">
-                    {currency} {(subtotal + processingFee).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Additional Information */}
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center space-x-3 text-sm text-gray-400">
-                  <Clock className="w-5 h-5 text-gray-500" />
-                  <span>Tickets will be delivered instantly via email</span>
                 </div>
               </div>
             </div>
