@@ -28,30 +28,32 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
       before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
       before:rounded-xl before:opacity-0 hover:before:opacity-100 
       before:transition-opacity before:duration-500
-      flex flex-col h-auto ${className}`}>
+      flex flex-col ${className}`}>
       
-      <div className="p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative">
-            <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-            <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
-              backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
-              <Ticket className="w-5 h-5 text-amber-400" />
+      <div className="p-5 flex flex-col h-full">
+        <div className="flex-none">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative">
+              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+                <Ticket className="w-5 h-5 text-amber-400" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                Selected Tickets
+              </h3>
+              <p className="text-sm font-medium text-white/60">
+                {selectedSeats.length} {selectedSeats.length === 1 ? 'ticket' : 'tickets'} selected
+              </p>
             </div>
           </div>
-          <div>
-            <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-              Selected Tickets
-            </h3>
-            <p className="text-sm font-medium text-white/60">
-              {selectedSeats.length} {selectedSeats.length === 1 ? 'ticket' : 'tickets'} selected
-            </p>
-          </div>
+
+          <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
         </div>
 
-        <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
-
-        <div className="space-y-2">
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pr-1">
           <AnimatePresence>
             {selectedSeats.map((seat) => (
               <motion.div
@@ -120,8 +122,8 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
         </div>
 
         {selectedSeats.length > 0 && (
-          <>
-            <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent my-4"></div>
+          <div className="flex-none pt-4">
+            <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
             
             <div className="flex items-center justify-between mb-4">
               <span className="text-white font-medium">Total</span>
@@ -141,7 +143,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
             >
               Proceed to Checkout
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

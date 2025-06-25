@@ -54,8 +54,8 @@ const Tickets = () => {
   return (
     <div className="min-h-screen bg-black text-white pt-32 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+          <div className="space-y-8">
             <UserTypeToggle userType={userType} onUserTypeChange={setUserType} />
             <DatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} />
             <ShowTimeSelector 
@@ -86,14 +86,16 @@ const Tickets = () => {
             )}
           </div>
 
-          <div className="lg:col-span-1">
-            <TicketSummary
-              selectedSeats={selectedSeats}
-              userType={userType}
-              onRemoveSeat={handleSeatRemove}
-              className="h-full"
-              onProceedToCheckout={handleProceedToCheckout}
-            />
+          <div className="relative lg:h-[calc(100vh-8rem)]">
+            <div className="sticky top-32">
+              <TicketSummary
+                selectedSeats={selectedSeats}
+                userType={userType}
+                onRemoveSeat={handleSeatRemove}
+                className="max-h-[calc(100vh-10rem)] overflow-y-auto"
+                onProceedToCheckout={handleProceedToCheckout}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -198,72 +198,107 @@ const DatePicker = ({ onDateSelect, selectedDate }: DatePickerProps) => {
               transition={{ duration: 0.2 }}
               style={{
                 position: 'absolute',
-                top: dropdownPosition.top + 16,
+                top: dropdownPosition.top,
                 left: dropdownPosition.left,
-                width: dropdownPosition.width,
-                zIndex: 50
+                width: Math.max(dropdownPosition.width, 320),
+                zIndex: 50,
               }}
-              className="overflow-visible"
+              className="bg-gray-900/90 backdrop-blur-xl rounded-2xl p-4 
+                border border-gray-700/30 shadow-xl shadow-black/20
+                before:absolute before:inset-0 before:bg-gradient-to-b 
+                before:from-amber-500/5 before:to-transparent before:rounded-2xl"
             >
-              <div className="bg-gray-800/90 backdrop-blur-xl rounded-xl 
-                border border-gray-700/30 shadow-xl shadow-black/20 p-6
-                min-w-[320px] md:min-w-[360px]"
-              >
-                {/* Month Navigation */}
-                <div className="flex items-center justify-between mb-6">
-                  <button
-                    onClick={handlePrevMonth}
-                    className="p-2.5 rounded-xl text-white/60 hover:text-amber-400 
-                      hover:bg-amber-500/10 transition-all duration-300"
+              {/* Calendar Header */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={handlePrevMonth}
+                  className="p-2 rounded-xl hover:bg-gray-800/50 
+                    transition-colors duration-300 group"
+                >
+                  <svg
+                    className="w-5 h-5 text-amber-400 transform rotate-90 
+                      group-hover:text-amber-300 transition-colors duration-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <div className="text-white font-medium">
-                    {new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentMonth)}
-                  </div>
-                  <button
-                    onClick={handleNextMonth}
-                    className="p-2.5 rounded-xl text-white/60 hover:text-amber-400 
-                      hover:bg-amber-500/10 transition-all duration-300"
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <h3 className="text-lg font-medium text-white">
+                  {new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentMonth)}
+                </h3>
+                <button
+                  onClick={handleNextMonth}
+                  className="p-2 rounded-xl hover:bg-gray-800/50 
+                    transition-colors duration-300 group"
+                >
+                  <svg
+                    className="w-5 h-5 text-amber-400 transform -rotate-90 
+                      group-hover:text-amber-300 transition-colors duration-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
 
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                    <div key={day} className="text-center text-sm font-medium text-white/60 py-2">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {getDaysInMonth(currentMonth).map((date, index) => (
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div
+                    key={day}
+                    className="text-center text-sm font-medium text-amber-400/70 py-2"
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {getDaysInMonth(currentMonth).map((date, index) => {
+                  if (!date) {
+                    return <div key={`empty-${index}`} className="aspect-square" />;
+                  }
+
+                  const isDisabled = isPastDate(date);
+                  const isActiveDate = isSelected(date);
+                  const isTodayDate = isToday(date);
+
+                  return (
                     <button
-                      key={index}
-                      onClick={() => date && handleDateClick(date)}
-                      disabled={date ? isPastDate(date) : true}
+                      key={date.toISOString()}
+                      onClick={() => handleDateClick(date)}
+                      disabled={isDisabled}
                       className={`
-                        p-2 rounded-xl font-medium text-sm transition-all duration-300
-                        ${!date ? 'invisible' : ''}
-                        ${date && isPastDate(date) ? 'text-white/20 cursor-not-allowed' : ''}
-                        ${date && !isPastDate(date) && !isSelected(date) ? 
-                          'text-white hover:bg-amber-500/10 hover:text-amber-400' : ''}
-                        ${date && isSelected(date) ? 
-                          'bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 shadow-lg shadow-amber-500/20' : ''}
-                        ${date && isToday(date) && !isSelected(date) ? 
-                          'border border-amber-500/30' : ''}
+                        relative aspect-square rounded-xl text-sm font-medium
+                        flex items-center justify-center
+                        transition-all duration-300
+                        ${
+                          isDisabled
+                            ? 'text-gray-600 cursor-not-allowed'
+                            : isActiveDate
+                            ? 'bg-amber-500/20 text-amber-400 border-2 border-amber-500/50 shadow-lg shadow-amber-500/10'
+                            : isTodayDate
+                            ? 'bg-gray-800/30 text-white border border-amber-500/30'
+                            : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
+                        }
+                        ${
+                          !isDisabled && !isActiveDate
+                            ? 'hover:shadow-md hover:shadow-amber-500/5'
+                            : ''
+                        }
                       `}
                     >
-                      {date ? date.getDate() : ''}
+                      {date.getDate()}
+                      {isActiveDate && (
+                        <div className="absolute inset-0 rounded-xl bg-amber-500/10 animate-pulse" />
+                      )}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </motion.div>
           </Portal>
