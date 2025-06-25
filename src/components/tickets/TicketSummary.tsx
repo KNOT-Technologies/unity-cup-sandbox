@@ -88,7 +88,8 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                       </span>
                     </div>
                     <div className="text-sm text-white/60 mt-0.5">
-                      {seat.ticketType === 'adult' ? 'Adult' : 'Child'} Ticket
+                      {seat.ticketType === 'senior' ? 'Senior' : 
+                       seat.ticketType === 'student' ? 'Student' : 'Child'} Ticket
                     </div>
                   </div>
 

@@ -68,7 +68,7 @@ const TicketTypeModal = ({ seat, userType, onClose, onConfirm, position }: Ticke
             <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
 
             <div className="space-y-2">
-              {(['adult', 'child'] as const).map((type) => (
+              {(['senior', 'student', 'child'] as const).map((type) => (
                 <button
                   key={type}
                   onClick={() => onConfirm(type)}

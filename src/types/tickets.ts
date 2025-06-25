@@ -1,5 +1,5 @@
 export type UserType = 'tourist' | 'local';
-export type TicketType = 'adult' | 'child';
+export type TicketType = 'senior' | 'student' | 'child';
 export type SeatZone = 'vip' | 'regular';
 
 // Define seat status as a const object
@@ -41,25 +41,29 @@ export interface ShowTime {
   language: string;
 }
 
-export const PRICING: Record<UserType, ZonePricing> = {
+export const PRICING = {
   tourist: {
-    vip: {
-      adult: 50,
+    regular: {
+      senior: 50,
+      student: 40,
       child: 30
     },
-    regular: {
-      adult: 30,
-      child: 20
+    vip: {
+      senior: 80,
+      student: 70,
+      child: 60
     }
   },
   local: {
-    vip: {
-      adult: 500,
-      child: 300
-    },
     regular: {
-      adult: 300,
+      senior: 400,
+      student: 300,
       child: 200
+    },
+    vip: {
+      senior: 700,
+      student: 600,
+      child: 500
     }
   }
-}; 
+} as const; 

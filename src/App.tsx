@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Tickets from './pages/Tickets';
 import Checkout from './pages/Checkout';
 import BusinessPortal from './pages/BusinessPortal';
+import PurchaseSuccess from './pages/PurchaseSuccess';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/success" element={<PurchaseSuccess />} />
           <Route path="/business-portal" element={<BusinessPortal />} />
         </Routes>
       </div>

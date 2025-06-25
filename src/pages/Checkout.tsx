@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, Wallet, QrCode, Clock, Shield, ArrowLeft, Users, Ticket, Plus } from 'lucide-react';
 import type { SelectedSeat, UserType } from '../types/tickets';
+import { useNavigate } from 'react-router-dom';
 
 interface PaymentMethod {
   id: string;
@@ -235,6 +236,7 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 const Checkout = () => {
+  const navigate = useNavigate();
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
   const [userType, setUserType] = useState<UserType>('tourist');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('credit-card');
@@ -244,28 +246,35 @@ const Checkout = () => {
     needed: false
   });
   const [loading, setLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   useEffect(() => {
+    // Get selected seats from localStorage
     const storedSeats = localStorage.getItem('selectedSeats');
-    const storedUserType = localStorage.getItem('userType') as UserType;
-    const storedTranslation = localStorage.getItem('translationPreference');
-    
-    if (storedSeats && storedUserType) {
-      const parsedSeats = JSON.parse(storedSeats);
-      setSelectedSeats(parsedSeats);
-      setUserType(storedUserType);
-      if (storedTranslation) {
-        setTranslationPreference(JSON.parse(storedTranslation));
-      }
+    if (storedSeats) {
+      const seats = JSON.parse(storedSeats) as SelectedSeat[];
+      setSelectedSeats(seats);
       // Initialize guest info array based on number of seats
-      setGuestInfo(parsedSeats.map((seat: SelectedSeat) => ({
+      setGuestInfo(seats.map((seat: SelectedSeat) => ({
         id: seat.id,
         name: '',
         nationality: ''
       })));
     } else {
       // Redirect back to tickets page if no seats are selected
-      window.location.href = '/tickets';
+      navigate('/tickets');
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const storedUserType = localStorage.getItem('userType') as UserType;
+    const storedTranslation = localStorage.getItem('translationPreference');
+    
+    if (storedUserType) {
+      setUserType(storedUserType);
+      if (storedTranslation) {
+        setTranslationPreference(JSON.parse(storedTranslation));
+      }
     }
   }, []);
 
@@ -275,29 +284,69 @@ const Checkout = () => {
     ));
   };
 
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    // Check email
+    if (!email.trim()) {
+      errors.push("Please enter your email address");
+    } else if (!email.includes('@')) {
+      errors.push("Please enter a valid email address");
+    }
+
+    // Check guest information
+    guestInfo.forEach((guest, index) => {
+      if (!guest.name.trim()) {
+        errors.push(`Please enter the name for Guest ${index + 1}`);
+      }
+      if (!guest.nationality.trim()) {
+        errors.push(`Please select the nationality for Guest ${index + 1}`);
+      }
+    });
+
+    // Check payment method
+    if (!selectedPaymentMethod) {
+      errors.push("Please select a payment method");
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate all guest information is filled
-    const allGuestsFilled = guestInfo.every(guest => 
-      guest.name.trim() !== '' && guest.nationality.trim() !== ''
-    );
-    if (!allGuestsFilled) {
-      alert('Please fill in all guest information');
+    // Clear previous validation errors
+    setValidationErrors([]);
+
+    // Validate form
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      // Scroll to the top where errors are displayed
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     setLoading(true);
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    // Clear selected seats from storage
-    localStorage.removeItem('selectedSeats');
-    localStorage.removeItem('userType');
-    localStorage.removeItem('translationPreference');
-    // Redirect to success page or show success message
-    setLoading(false);
-    alert('Payment successful! Your tickets have been sent to your email.');
-    window.location.href = '/';
+    try {
+      // Store all necessary data for success page
+      localStorage.setItem('selectedSeats', JSON.stringify(selectedSeats));
+      localStorage.setItem('userType', userType);
+      localStorage.setItem('purchaseEmail', email);
+      if (translationPreference.needed) {
+        localStorage.setItem('translationPreference', JSON.stringify(translationPreference));
+      }
+
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Navigate to success page using React Router
+      navigate('/success');
+    } catch (error) {
+      setValidationErrors(['An error occurred during checkout. Please try again.']);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setLoading(false);
+    }
   };
 
   const total = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
@@ -308,6 +357,24 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-black text-white pt-32 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 bg-red-500/10 border border-red-500/20 rounded-xl p-4"
+          >
+            <h3 className="text-red-400 font-medium mb-2">Please fix the following:</h3>
+            <ul className="list-disc list-inside space-y-1">
+              {validationErrors.map((error, index) => (
+                <li key={index} className="text-red-300 text-sm">
+                  {error}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+
         {/* Back Button */}
         <motion.button
           initial={{ opacity: 0, x: -20 }}
@@ -320,7 +387,7 @@ const Checkout = () => {
           <span>Back to Seat Selection</span>
         </motion.button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Payment Form */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -589,22 +656,31 @@ const Checkout = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={loading || !email}
-                  onClick={handleSubmit}
-                  className={`w-full bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 
-                    py-3 rounded-xl font-medium shadow-lg shadow-amber-500/20
-                    hover:shadow-xl hover:shadow-amber-500/30 
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    transition-all duration-300 relative`}
+                  disabled={loading}
+                  className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300
+                    relative overflow-hidden group
+                    ${loading 
+                      ? 'bg-gray-800/50 text-white/30 cursor-not-allowed'
+                      : 'bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 hover:shadow-lg hover:shadow-amber-500/20'
+                    }
+                  `}
                 >
-                  <span className={`inline-flex items-center ${loading ? 'invisible' : ''}`}>
-                    Complete Purchase
-                  </span>
-                  {loading && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
+                    translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000
+                    pointer-events-none"></div>
+                  <div className="relative flex items-center justify-center">
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      'Complete Purchase'
+                    )}
+                  </div>
                 </button>
               </div>
             </div>
@@ -615,16 +691,11 @@ const Checkout = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:sticky lg:top-32"
+            className="lg:sticky lg:top-32 lg:h-fit"
           >
             <div className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 
-              hover:border-amber-500/20 transition-all duration-500 
-              hover:shadow-2xl hover:shadow-amber-500/5
-              relative before:absolute before:inset-0 
-              before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
-              before:rounded-2xl before:opacity-0 hover:before:opacity-100 
-              before:transition-opacity before:duration-500 before:pointer-events-none
-              p-6">
+              hover:border-amber-500/20 transition-all duration-500 p-6
+              hover:shadow-2xl hover:shadow-amber-500/5">
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="relative">
@@ -671,7 +742,8 @@ const Checkout = () => {
                               </span>
                             </div>
                             <div className="text-sm text-white/60 mt-0.5">
-                              {seat.ticketType === 'adult' ? 'Adult' : 'Child'} Ticket
+                              {seat.ticketType === 'senior' ? 'Senior' : 
+                               seat.ticketType === 'student' ? 'Student' : 'Child'} Ticket
                             </div>
                           </div>
                           <span className="text-amber-400 font-medium">
@@ -739,7 +811,7 @@ const Checkout = () => {
               </div>
             </div>
           </motion.div>
-        </div>
+        </form>
       </div>
     </div>
   );
