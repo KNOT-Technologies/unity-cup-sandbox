@@ -30,7 +30,7 @@ const TicketForm = ({ seatId, onClose, onSubmit }: TicketFormProps) => {
       <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 max-w-md w-full mx-4 border border-gray-700/50
         transform transition-all duration-300 scale-100 opacity-100 shadow-[0_0_25px_rgba(0,0,0,0.3)]">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-serif font-semibold text-white">Select Ticket Type</h3>
+          <h3 className="text-xl font-medium text-white">Select Ticket Type</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-yellow-400 transition-colors duration-300"

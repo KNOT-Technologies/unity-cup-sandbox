@@ -27,14 +27,15 @@ const Navbar = () => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
       ${isScrolled 
-        ? 'bg-gray-900/90 backdrop-blur-xl shadow-2xl shadow-black/20 border-b border-gray-800/50' 
-        : 'bg-transparent'}`}>
+        ? 'bg-black/95 backdrop-blur-xl shadow-2xl shadow-black/20 border-b border-gray-800/50' 
+        : 'bg-black/80 backdrop-blur-lg'}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-24">
           <div className="flex-shrink-0">
             <Link 
               to="/" 
-              className="text-2xl font-serif tracking-wide group relative"
+              className="text-2xl font-medium tracking-wide group relative"
             >
               <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-400 
                 bg-clip-text text-transparent group-hover:opacity-80 transition-opacity duration-300">
@@ -110,7 +111,7 @@ const Navbar = () => {
           ${isMobileMenuOpen 
             ? 'max-h-96 opacity-100 border-t border-gray-800/50' 
             : 'max-h-0 opacity-0'} 
-          overflow-hidden backdrop-blur-xl bg-gray-900/90`}
+          overflow-hidden backdrop-blur-xl bg-black/90`}
       >
         <div className="px-4 pt-2 pb-3 space-y-2">
           {navItems.map((item) => (

@@ -8,7 +8,6 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       fontSize: {
         '2xs': '0.625rem', // 10px
