@@ -394,55 +394,43 @@ const BusinessPortal = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-white/10">
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <th className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                   backdrop-blur-xl border border-amber-500/20">
-                                  <FileText className="w-5 h-5 text-amber-400" />
+                                  <CalendarDays className="w-4 h-4 text-amber-400" />
                                 </div>
                               </div>
-                              <span className="text-white/80 font-semibold text-lg">Invoice ID</span>
+                              <span className="text-white/80 font-semibold text-sm">Date</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <th className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                   backdrop-blur-xl border border-amber-500/20">
-                                  <CalendarDays className="w-5 h-5 text-amber-400" />
+                                  <Ticket className="w-4 h-4 text-amber-400" />
                                 </div>
                               </div>
-                              <span className="text-white/80 font-semibold text-lg">Date</span>
+                              <span className="text-white/80 font-semibold text-sm">Tickets</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <th className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                   backdrop-blur-xl border border-amber-500/20">
-                                  <Ticket className="w-5 h-5 text-amber-400" />
-                                </div>
-                              </div>
-                              <span className="text-white/80 font-semibold text-lg">Tickets</span>
-                            </div>
-                          </th>
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
-                                  backdrop-blur-xl border border-amber-500/20">
-                                  <Coins className="w-5 h-5 text-amber-400" />
+                                  <Coins className="w-4 h-4 text-amber-400" />
                   </div>
                   </div>
-                              <span className="text-white/80 font-semibold text-lg">Credits</span>
+                              <span className="text-white/80 font-semibold text-sm">Credits</span>
                   </div>
                           </th>
-                          <th className="px-6 py-4"></th>
+                          <th className="px-4 py-3"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -451,30 +439,27 @@ const BusinessPortal = () => {
                             key={order.id}
                             className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
                           >
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-white/90 font-medium">{order.id}</span>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-white/80 text-xs">{new Date(order.date).toLocaleDateString()}</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-white/80">{new Date(order.date).toLocaleDateString()}</span>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-base font-semibold text-white">{order.tickets.toLocaleString()}</span>
+                              <span className="text-white/60 text-xs ml-1">tickets</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-2xl font-semibold text-white">{order.tickets.toLocaleString()}</span>
-                              <span className="text-white/60 ml-1">tickets</span>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-base font-semibold text-white">{order.credits.toLocaleString()}</span>
+                              <span className="text-white/60 text-xs ml-1">credits</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-2xl font-semibold text-white">{order.credits.toLocaleString()}</span>
-                              <span className="text-white/60 ml-1">credits</span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-4 py-3 text-center">
                               <button 
                                 onClick={() => handleDownloadInvoice(order.id)}
-                                className="px-4 py-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                                className="px-3 py-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 
                                   backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
                                   transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
-                                  group flex items-center gap-2"
+                                  group flex items-center gap-1.5"
                               >
-                                <Download className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
-                                <span className="text-purple-400 font-medium">PDF</span>
+                                <Download className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
+                                <span className="text-purple-400 text-xs font-medium">PDF</span>
                               </button>
                             </td>
                           </tr>
@@ -507,55 +492,43 @@ const BusinessPortal = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-white/10">
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <th className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                   backdrop-blur-xl border border-amber-500/20">
-                                  <FileText className="w-5 h-5 text-amber-400" />
+                                  <CalendarDays className="w-4 h-4 text-amber-400" />
                                 </div>
                               </div>
-                              <span className="text-white/80 font-semibold text-lg">Invoice ID</span>
+                              <span className="text-white/80 font-semibold text-sm">Date</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <th className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                   backdrop-blur-xl border border-amber-500/20">
-                                  <CalendarDays className="w-5 h-5 text-amber-400" />
+                                  <Coins className="w-4 h-4 text-amber-400" />
                                 </div>
                               </div>
-                              <span className="text-white/80 font-semibold text-lg">Date</span>
+                              <span className="text-white/80 font-semibold text-sm">Credits</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <th className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1.5">
                               <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                   backdrop-blur-xl border border-amber-500/20">
-                                  <Coins className="w-5 h-5 text-amber-400" />
+                                  <CreditCard className="w-4 h-4 text-amber-400" />
                                 </div>
                               </div>
-                              <span className="text-white/80 font-semibold text-lg">Credits</span>
+                              <span className="text-white/80 font-semibold text-sm">Amount</span>
                             </div>
                           </th>
-                          <th className="px-6 py-4">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
-                                  backdrop-blur-xl border border-amber-500/20">
-                                  <CreditCard className="w-5 h-5 text-amber-400" />
-                                </div>
-                              </div>
-                              <span className="text-white/80 font-semibold text-lg">Amount</span>
-                            </div>
-                          </th>
-                          <th className="px-6 py-4"></th>
+                          <th className="px-4 py-3"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -564,29 +537,26 @@ const BusinessPortal = () => {
                             key={purchase.id}
                             className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
                           >
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-white/90 font-medium">{purchase.id}</span>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-white/80 text-xs">{new Date(purchase.date).toLocaleDateString()}</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-white/80">{new Date(purchase.date).toLocaleDateString()}</span>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-base font-semibold text-white">{purchase.credits.toLocaleString()}</span>
+                              <span className="text-white/60 text-xs ml-1">credits</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-2xl font-semibold text-white">{purchase.credits.toLocaleString()}</span>
-                              <span className="text-white/60 ml-1">credits</span>
+                            <td className="px-4 py-3 text-center">
+                              <span className="text-base font-semibold text-amber-400">${purchase.amount.toLocaleString()}</span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="text-2xl font-semibold text-amber-400">${purchase.amount.toLocaleString()}</span>
-                            </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-4 py-3 text-center">
                               <button 
                                 onClick={() => handleDownloadInvoice(purchase.id)}
-                                className="px-4 py-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                                className="px-3 py-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 
                                   backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
                                   transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
-                                  group flex items-center gap-2"
+                                  group flex items-center gap-1.5"
                               >
-                                <Download className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
-                                <span className="text-purple-400 font-medium">PDF</span>
+                                <Download className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
+                                <span className="text-purple-400 text-xs font-medium">PDF</span>
                               </button>
                             </td>
                           </tr>
@@ -610,55 +580,55 @@ const BusinessPortal = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-white/10">
-                        <th className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-2">
+                        <th className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
                             <div className="relative">
-                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20">
-                                <Coins className="w-5 h-5 text-amber-400" />
+                                <Coins className="w-4 h-4 text-amber-400" />
                               </div>
                             </div>
-                            <span className="text-white/80 font-semibold text-lg">Credits</span>
+                            <span className="text-white/80 font-semibold text-sm">Credits</span>
                           </div>
                         </th>
-                        <th className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-2">
+                        <th className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
                             <div className="relative">
-                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20">
-                                <Clock className="w-5 h-5 text-amber-400" />
+                                <Clock className="w-4 h-4 text-amber-400" />
                               </div>
                             </div>
-                            <span className="text-white/80 font-semibold text-lg">Expiry</span>
+                            <span className="text-white/80 font-semibold text-sm">Expiry</span>
                           </div>
                         </th>
-                        <th className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-2">
+                        <th className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
                             <div className="relative">
-                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20">
-                                <CreditCard className="w-5 h-5 text-amber-400" />
+                                <CreditCard className="w-4 h-4 text-amber-400" />
                               </div>
                             </div>
-                            <span className="text-white/80 font-semibold text-lg">Total Price</span>
+                            <span className="text-white/80 font-semibold text-sm">Total Price</span>
                   </div>
                         </th>
-                        <th className="px-6 py-4">
-                          <div className="flex items-center justify-center gap-2">
+                        <th className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5">
                             <div className="relative">
-                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20">
-                                <Percent className="w-5 h-5 text-amber-400" />
+                                <Percent className="w-4 h-4 text-amber-400" />
                   </div>
                 </div>
-                            <span className="text-white/80 font-semibold text-lg">Price Per Credit</span>
+                            <span className="text-white/80 font-semibold text-sm">Price Per Credit</span>
                           </div>
                         </th>
-                        <th className="px-6 py-4"></th>
+                        <th className="px-4 py-3"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -667,17 +637,17 @@ const BusinessPortal = () => {
                           key={index}
                           className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
                         >
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-4 py-3 text-center">
                             <span className="text-2xl font-semibold text-white">{pkg.credits}</span>
                             <span className="text-white/60 ml-1">credits</span>
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-4 py-3 text-center">
                             <span className="text-white/80">{pkg.expiryMonths} months</span>
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-4 py-3 text-center">
                             <span className="text-2xl font-semibold text-amber-400">${pkg.price}</span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 py-3">
                             <div className="flex items-center justify-center gap-2">
                               <span className="text-white/80">${pkg.pricePerCredit}/credit</span>
                               {pkg.discount > 0 && (
@@ -687,7 +657,7 @@ const BusinessPortal = () => {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="px-4 py-3 text-center">
                 <button
                               onClick={() => handlePurchase(pkg.credits)}
                               className="px-4 py-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
@@ -708,64 +678,63 @@ const BusinessPortal = () => {
 
               {/* Bookings Interface - Only show on bookings page */}
               {location.pathname === '/business/bookings' && (
-                <div className="max-w-7xl mx-auto">
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 sm:gap-8">
-                    <div className="space-y-4 sm:space-y-8">
-                      {/* Available Credits Display and Action Buttons */}
-                      <div className="flex items-center gap-4">
-                        <div className="bg-amber-500/10 backdrop-blur-sm rounded-xl border border-amber-500/20 p-4">
-                          <div className="flex items-center gap-3">
-                            <Coins className="w-5 h-5 text-amber-400" />
-                            <span className="text-white font-medium">Available Credits: {availableCredits}</span>
+                <div className="w-full px-4 sm:px-6">
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Available Credits Display and Action Buttons */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                      <div className="bg-amber-500/10 backdrop-blur-sm rounded-xl border border-amber-500/20 p-3 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Coins className="w-4 h-4 text-amber-400" />
+                          <span className="text-white/90 text-sm">Credits: {availableCredits}</span>
+                        </div>
                       </div>
-                  </div>
-                        <button
-                          onClick={() => navigate('/business/credits')}
-                          className="px-4 py-4 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
-                            backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
-                            transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
-                            flex items-center justify-center gap-2"
-                        >
-                          <Plus className="w-5 h-5 text-emerald-400" />
-                          <span className="text-emerald-400 font-medium">Buy More Credits</span>
-                        </button>
-                        <button 
-                          onClick={handleUploadGuestDetails}
-                          className="px-4 py-4 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 
-                            backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
-                            transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
-                            flex items-center justify-center gap-2"
-                        >
-                          <Upload className="w-5 h-5 text-purple-400 group-hover:translate-y-[-2px] transition-transform duration-300" />
-                          <span className="text-purple-400 font-medium">Upload Guest Details</span>
-                        </button>
-                </div>
+                      <button
+                        onClick={() => navigate('/business/credits')}
+                        className="px-3 py-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
+                          backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
+                          transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
+                          flex items-center justify-center gap-2 flex-1 sm:flex-initial"
+                      >
+                        <Plus className="w-4 h-4 text-emerald-400" />
+                        <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">Buy Credits</span>
+                      </button>
+                      <button
+                        onClick={handleUploadGuestDetails}
+                        className="px-3 py-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                          backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
+                          transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
+                          flex items-center justify-center gap-2 flex-1 sm:flex-initial"
+                      >
+                        <Upload className="w-4 h-4 text-purple-400" />
+                        <span className="text-purple-400 text-sm font-medium whitespace-nowrap">Upload Guest Details</span>
+                      </button>
+                    </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                        <DatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-                        <div className="sm:block">
-                          <ShowTimeSelector 
-                            selectedTime={selectedTime} 
-                            onTimeSelect={setSelectedTime}
-                            showTimes={[]}
-                            className="h-full"
-                          />
-                  </div>
-                </div>
-
-                      <div className="sm:block">
-                        <TranslationSelector
-                          onTranslationChange={handleTranslationChange}
-                          className="h-full"
-                        />
-                      </div>
-                      
-                      {selectedTime && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
+                    <div className="space-y-4">
+                      <DatePicker 
+                        selectedDate={selectedDate} 
+                        onDateSelect={setSelectedDate}
+                      />
+                      <ShowTimeSelector 
+                        selectedTime={selectedTime} 
+                        onTimeSelect={setSelectedTime}
+                        showTimes={[]}
+                        className="h-full"
+                      />
+                      <TranslationSelector
+                        onTranslationChange={handleTranslationChange}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    {selectedTime && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-x-auto pb-4 -mx-4 sm:mx-0 px-4 sm:px-0"
+                      >
+                        <div className="min-w-[800px] lg:min-w-0">
                           <SeatMap
                             userType="tourist"
                             onUserTypeChange={() => {}} // Disabled for business portal
@@ -777,24 +746,25 @@ const BusinessPortal = () => {
                             useCredits={true}
                             creditCosts={CREDIT_COSTS}
                           />
-                        </motion.div>
-                      )}
-                    </div>
+                        </div>
+                      </motion.div>
+                    )}
 
-                    <div className="relative lg:h-[calc(100vh-8rem)]">
-                      <div className="lg:sticky lg:top-32">
-                        <TicketSummary
-                          selectedSeats={selectedSeats}
-                          userType="tourist"
-                          onRemoveSeat={handleSeatRemove}
-                          className="max-h-[calc(100vh-10rem)] overflow-y-auto"
-                          onProceedToCheckout={handleProceedToCheckout}
-                          translationPreference={translationPreference}
-                          useCredits={true}
-                          creditCosts={CREDIT_COSTS}
-                        />
-                      </div>
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <TicketSummary
+                        selectedSeats={selectedSeats}
+                        userType="tourist"
+                        onRemoveSeat={handleSeatRemove}
+                        onProceedToCheckout={handleProceedToCheckout}
+                        translationPreference={translationPreference}
+                        useCredits={true}
+                        creditCosts={CREDIT_COSTS}
+                      />
+                    </motion.div>
                   </div>
                 </div>
               )}
