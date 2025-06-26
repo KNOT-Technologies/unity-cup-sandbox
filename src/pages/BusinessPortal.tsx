@@ -1,384 +1,817 @@
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Calendar, 
+  ClipboardList, 
+  Receipt, 
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  CreditCard,
+  Clock,
+  Plus,
+  Percent,
+  Coins,
+  Check,
+  Download,
+  CalendarDays,
+  Ticket,
+  FileText,
+  Upload,
+  Users
+} from 'lucide-react';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import Sidebar from '../components/common/Sidebar';
+import DatePicker from '../components/tickets/DatePicker';
+import ShowTimeSelector from '../components/tickets/ShowTimeSelector';
+import SeatMap from '../components/tickets/SeatMap';
+import TicketSummary from '../components/tickets/TicketSummary';
+import TranslationSelector from '../components/tickets/TranslationSelector';
+import GuestUploadModal from '../components/common/GuestUploadModal';
+import DashboardCharts from '../components/dashboard/DashboardCharts';
+import DemographicCharts from '../components/dashboard/DemographicCharts';
+import type { UserType, Seat, TicketType, SelectedSeat } from '../types/tickets';
 
-interface TicketType {
-  id: string;
-  name: string;
-  basePrice: number;
-  quantity: number;
-}
+const creditPackages = [
+  {
+    credits: 100,
+    expiryMonths: 1,
+    price: 450,
+    pricePerCredit: 4.50,
+    discount: 0
+  },
+  {
+    credits: 500,
+    expiryMonths: 2,
+    price: 2000,
+    pricePerCredit: 4.00,
+    discount: 11
+  },
+  {
+    credits: 1000,
+    expiryMonths: 3,
+    price: 3500,
+    pricePerCredit: 3.50,
+    discount: 22
+  }
+];
 
-interface PricingTier {
-  minQuantity: number;
-  discount: number;
-}
+// Credit costs for different ticket types and zones
+const CREDIT_COSTS = {
+  regular: {
+    senior: 2,
+    adult: 2,
+    student: 1,
+    child: 1
+  },
+  vip: {
+    senior: 3,
+    adult: 3,
+    student: 2,
+    child: 2
+  }
+} as const;
+
+// Mock invoice data - in a real app, this would come from your backend
+const ticketOrders = [
+  {
+    id: 'INV-2024-001',
+    date: '2024-03-15',
+    tickets: 45,
+    credits: 135,
+    amount: 2025,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-002',
+    date: '2024-03-12',
+    tickets: 60,
+    credits: 180,
+    amount: 2700,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-003',
+    date: '2024-03-08',
+    tickets: 80,
+    credits: 240,
+    amount: 3600,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-004',
+    date: '2024-03-05',
+    tickets: 35,
+    credits: 105,
+    amount: 1575,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-005',
+    date: '2024-02-28',
+    tickets: 50,
+    credits: 150,
+    amount: 2250,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-006',
+    date: '2024-02-25',
+    tickets: 65,
+    credits: 195,
+    amount: 2925,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-007',
+    date: '2024-02-20',
+    tickets: 75,
+    credits: 225,
+    amount: 3375,
+    status: 'Paid'
+  },
+  {
+    id: 'INV-2024-008',
+    date: '2024-02-15',
+    tickets: 40,
+    credits: 120,
+    amount: 1800,
+    status: 'Paid'
+  }
+];
+
+// Mock credit purchase data
+const creditPurchases = [
+  {
+    id: 'CRD-2024-001',
+    date: '2024-03-14',
+    credits: 500,
+    amount: 2250,
+  },
+  {
+    id: 'CRD-2024-002',
+    date: '2024-03-01',
+    credits: 1000,
+    amount: 4500,
+  },
+  {
+    id: 'CRD-2024-003',
+    date: '2024-02-15',
+    credits: 200,
+    amount: 900,
+  },
+  {
+    id: 'CRD-2024-004',
+    date: '2024-02-01',
+    credits: 750,
+    amount: 3375,
+  }
+];
 
 const BusinessPortal = () => {
-  const [formData, setFormData] = useState({
-    agencyName: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    date: '',
-    timeSlot: '',
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [purchasedCredits, setPurchasedCredits] = useState(0);
+  
+  // Booking state
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>();
+  const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
+  const [translationPreference, setTranslationPreference] = useState<{
+    needed: boolean;
+    language?: string;
+  }>({
+    needed: false
   });
+  const [availableCredits] = useState(100); // This would come from your backend in a real app
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const [tickets, setTickets] = useState<TicketType[]>([
-    { id: 'localAdult', name: 'Local Adult', basePrice: 200, quantity: 0 },
-    { id: 'localStudent', name: 'Local Student', basePrice: 150, quantity: 0 },
-    { id: 'touristAdult', name: 'Tourist Adult', basePrice: 400, quantity: 0 },
-    { id: 'touristStudent', name: 'Tourist Student', basePrice: 300, quantity: 0 },
-  ]);
-
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const pricingTiers: PricingTier[] = [
-    { minQuantity: 50, discount: 0.20 }, // 20% off for 50+ tickets
-    { minQuantity: 20, discount: 0.10 }, // 10% off for 20+ tickets
-    { minQuantity: 0, discount: 0 },     // No discount
-  ];
-
-  const timeSlots = [
-    '19:00 - English Show',
-    '20:30 - Arabic Show',
-    '22:00 - French Show',
-  ];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // Mock user data - in a real app, this would come from your auth context/state
+  const user = {
+    name: "John Smith",
+    initials: "JS"
   };
 
-  const handleTicketChange = (id: string, value: number) => {
-    setTickets(tickets.map(ticket =>
-      ticket.id === id ? { ...ticket, quantity: Math.max(0, value) } : ticket
-    ));
+  const handleLogout = () => {
+    navigate('/business/login');
   };
 
-  const getTotalQuantity = () => {
-    return tickets.reduce((sum, ticket) => sum + ticket.quantity, 0);
+  const handlePurchase = (credits: number) => {
+    // In a real app, this would make an API call to process the purchase
+    setPurchasedCredits(credits);
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000); // Hide after 3 seconds
   };
 
-  const getDiscount = () => {
-    const totalQuantity = getTotalQuantity();
-    return pricingTiers.find(tier => totalQuantity >= tier.minQuantity)?.discount || 0;
+  const handleSeatSelect = (seat: Seat, ticketType: TicketType) => {
+    const creditCost = CREDIT_COSTS[seat.zone][ticketType];
+    const newSelectedSeats = [
+      ...selectedSeats,
+      {
+        ...seat,
+        ticketType,
+        price: creditCost // We use this field for credit cost instead of money
+      }
+    ];
+    setSelectedSeats(newSelectedSeats);
   };
 
-  const calculateTotal = () => {
-    const subtotal = tickets.reduce((sum, ticket) => sum + (ticket.quantity * ticket.basePrice), 0);
-    const discount = getDiscount();
-    return subtotal * (1 - discount);
+  const handleSeatRemove = (seatId: string) => {
+    setSelectedSeats((prev) => prev.filter((seat) => seat.id !== seatId));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true);
-    // In a real application, this would send data to a backend
+  const handleTranslationChange = (needed: boolean, language?: string) => {
+    setTranslationPreference({ needed, language });
+  };
+
+  const handleProceedToCheckout = () => {
+    // In a real app, this would make an API call to process the booking
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      setSelectedSeats([]);
+      setSelectedTime(undefined);
+    }, 3000);
+  };
+
+  const handleDownloadInvoice = (invoiceId: string) => {
+    // In a real app, this would trigger a PDF download
+    console.log('Downloading invoice:', invoiceId);
+  };
+
+  const handleUploadGuestDetails = () => {
+    setShowUploadModal(true);
+  };
+
+  const handleGuestFileUpload = async (file: File): Promise<number> => {
+    // In a real app, this would be an API call to process the file
+    // For now, we'll simulate processing with a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return a mock number of processed guests
+    return Math.floor(Math.random() * 20) + 10;
+  };
+
+  const getPageIcon = () => {
+    switch (location.pathname) {
+      case '/business/credits':
+        return <CreditCard className="w-8 h-8 text-amber-400" strokeWidth={2} />;
+      case '/business/bookings':
+        return <Calendar className="w-8 h-8 text-amber-400" strokeWidth={2} />;
+      case '/business/orders':
+        return <Receipt className="w-8 h-8 text-amber-400" strokeWidth={2} />;
+      case '/business/settings':
+        return <Settings className="w-8 h-8 text-amber-400" strokeWidth={2} />;
+      default:
+        return <LayoutDashboard className="w-8 h-8 text-amber-400" strokeWidth={2} />;
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (location.pathname) {
+      case '/business/credits':
+        return 'Buy Credits';
+      case '/business/bookings':
+        return 'Bookings';
+      case '/business/orders':
+        return 'Order History';
+      case '/business/settings':
+        return 'Settings';
+      default:
+        return 'Dashboard';
+    }
   };
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
-        {/* Introduction Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-4xl md:text-5xl font-medium text-white mb-6 tracking-wide">
-            Business Portal
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Exclusive access for travel agencies and tour operators. Enjoy special bulk pricing
-            and streamlined booking process for group tours.
-          </p>
-        </motion.div>
-
-        {isSubmitted ? (
+      <Sidebar onLogout={handleLogout} />
+      
+      {/* Success Messages */}
+      <AnimatePresence>
+        {showSuccess && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="max-w-2xl mx-auto bg-gray-900/50 backdrop-blur-xl rounded-2xl p-8 border border-gray-800/50"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-24 left-64 right-0 z-50 flex justify-end px-12"
           >
-            <div className="text-center">
-              <div className="w-16 h-16 bg-yellow-500/20 rounded-full mx-auto mb-6 flex items-center justify-center">
-                <svg className="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+            <div className="relative">
+              <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/30 to-emerald-500/0 rounded-lg blur-xl opacity-50"></div>
+              <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 backdrop-blur-xl 
+                border border-emerald-500/20 rounded-lg p-4 relative flex items-center gap-3">
+                <div className="bg-emerald-500/20 rounded-full p-1">
+                  <Check className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-emerald-400 font-medium">Purchase Successful!</p>
+                  <p className="text-emerald-400/80 text-sm">{purchasedCredits} credits have been added to your account</p>
+                </div>
               </div>
-              <h2 className="text-2xl font-medium text-white mb-4">
-                Thank You for Your Request
-              </h2>
-              <p className="text-gray-300 mb-6">
-                We've received your bulk booking request. Our team will review the details
-                and contact you within 24 hours to finalize your booking.
-              </p>
-              <button
-                onClick={() => setIsSubmitted(false)}
-                className="text-yellow-400 hover:text-yellow-300 font-medium tracking-wide"
-              >
-                Submit Another Request
-              </button>
             </div>
           </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Bulk Order Form */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <form onSubmit={handleSubmit} className="bg-gray-900/50 backdrop-blur-xl rounded-2xl p-8 border border-gray-800/50">
-                <h2 className="text-2xl font-medium text-white mb-6">
-                  Bulk Order Request
-                </h2>
-                
-                {/* Agency Details */}
-                <div className="space-y-4 mb-8">
-                  <div>
-                    <label htmlFor="agencyName" className="block text-sm font-medium text-gray-300 mb-2">
-                      Agency Name
-                    </label>
-                    <input
-                      type="text"
-                      id="agencyName"
-                      name="agencyName"
-                      required
-                      value={formData.agencyName}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                        focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="contactName" className="block text-sm font-medium text-gray-300 mb-2">
-                      Contact Person Name
-                    </label>
-                    <input
-                      type="text"
-                      id="contactName"
-                      name="contactName"
-                      required
-                      value={formData.contactName}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                        focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                        focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      required
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                        focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-2">
-                      Desired Date
-                    </label>
-                    <input
-                      type="date"
-                      id="date"
-                      name="date"
-                      required
-                      value={formData.date}
-                      onChange={handleInputChange}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                        focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="timeSlot" className="block text-sm font-medium text-gray-300 mb-2">
-                      Time Slot
-                    </label>
-                    <select
-                      id="timeSlot"
-                      name="timeSlot"
-                      required
-                      value={formData.timeSlot}
-                      onChange={handleInputChange}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3
-                        text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                        focus:border-transparent transition-all duration-300"
-                    >
-                      <option value="">Select a time slot</option>
-                      {timeSlots.map((slot) => (
-                        <option key={slot} value={slot}>{slot}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Ticket Selection */}
-                <div className="space-y-4 mb-8">
-                  <h3 className="text-xl font-serif font-semibold text-white mb-4">
-                    Ticket Selection
-                  </h3>
-                  {tickets.map((ticket) => (
-                    <div key={ticket.id} className="flex items-center justify-between">
-                      <label htmlFor={ticket.id} className="text-gray-300">
-                        {ticket.name} (EGP {ticket.basePrice})
-                      </label>
-                      <input
-                        type="number"
-                        id={ticket.id}
-                        min="0"
-                        value={ticket.quantity}
-                        onChange={(e) => handleTicketChange(ticket.id, parseInt(e.target.value) || 0)}
-                        className="w-24 bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2
-                          text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500/50
-                          focus:border-transparent transition-all duration-300"
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Total */}
-                <div className="border-t border-gray-700/50 pt-6 mb-8">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-300">Subtotal:</span>
-                    <span className="text-white">
-                      EGP {calculateTotal().toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-400">Applied Discount:</span>
-                    <span className="text-yellow-400">
-                      {(getDiscount() * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-yellow-500 to-amber-500 
-                    text-gray-900 px-8 py-4 rounded-xl text-lg font-medium tracking-wider
-                    hover:shadow-lg hover:shadow-yellow-500/20 
-                    active:scale-95 transform transition-all duration-300
-                    focus:outline-none focus:ring-2 focus:ring-yellow-500/60"
-                >
-                  Submit Request
-                </button>
-              </form>
-            </motion.div>
-
-            {/* Pricing Table */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50"
-            >
-              <h2 className="text-2xl font-medium text-white mb-6">
-                Bulk Pricing
-              </h2>
-              
-              <div className="space-y-6">
-                {/* Regular Prices */}
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-4">Regular Prices</h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    {tickets.map((ticket) => (
-                      <div key={ticket.id} className="flex justify-between items-center">
-                        <span className="text-gray-300">{ticket.name}</span>
-                        <span className="text-white">EGP {ticket.basePrice}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Discount Tiers */}
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-4">Discount Tiers</h3>
-                  <div className="space-y-3">
-                    {pricingTiers.filter(tier => tier.discount > 0).map((tier) => (
-                      <div key={tier.minQuantity} 
-                        className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
-                        <div className="flex justify-between items-center">
-                          <span className="text-yellow-400 font-medium">
-                            {tier.minQuantity}+ tickets
-                          </span>
-                          <span className="text-white">
-                            {(tier.discount * 100).toFixed(0)}% off
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Example Calculations */}
-                <div>
-                  <h3 className="text-lg font-medium text-white mb-4">Example Savings</h3>
-                  <div className="space-y-3">
-                    <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
-                      <div className="text-sm text-gray-400 mb-2">20 Tourist Adult Tickets</div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Regular Price</span>
-                        <span className="text-white">EGP 8,000</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">With 10% Discount</span>
-                        <span className="text-yellow-400">EGP 7,200</span>
-                      </div>
-                    </div>
-                    <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
-                      <div className="text-sm text-gray-400 mb-2">50 Tourist Adult Tickets</div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">Regular Price</span>
-                        <span className="text-white">EGP 20,000</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-300">With 20% Discount</span>
-                        <span className="text-yellow-400">EGP 16,000</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
         )}
+      </AnimatePresence>
+
+      {/* Header with Welcome Message */}
+      <div className="fixed top-0 left-64 right-0 h-24 bg-black z-0 flex items-center justify-end px-12">
+        <div className="flex items-center gap-6">
+          <p className="text-white text-xl font-semibold tracking-wide">{user.name}</p>
+          <div className="relative">
+            <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-50"></div>
+            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/5 backdrop-blur-xl border border-amber-500/20 flex items-center justify-center relative">
+              <span className="text-amber-400 font-medium text-base">{user.initials}</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Main Content Area with Grey Panel */}
+      <div className="ml-64 pt-24 relative z-10">
+        <div className="min-h-[calc(100vh-6rem)] bg-[#737373]/10 backdrop-blur-md rounded-tl-[2rem] border-t border-l border-white/5 shadow-2xl">
+          <main className="p-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="h-full"
+            >
+              <div className="mb-12">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="relative">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-50"></div>
+                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                      backdrop-blur-xl border border-amber-500/20 transition-colors duration-300">
+                      {getPageIcon()}
+                    </div>
+                  </div>
+                  <h1 className="text-4xl font-semibold text-white tracking-wide">
+                    {getPageTitle()}
+                  </h1>
+                </div>
+                                <div className="h-0.5 w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent" />
+                  </div>
+
+              {/* Dashboard */}
+              {location.pathname === '/business' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <DashboardCharts />
+                  <DemographicCharts />
+                </motion.div>
+              )}
+
+              {/* Order History Tables */}
+              {location.pathname === '/business/orders' && (
+                <div className="grid grid-cols-2 gap-8">
+                  {/* Ticket Orders Table */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="bg-black/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden
+                      hover:border-amber-500/20 transition-all duration-500 
+                      hover:shadow-2xl hover:shadow-amber-500/5"
+                  >
+                    <div className="px-6 py-4 border-b border-white/10">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-50"></div>
+                          <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                            backdrop-blur-xl border border-amber-500/20">
+                            <Ticket className="w-6 h-6 text-amber-400" strokeWidth={2} />
+                          </div>
+                        </div>
+                        <h2 className="text-xl font-semibold text-amber-400">Ticket Orders</h2>
+                      </div>
+                    </div>
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <FileText className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Invoice ID</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <CalendarDays className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Date</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <Ticket className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Tickets</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <Coins className="w-5 h-5 text-amber-400" />
+                  </div>
+                  </div>
+                              <span className="text-white/80 font-semibold text-lg">Credits</span>
+                  </div>
+                          </th>
+                          <th className="px-6 py-4"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ticketOrders.map((order) => (
+                          <tr 
+                            key={order.id}
+                            className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
+                          >
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-white/90 font-medium">{order.id}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-white/80">{new Date(order.date).toLocaleDateString()}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-2xl font-semibold text-white">{order.tickets.toLocaleString()}</span>
+                              <span className="text-white/60 ml-1">tickets</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-2xl font-semibold text-white">{order.credits.toLocaleString()}</span>
+                              <span className="text-white/60 ml-1">credits</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button 
+                                onClick={() => handleDownloadInvoice(order.id)}
+                                className="px-4 py-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                                  backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
+                                  transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
+                                  group flex items-center gap-2"
+                              >
+                                <Download className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
+                                <span className="text-purple-400 font-medium">PDF</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </motion.div>
+
+                  {/* Credit Purchases Table */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="bg-black/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden
+                      hover:border-amber-500/20 transition-all duration-500 
+                      hover:shadow-2xl hover:shadow-amber-500/5"
+                    >
+                    <div className="px-6 py-4 border-b border-white/10">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-50"></div>
+                          <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                            backdrop-blur-xl border border-amber-500/20">
+                            <Coins className="w-6 h-6 text-amber-400" strokeWidth={2} />
+                  </div>
+                </div>
+                        <h2 className="text-xl font-semibold text-amber-400">Credit Purchases</h2>
+                      </div>
+                    </div>
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <FileText className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Invoice ID</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <CalendarDays className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Date</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <Coins className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Credits</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="relative">
+                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                  backdrop-blur-xl border border-amber-500/20">
+                                  <CreditCard className="w-5 h-5 text-amber-400" />
+                                </div>
+                              </div>
+                              <span className="text-white/80 font-semibold text-lg">Amount</span>
+                            </div>
+                          </th>
+                          <th className="px-6 py-4"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {creditPurchases.map((purchase) => (
+                          <tr 
+                            key={purchase.id}
+                            className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
+                          >
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-white/90 font-medium">{purchase.id}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-white/80">{new Date(purchase.date).toLocaleDateString()}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-2xl font-semibold text-white">{purchase.credits.toLocaleString()}</span>
+                              <span className="text-white/60 ml-1">credits</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="text-2xl font-semibold text-amber-400">${purchase.amount.toLocaleString()}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <button 
+                                onClick={() => handleDownloadInvoice(purchase.id)}
+                                className="px-4 py-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                                  backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
+                                  transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
+                                  group flex items-center gap-2"
+                              >
+                                <Download className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform duration-300" />
+                                <span className="text-purple-400 font-medium">PDF</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </motion.div>
+                </div>
+              )}
+
+              {/* Credits Table - Only show on credits page */}
+              {location.pathname === '/business/credits' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="bg-black/20 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden
+                    hover:border-amber-500/20 transition-all duration-500 
+                    hover:shadow-2xl hover:shadow-amber-500/5"
+                >
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="relative">
+                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                backdrop-blur-xl border border-amber-500/20">
+                                <Coins className="w-5 h-5 text-amber-400" />
+                              </div>
+                            </div>
+                            <span className="text-white/80 font-semibold text-lg">Credits</span>
+                          </div>
+                        </th>
+                        <th className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="relative">
+                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                backdrop-blur-xl border border-amber-500/20">
+                                <Clock className="w-5 h-5 text-amber-400" />
+                              </div>
+                            </div>
+                            <span className="text-white/80 font-semibold text-lg">Expiry</span>
+                          </div>
+                        </th>
+                        <th className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="relative">
+                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                backdrop-blur-xl border border-amber-500/20">
+                                <CreditCard className="w-5 h-5 text-amber-400" />
+                              </div>
+                            </div>
+                            <span className="text-white/80 font-semibold text-lg">Total Price</span>
+                  </div>
+                        </th>
+                        <th className="px-6 py-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="relative">
+                              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 relative
+                                backdrop-blur-xl border border-amber-500/20">
+                                <Percent className="w-5 h-5 text-amber-400" />
+                  </div>
+                </div>
+                            <span className="text-white/80 font-semibold text-lg">Price Per Credit</span>
+                          </div>
+                        </th>
+                        <th className="px-6 py-4"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {creditPackages.map((pkg, index) => (
+                        <tr 
+                          key={index}
+                          className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
+                        >
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-2xl font-semibold text-white">{pkg.credits}</span>
+                            <span className="text-white/60 ml-1">credits</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-white/80">{pkg.expiryMonths} months</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="text-2xl font-semibold text-amber-400">${pkg.price}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="text-white/80">${pkg.pricePerCredit}/credit</span>
+                              {pkg.discount > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-medium">
+                                  {pkg.discount}% OFF
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                <button
+                              onClick={() => handlePurchase(pkg.credits)}
+                              className="px-4 py-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
+                                backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
+                                transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
+                                group flex items-center gap-2"
+                            >
+                              <Plus className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                              <span className="text-emerald-400 font-medium">Buy</span>
+                </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+            </motion.div>
+              )}
+
+              {/* Bookings Interface - Only show on bookings page */}
+              {location.pathname === '/business/bookings' && (
+                <div className="max-w-7xl mx-auto">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 sm:gap-8">
+                    <div className="space-y-4 sm:space-y-8">
+                      {/* Available Credits Display and Action Buttons */}
+                      <div className="flex items-center gap-4">
+                        <div className="bg-amber-500/10 backdrop-blur-sm rounded-xl border border-amber-500/20 p-4">
+                          <div className="flex items-center gap-3">
+                            <Coins className="w-5 h-5 text-amber-400" />
+                            <span className="text-white font-medium">Available Credits: {availableCredits}</span>
+                      </div>
+                  </div>
+                        <button
+                          onClick={() => navigate('/business/credits')}
+                          className="px-4 py-4 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
+                            backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
+                            transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
+                            flex items-center justify-center gap-2"
+                        >
+                          <Plus className="w-5 h-5 text-emerald-400" />
+                          <span className="text-emerald-400 font-medium">Buy More Credits</span>
+                        </button>
+                        <button 
+                          onClick={handleUploadGuestDetails}
+                          className="px-4 py-4 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                            backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
+                            transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
+                            flex items-center justify-center gap-2"
+                        >
+                          <Upload className="w-5 h-5 text-purple-400 group-hover:translate-y-[-2px] transition-transform duration-300" />
+                          <span className="text-purple-400 font-medium">Upload Guest Details</span>
+                        </button>
+                </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                        <DatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+                        <div className="sm:block">
+                          <ShowTimeSelector 
+                            selectedTime={selectedTime} 
+                            onTimeSelect={setSelectedTime}
+                            showTimes={[]}
+                            className="h-full"
+                          />
+                  </div>
+                </div>
+
+                      <div className="sm:block">
+                        <TranslationSelector
+                          onTranslationChange={handleTranslationChange}
+                          className="h-full"
+                        />
+                      </div>
+                      
+                      {selectedTime && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <SeatMap
+                            userType="tourist"
+                            onUserTypeChange={() => {}} // Disabled for business portal
+                            onSeatSelect={handleSeatSelect}
+                            onSeatDeselect={handleSeatRemove}
+                            selectedSeatIds={selectedSeats.map(seat => seat.id)}
+                            selectedDate={selectedDate}
+                            selectedShowTime={selectedTime}
+                            useCredits={true}
+                            creditCosts={CREDIT_COSTS}
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+
+                    <div className="relative lg:h-[calc(100vh-8rem)]">
+                      <div className="lg:sticky lg:top-32">
+                        <TicketSummary
+                          selectedSeats={selectedSeats}
+                          userType="tourist"
+                          onRemoveSeat={handleSeatRemove}
+                          className="max-h-[calc(100vh-10rem)] overflow-y-auto"
+                          onProceedToCheckout={handleProceedToCheckout}
+                          translationPreference={translationPreference}
+                          useCredits={true}
+                          creditCosts={CREDIT_COSTS}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </main>
+          </div>
+      </div>
+
+      {/* Guest Upload Modal */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <GuestUploadModal
+            onClose={() => setShowUploadModal(false)}
+            onUpload={handleGuestFileUpload}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -12,6 +12,21 @@ interface TicketSummaryProps {
     needed: boolean;
     language?: string;
   };
+  useCredits?: boolean;
+  creditCosts?: {
+    regular: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+    vip: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+  };
 }
 
 const TicketSummary: React.FC<TicketSummaryProps> = ({
@@ -20,12 +35,14 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
   onRemoveSeat,
   className,
   onProceedToCheckout,
-  translationPreference
+  translationPreference,
+  useCredits = false,
+  creditCosts
 }) => {
   const currency = userType === 'tourist' ? '$' : 'EGP';
   const total = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
-  const translationFee = translationPreference?.needed ? (userType === 'tourist' ? 10 : 150) : 0;
-  const totalWithAddons = total + (translationFee * selectedSeats.length);
+  const translationFee = !useCredits && translationPreference?.needed ? (userType === 'tourist' ? 10 : 150) : 1;
+  const totalWithAddons = useCredits ? total + (translationPreference?.needed ? selectedSeats.length : 0) : total + (translationFee * selectedSeats.length);
 
   return (
     <div className={`bg-gray-800/20 backdrop-blur-xl rounded-xl border border-gray-700/20 
@@ -89,13 +106,14 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                     </div>
                     <div className="text-sm text-white/60 mt-0.5">
                       {seat.ticketType === 'senior' ? 'Senior' : 
-                       seat.ticketType === 'student' ? 'Student' : 'Child'} Ticket
+                       seat.ticketType === 'student' ? 'Student' : 
+                       seat.ticketType === 'child' ? 'Child' : 'Adult'} Ticket
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
                     <span className="text-amber-400 font-medium">
-                      {currency} {seat.price}
+                      {useCredits ? `${seat.price} credits` : `${currency} ${seat.price}`}
                     </span>
                     <button
                       type="button"
@@ -167,7 +185,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                       </div>
                     </div>
                     <span className="text-amber-400 font-medium">
-                      {currency} {translationFee * selectedSeats.length}
+                      {useCredits ? `${selectedSeats.length} credits` : `${currency} ${translationFee * selectedSeats.length}`}
                     </span>
                   </div>
                 </motion.div>
@@ -184,17 +202,17 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-white/60">
                   <span>Tickets Subtotal</span>
-                  <span>{currency} {total}</span>
+                  <span>{useCredits ? `${total} credits` : `${currency} ${total}`}</span>
                 </div>
                 {translationPreference?.needed && (
                   <div className="flex justify-between text-white/60">
                     <span>Translation Service</span>
-                    <span>{currency} {translationFee * selectedSeats.length}</span>
+                    <span>{useCredits ? `${selectedSeats.length} credits` : `${currency} ${translationFee * selectedSeats.length}`}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-medium pt-2">
                   <span className="text-white">Total</span>
-                  <span className="text-amber-400">{currency} {totalWithAddons}</span>
+                  <span className="text-amber-400">{useCredits ? `${totalWithAddons} credits` : `${currency} ${totalWithAddons}`}</span>
                 </div>
               </div>
             </>
@@ -210,7 +228,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
               }
             `}
           >
-            Proceed to Checkout
+            {useCredits ? 'Book with Credits' : 'Proceed to Checkout'}
           </button>
         </div>
       </div>

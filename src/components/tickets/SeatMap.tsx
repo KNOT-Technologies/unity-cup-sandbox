@@ -13,6 +13,21 @@ interface SeatMapProps {
   userType: UserType;
   onUserTypeChange: (type: UserType) => void;
   selectedSeatIds?: string[];
+  useCredits?: boolean;
+  creditCosts?: {
+    regular: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+    vip: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+  };
 }
 
 const generateInitialSeats = (): Seat[] => {
@@ -76,7 +91,9 @@ const SeatMap = ({
   selectedShowTime, 
   userType,
   onUserTypeChange,
-  selectedSeatIds = []
+  selectedSeatIds = [],
+  useCredits = false,
+  creditCosts
 }: SeatMapProps) => {
   const [seats, setSeats] = useState<Seat[]>([]);
   const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
@@ -200,8 +217,7 @@ const SeatMap = ({
               Select Your Seats
             </h3>
             <p className="text-sm font-medium text-white/60">
-              <span className="hidden sm:inline">Click on available seats to select</span>
-              <span className="sm:hidden">Scroll horizontally to view all seats</span>
+              {useCredits ? 'Using credits for booking' : 'Regular booking'}
             </p>
           </div>
         </div>
@@ -431,11 +447,13 @@ const SeatMap = ({
         {selectedSeatForModal && (
           <TicketTypeModal
             seat={selectedSeatForModal}
-            position={modalPosition}
-            onConfirm={handleTicketTypeSelect}
-            onClose={() => setSelectedSeatForModal(null)}
             userType={userType}
+            onClose={() => setSelectedSeatForModal(null)}
+            onConfirm={handleTicketTypeSelect}
             onUserTypeChange={onUserTypeChange}
+            position={modalPosition}
+            useCredits={useCredits}
+            creditCosts={creditCosts}
           />
         )}
       </AnimatePresence>
