@@ -6,43 +6,44 @@ interface ShowTimeSelectorProps {
   showTimes: ShowTime[];
   selectedTime?: string;
   onTimeSelect: (time: string) => void;
+  className?: string;
 }
 
-const ShowTimeSelector = ({ showTimes, selectedTime, onTimeSelect }: ShowTimeSelectorProps) => {
+const ShowTimeSelector = ({ showTimes, selectedTime, onTimeSelect, className = '' }: ShowTimeSelectorProps) => {
   // Mock show times if none provided
   const times = showTimes.length > 0 ? showTimes : [
     { id: '1', time: '19:00', language: 'English' },
     { id: '2', time: '20:00', language: 'Arabic' },
-    { id: '3', time: '21:00', language: 'English' }
+    { id: '3', time: '21:00', language: 'German' }
   ];
 
   return (
-    <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl p-5 
+    <div className={`bg-gray-800/20 backdrop-blur-xl rounded-xl p-3 sm:p-5 
       border border-gray-700/20 
       hover:border-amber-500/20 transition-all duration-500 
       hover:shadow-2xl hover:shadow-amber-500/5
       relative before:absolute before:inset-0 
       before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
       before:rounded-xl before:opacity-0 hover:before:opacity-100 
-      before:transition-opacity before:duration-500">
+      before:transition-opacity before:duration-500 ${className}`}>
       
       <div className="relative">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-3 sm:mb-4">
           <div className="relative">
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
             <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
               backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
-              <Clock className="w-5 h-5 text-amber-400" />
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
             </div>
           </div>
-          <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+          <h3 className="text-sm sm:text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
             Select Show Time
           </h3>
         </div>
 
-        <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
+        <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-3 sm:mb-4"></div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {times.map((show) => (
             <motion.button
               key={show.id}
@@ -50,16 +51,16 @@ const ShowTimeSelector = ({ showTimes, selectedTime, onTimeSelect }: ShowTimeSel
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`
-                relative p-3 rounded-lg border backdrop-blur-sm transition-all duration-300
+                relative p-2 sm:p-3 rounded-lg border backdrop-blur-sm transition-all duration-300
                 ${selectedTime === show.time
                   ? 'bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 border-transparent shadow-lg shadow-amber-500/20'
                   : 'bg-gray-800/30 text-white border-gray-700/30 hover:bg-gray-700/30 hover:border-amber-500/20 hover:shadow-lg hover:shadow-amber-500/5'
                 }
               `}
             >
-              <div className="flex flex-col items-center space-y-1">
-                <span className="text-lg font-medium">{show.time}</span>
-                <span className={`text-sm font-medium ${selectedTime === show.time ? 'text-gray-800' : 'text-white/60'}`}>
+              <div className="flex flex-col items-center space-y-0.5 sm:space-y-1">
+                <span className="text-base sm:text-lg font-medium">{show.time}</span>
+                <span className={`text-xs sm:text-sm font-medium ${selectedTime === show.time ? 'text-gray-800' : 'text-white/60'}`}>
                   {show.language}
                 </span>
               </div>

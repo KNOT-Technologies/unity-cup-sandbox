@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Wallet, QrCode, Clock, Shield, ArrowLeft, Users, Ticket, Plus } from 'lucide-react';
-import type { SelectedSeat, UserType } from '../types/tickets';
+import { CreditCard, Wallet, QrCode, Clock, Shield, ArrowLeft, Users, Ticket, Plus, Ban } from 'lucide-react';
+import type { SelectedSeat, UserType, TicketType } from '../types/tickets';
 import { useNavigate } from 'react-router-dom';
 
 interface PaymentMethod {
@@ -20,6 +20,7 @@ interface GuestInfo {
   id: string;
   name: string;
   nationality: string;
+  dateOfBirth: string;
 }
 
 // Comprehensive list of countries
@@ -235,6 +236,33 @@ const paymentMethods: PaymentMethod[] = [
   }
 ];
 
+const calculateAge = (birthDate: string): number => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const isValidAgeForTicket = (birthDate: string, ticketType: TicketType): boolean => {
+  const age = calculateAge(birthDate);
+  switch (ticketType) {
+    case 'senior':
+      return age >= 80;
+    case 'student':
+      return age < 16;
+    case 'child':
+      return age < 6;
+    case 'adult':
+      return age >= 16 && age < 80;
+    default:
+      return true;
+  }
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
@@ -248,6 +276,11 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
+  // Filter nationalities based on user type
+  const availableNationalities = userType === 'tourist' 
+    ? nationalities.filter(n => n !== 'Egypt')
+    : ['Egypt'];
+
   useEffect(() => {
     // Get selected seats from localStorage
     const storedSeats = localStorage.getItem('selectedSeats');
@@ -258,13 +291,14 @@ const Checkout = () => {
       setGuestInfo(seats.map((seat: SelectedSeat) => ({
         id: seat.id,
         name: '',
-        nationality: ''
+        nationality: userType === 'local' ? 'Egypt' : '',
+        dateOfBirth: ''
       })));
     } else {
       // Redirect back to tickets page if no seats are selected
       navigate('/tickets');
     }
-  }, [navigate]);
+  }, [navigate, userType]);
 
   useEffect(() => {
     const storedUserType = localStorage.getItem('userType') as UserType;
@@ -272,13 +306,23 @@ const Checkout = () => {
     
     if (storedUserType) {
       setUserType(storedUserType);
+      // Update all guest nationalities if user type is local
+      if (storedUserType === 'local') {
+        setGuestInfo(prev => prev.map(guest => ({
+          ...guest,
+          nationality: 'Egypt'
+        })));
+      }
       if (storedTranslation) {
         setTranslationPreference(JSON.parse(storedTranslation));
       }
     }
   }, []);
 
-  const handleGuestInfoChange = (id: string, field: 'name' | 'nationality', value: string) => {
+  const handleGuestInfoChange = (id: string, field: 'name' | 'nationality' | 'dateOfBirth', value: string) => {
+    // If user type is local, don't allow nationality change
+    if (userType === 'local' && field === 'nationality') return;
+    
     setGuestInfo(prev => prev.map(guest => 
       guest.id === id ? { ...guest, [field]: value } : guest
     ));
@@ -296,11 +340,21 @@ const Checkout = () => {
 
     // Check guest information
     guestInfo.forEach((guest, index) => {
+      const seat = selectedSeats.find(s => s.id === guest.id);
       if (!guest.name.trim()) {
         errors.push(`Please enter the name for Guest ${index + 1}`);
       }
       if (!guest.nationality.trim()) {
         errors.push(`Please select the nationality for Guest ${index + 1}`);
+      }
+      if (!guest.dateOfBirth) {
+        errors.push(`Please enter the date of birth for Guest ${index + 1}`);
+      } else if (seat && !isValidAgeForTicket(guest.dateOfBirth, seat.ticketType)) {
+        const ageRequirement = seat.ticketType === 'senior' ? '80 years or older' :
+                             seat.ticketType === 'student' ? 'under 16 years' :
+                             seat.ticketType === 'child' ? 'under 6 years' :
+                             'between 16 and 80 years';
+        errors.push(`Guest ${index + 1} must be ${ageRequirement} for a ${seat.ticketType} ticket`);
       }
     });
 
@@ -510,21 +564,53 @@ const Checkout = () => {
                                     id={`guest-nationality-${guest.id}`}
                                     value={guest.nationality}
                                     onChange={(e) => handleGuestInfoChange(guest.id, 'nationality', e.target.value)}
-                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-3 py-2
+                                    className={`w-full bg-gray-800/30 border rounded-lg px-3 py-2
                                       text-white focus:outline-none focus:ring-2 
                                       focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300
-                                      text-sm appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik02IDcuNEwwIDEuNEwxLjQgMEw2IDQuNkwxMC42IDBMMTI7IDEuNEw2IDcuNFoiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuNCIvPgo8L3N2Zz4K')]
-                                      bg-no-repeat bg-[center_right_1rem]"
+                                      text-sm appearance-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOCIgdmlld0JveD0iMCAwIDEyIDgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zz4KPHBhdGggZD0iTTYgNy40TDAgMS40TDEuNCAwTDYgNC42TDEwLjYgMEwxMjsgMS40TDYgNy40WiIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC40Ii8+Cjwvc3ZnPgo')]
+                                      bg-no-repeat bg-[center_right_1rem]
+                                      ${userType === 'local' ? 'opacity-90 cursor-not-allowed border-gray-500/50 bg-gray-700/30 text-gray-300 font-medium pr-10' : 'border-gray-700/30'}`}
                                     required
+                                    disabled={userType === 'local'}
                                   >
                                     <option value="" disabled>Select nationality</option>
-                                    {nationalities.map(nationality => (
+                                    {availableNationalities.map(nationality => (
                                       <option key={nationality} value={nationality}>
                                         {nationality}
                                       </option>
                                     ))}
                                   </select>
                                 </div>
+                              </div>
+                              <div className="mt-3">
+                                <label htmlFor={`guest-dob-${guest.id}`} className="block text-xs font-medium text-white/60 mb-1">
+                                  Date of Birth
+                                  {seat && (
+                                    <span className="ml-2 text-amber-400">
+                                      {seat.ticketType === 'senior' ? '(must be 80+ years)' :
+                                       seat.ticketType === 'student' ? '(must be under 16 years)' :
+                                       seat.ticketType === 'child' ? '(must be under 6 years)' :
+                                       '(must be between 16-80 years)'}
+                                    </span>
+                                  )}
+                                </label>
+                                <input
+                                  type="date"
+                                  id={`guest-dob-${guest.id}`}
+                                  value={guest.dateOfBirth}
+                                  onChange={(e) => handleGuestInfoChange(guest.id, 'dateOfBirth', e.target.value)}
+                                  max={new Date().toISOString().split('T')[0]}
+                                  className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-3 py-2
+                                    text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300
+                                    text-sm [color-scheme:dark]"
+                                  required
+                                />
+                                {seat && guest.dateOfBirth && !isValidAgeForTicket(guest.dateOfBirth, seat.ticketType) && (
+                                  <p className="text-red-400 text-xs mt-1">
+                                    Age does not match the selected ticket type
+                                  </p>
+                                )}
                               </div>
                             </div>
                           );

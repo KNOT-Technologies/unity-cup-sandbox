@@ -5,7 +5,6 @@ import DatePicker from '../components/tickets/DatePicker';
 import ShowTimeSelector from '../components/tickets/ShowTimeSelector';
 import SeatMap from '../components/tickets/SeatMap';
 import TicketSummary from '../components/tickets/TicketSummary';
-import UserTypeToggle from '../components/tickets/UserTypeToggle';
 import TranslationSelector from '../components/tickets/TranslationSelector';
 import type { UserType, Seat, TicketType, SelectedSeat } from '../types/tickets';
 import { PRICING } from '../types/tickets';
@@ -54,21 +53,28 @@ const Tickets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white pt-32 pb-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
-          <div className="space-y-8">
-            <UserTypeToggle userType={userType} onUserTypeChange={setUserType} />
-            <DatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-            <ShowTimeSelector 
-              selectedTime={selectedTime} 
-              onTimeSelect={setSelectedTime}
-              showTimes={[]}
-            />
+    <div className="min-h-screen bg-black text-white pt-24 sm:pt-32 pb-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 sm:gap-8">
+          <div className="space-y-4 sm:space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+              <DatePicker selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+              <div className="sm:block">
+                <ShowTimeSelector 
+                  selectedTime={selectedTime} 
+                  onTimeSelect={setSelectedTime}
+                  showTimes={[]}
+                  className="h-full"
+                />
+              </div>
+            </div>
             
-            <TranslationSelector
-              onTranslationChange={handleTranslationChange}
-            />
+            <div className="sm:block">
+              <TranslationSelector
+                onTranslationChange={handleTranslationChange}
+                className="h-full"
+              />
+            </div>
             
             {selectedTime && (
               <motion.div
@@ -78,6 +84,7 @@ const Tickets = () => {
               >
                 <SeatMap
                   userType={userType}
+                  onUserTypeChange={setUserType}
                   onSeatSelect={handleSeatSelect}
                   onSeatDeselect={handleSeatRemove}
                   selectedSeatIds={selectedSeats.map(seat => seat.id)}
@@ -89,7 +96,7 @@ const Tickets = () => {
           </div>
 
           <div className="relative lg:h-[calc(100vh-8rem)]">
-            <div className="sticky top-32">
+            <div className="lg:sticky lg:top-32">
               <TicketSummary
                 selectedSeats={selectedSeats}
                 userType={userType}

@@ -1,5 +1,5 @@
 export type UserType = 'tourist' | 'local';
-export type TicketType = 'senior' | 'student' | 'child';
+export type TicketType = 'senior' | 'adult' | 'student' | 'child';
 export type SeatZone = 'vip' | 'regular';
 
 // Define seat status as a const object
@@ -45,11 +45,13 @@ export const PRICING = {
   tourist: {
     regular: {
       senior: 50,
+      adult: 45,
       student: 40,
       child: 30
     },
     vip: {
       senior: 80,
+      adult: 75,
       student: 70,
       child: 60
     }
@@ -57,11 +59,13 @@ export const PRICING = {
   local: {
     regular: {
       senior: 400,
+      adult: 350,
       student: 300,
       child: 200
     },
     vip: {
       senior: 700,
+      adult: 650,
       student: 600,
       child: 500
     }

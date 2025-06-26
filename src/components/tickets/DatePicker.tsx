@@ -131,7 +131,7 @@ const DatePicker = ({ onDateSelect, selectedDate }: DatePickerProps) => {
   return (
     <div className="relative">
       {/* Date Display Button */}
-      <div className="bg-gray-800/20 backdrop-blur-xl rounded-2xl p-6 
+      <div className="bg-gray-800/20 backdrop-blur-xl rounded-2xl p-3 sm:p-6 
         border border-gray-700/20 
         hover:border-amber-500/20 transition-all duration-500 
         hover:shadow-2xl hover:shadow-amber-500/5
@@ -141,38 +141,38 @@ const DatePicker = ({ onDateSelect, selectedDate }: DatePickerProps) => {
         before:transition-opacity before:duration-500">
         
         <div className="relative">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-3 sm:mb-6">
             <div className="relative">
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-xl p-2.5 relative
+              <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg sm:rounded-xl p-2 sm:p-2.5 relative
                 backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
-                <Calendar className="w-6 h-6 text-amber-400" />
+                <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-amber-400" />
               </div>
             </div>
-            <h3 className="text-lg font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+            <h3 className="text-sm sm:text-lg font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
               Select Date
             </h3>
           </div>
 
-          <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-6"></div>
+          <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-3 sm:mb-6"></div>
 
           <button
             ref={triggerRef}
             onClick={handleOpenCalendar}
-            className="w-full bg-gray-800/30 backdrop-blur-sm rounded-xl p-4 
+            className="w-full bg-gray-800/30 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 
               border border-gray-700/30 text-left transition-all duration-300
               hover:border-amber-500/20 hover:bg-gray-700/30 
               hover:shadow-lg hover:shadow-amber-500/5 group
               focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
             <div className="flex items-center justify-between">
-              <div className="text-lg font-medium text-white group-hover:text-white/90 
+              <div className="text-base sm:text-lg font-medium text-white group-hover:text-white/90 
                 transition-colors duration-300"
               >
                 {formatDate(selectedDate)}
               </div>
               <svg
-                className={`w-5 h-5 text-amber-400 transition-transform duration-300 
+                className={`w-4 h-4 sm:w-5 sm:h-5 text-amber-400 transition-transform duration-300 
                   ${isCalendarOpen ? 'rotate-180' : ''}`}
                 fill="none"
                 viewBox="0 0 24 24"

@@ -11,6 +11,7 @@ interface SeatMapProps {
   selectedDate: Date;
   selectedShowTime?: string;
   userType: UserType;
+  onUserTypeChange: (type: UserType) => void;
   selectedSeatIds?: string[];
 }
 
@@ -74,6 +75,7 @@ const SeatMap = ({
   selectedDate, 
   selectedShowTime, 
   userType,
+  onUserTypeChange,
   selectedSeatIds = []
 }: SeatMapProps) => {
   const [seats, setSeats] = useState<Seat[]>([]);
@@ -184,7 +186,7 @@ const SeatMap = ({
       before:rounded-xl before:opacity-0 hover:before:opacity-100 
       before:transition-opacity before:duration-500">
       
-      <div className="p-5">
+      <div className="p-3 sm:p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative">
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
@@ -198,225 +200,228 @@ const SeatMap = ({
               Select Your Seats
             </h3>
             <p className="text-sm font-medium text-white/60">
-              Click on available seats to select
+              <span className="hidden sm:inline">Click on available seats to select</span>
+              <span className="sm:hidden">Scroll horizontally to view all seats</span>
             </p>
           </div>
         </div>
 
         <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
 
-        <div className="relative" ref={mapRef}>
-          {/* Stage */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="ml-[48px] w-[calc(100%-48px)] h-16 bg-gradient-to-t from-amber-500/20 to-amber-500/5
-              rounded-xl mb-8 flex items-center justify-center border border-amber-500/20
-              relative overflow-hidden group"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0 
-              opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <span className="text-white/90 text-sm font-medium relative z-10 group-hover:text-amber-400 
-              transition-colors duration-300">Stage</span>
-          </motion.div>
+        <div className="relative overflow-x-auto pb-4 sm:pb-0" ref={mapRef}>
+          <div className="min-w-[800px] sm:min-w-0">
+            {/* Stage */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="ml-[48px] w-[calc(100%-48px)] h-12 sm:h-16 bg-gradient-to-t from-amber-500/20 to-amber-500/5
+                rounded-xl mb-6 sm:mb-8 flex items-center justify-center border border-amber-500/20
+                relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0 
+                opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <span className="text-white/90 text-sm font-medium relative z-10 group-hover:text-amber-400 
+                transition-colors duration-300">Stage</span>
+            </motion.div>
 
-          {/* Seat Grid */}
-          <div className="flex flex-col gap-4">
-            {/* VIP Zone Label */}
-            <div className="text-center ml-[48px]">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                <span className="text-white/90 text-sm font-medium">VIP Zone</span>
-              </div>
-            </div>
-            
-            {/* VIP Rows */}
-            {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(row => (
-              <div key={row} className="grid grid-cols-[48px_1fr] gap-2 items-center">
-                <div className="flex justify-center items-center w-8 h-8 text-white/60 text-sm font-medium 
-                  bg-gray-800/30 rounded-lg">{row}</div>
-                <div className="grid grid-cols-[repeat(10,32px)_48px_repeat(10,32px)] justify-center">
-                  {/* First half of seats */}
-                  {seats
-                    .filter(seat => seat.row === row && seat.number <= 10)
-                    .sort((a, b) => a.number - b.number)
-                    .map((seat) => (
-                      <motion.button
-                        key={seat.id}
-                        onClick={(e) => handleSeatClick(seat, e)}
-                        onKeyDown={(e) => handleKeyPress(e, seat)}
-                        onMouseEnter={() => setHoveredSeat(seat.id)}
-                        onMouseLeave={() => setHoveredSeat(null)}
-                        onFocus={() => setFocusedSeat(seat.id)}
-                        onBlur={() => setFocusedSeat(null)}
-                        className={`
-                          w-6 h-6 rounded-full flex items-center justify-center mx-auto
-                          transition-all duration-300 relative group
-                          ${getSeatColor(seat)}
-                          ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
-                        `}
-                        aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
-                      >
-                        {renderSeatContent(seat)}
-                        
-                        <AnimatePresence>
-                          {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 10 }}
-                              className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
-                                px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
-                            >
-                              Row {seat.row}, Seat {seat.number}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.button>
-                    ))}
-
-                  {/* Walkway */}
-                  <div className="w-12 h-6 border-x border-amber-500/20 col-span-1 mx-auto"></div>
-
-                  {/* Second half of seats */}
-                  {seats
-                    .filter(seat => seat.row === row && seat.number > 10)
-                    .sort((a, b) => a.number - b.number)
-                    .map((seat) => (
-                      <motion.button
-                        key={seat.id}
-                        onClick={(e) => handleSeatClick(seat, e)}
-                        onKeyDown={(e) => handleKeyPress(e, seat)}
-                        onMouseEnter={() => setHoveredSeat(seat.id)}
-                        onMouseLeave={() => setHoveredSeat(null)}
-                        onFocus={() => setFocusedSeat(seat.id)}
-                        onBlur={() => setFocusedSeat(null)}
-                        className={`
-                          w-6 h-6 rounded-full flex items-center justify-center mx-auto
-                          transition-all duration-300 relative group
-                          ${getSeatColor(seat)}
-                          ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
-                        `}
-                        aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
-                      >
-                        {renderSeatContent(seat)}
-                        
-                        <AnimatePresence>
-                          {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 10 }}
-                              className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
-                                px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
-                            >
-                              Row {seat.row}, Seat {seat.number}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.button>
-                    ))}
+            {/* Seat Grid */}
+            <div className="flex flex-col gap-3 sm:gap-4">
+              {/* VIP Zone Label */}
+              <div className="text-center ml-[48px] sticky left-[48px]">
+                <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 bg-amber-500/10 rounded-full">
+                  <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-amber-500"></div>
+                  <span className="text-white/90 text-xs sm:text-sm font-medium">VIP Zone</span>
                 </div>
               </div>
-            ))}
+              
+              {/* VIP Rows */}
+              {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(row => (
+                <div key={row} className="grid grid-cols-[48px_1fr] gap-2 items-center">
+                  <div className="flex justify-center items-center w-8 h-8 text-white/60 text-sm font-medium 
+                    bg-gray-800/30 rounded-lg sticky left-0">{row}</div>
+                  <div className="grid grid-cols-[repeat(10,28px)_48px_repeat(10,28px)] sm:grid-cols-[repeat(10,32px)_48px_repeat(10,32px)] justify-center">
+                    {/* First half of seats */}
+                    {seats
+                      .filter(seat => seat.row === row && seat.number <= 10)
+                      .sort((a, b) => a.number - b.number)
+                      .map((seat) => (
+                        <motion.button
+                          key={seat.id}
+                          onClick={(e) => handleSeatClick(seat, e)}
+                          onKeyDown={(e) => handleKeyPress(e, seat)}
+                          onMouseEnter={() => setHoveredSeat(seat.id)}
+                          onMouseLeave={() => setHoveredSeat(null)}
+                          onFocus={() => setFocusedSeat(seat.id)}
+                          onBlur={() => setFocusedSeat(null)}
+                          className={`
+                            w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mx-auto
+                            transition-all duration-300 relative group
+                            ${getSeatColor(seat)}
+                            ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
+                          `}
+                          aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
+                        >
+                          {renderSeatContent(seat)}
+                          
+                          <AnimatePresence>
+                            {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
+                                  px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
+                              >
+                                Row {seat.row}, Seat {seat.number}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.button>
+                      ))}
 
-            {/* Regular Zone Label */}
-            <div className="text-center mt-6 ml-[48px]">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-500/10 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <span className="text-white/90 text-sm font-medium">Regular Zone</span>
-              </div>
-            </div>
-            
-            {/* Regular Rows */}
-            {['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'].map(row => (
-              <div key={row} className="grid grid-cols-[48px_1fr] gap-2 items-center">
-                <div className="flex justify-center items-center w-8 h-8 text-white/60 text-sm font-medium 
-                  bg-gray-800/30 rounded-lg">{row}</div>
-                <div className="grid grid-cols-[repeat(10,32px)_48px_repeat(10,32px)] justify-center">
-                  {/* First half of seats */}
-                  {seats
-                    .filter(seat => seat.row === row && seat.number <= 10)
-                    .sort((a, b) => a.number - b.number)
-                    .map((seat) => (
-                      <motion.button
-                        key={seat.id}
-                        onClick={(e) => handleSeatClick(seat, e)}
-                        onKeyDown={(e) => handleKeyPress(e, seat)}
-                        onMouseEnter={() => setHoveredSeat(seat.id)}
-                        onMouseLeave={() => setHoveredSeat(null)}
-                        onFocus={() => setFocusedSeat(seat.id)}
-                        onBlur={() => setFocusedSeat(null)}
-                        className={`
-                          w-6 h-6 rounded-full flex items-center justify-center mx-auto
-                          transition-all duration-300 relative group
-                          ${getSeatColor(seat)}
-                          ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
-                        `}
-                        aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
-                      >
-                        {renderSeatContent(seat)}
-                        
-                        <AnimatePresence>
-                          {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 10 }}
-                              className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
-                                px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
-                            >
-                              Row {seat.row}, Seat {seat.number}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.button>
-                    ))}
+                    {/* Walkway */}
+                    <div className="w-12 h-5 sm:h-6 border-x border-amber-500/20 col-span-1 mx-auto"></div>
 
-                  {/* Walkway */}
-                  <div className="w-12 h-6 border-x border-blue-500/20 col-span-1 mx-auto"></div>
+                    {/* Second half of seats */}
+                    {seats
+                      .filter(seat => seat.row === row && seat.number > 10)
+                      .sort((a, b) => a.number - b.number)
+                      .map((seat) => (
+                        <motion.button
+                          key={seat.id}
+                          onClick={(e) => handleSeatClick(seat, e)}
+                          onKeyDown={(e) => handleKeyPress(e, seat)}
+                          onMouseEnter={() => setHoveredSeat(seat.id)}
+                          onMouseLeave={() => setHoveredSeat(null)}
+                          onFocus={() => setFocusedSeat(seat.id)}
+                          onBlur={() => setFocusedSeat(null)}
+                          className={`
+                            w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mx-auto
+                            transition-all duration-300 relative group
+                            ${getSeatColor(seat)}
+                            ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
+                          `}
+                          aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
+                        >
+                          {renderSeatContent(seat)}
+                          
+                          <AnimatePresence>
+                            {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
+                                  px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
+                              >
+                                Row {seat.row}, Seat {seat.number}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.button>
+                      ))}
+                  </div>
+                </div>
+              ))}
 
-                  {/* Second half of seats */}
-                  {seats
-                    .filter(seat => seat.row === row && seat.number > 10)
-                    .sort((a, b) => a.number - b.number)
-                    .map((seat) => (
-                      <motion.button
-                        key={seat.id}
-                        onClick={(e) => handleSeatClick(seat, e)}
-                        onKeyDown={(e) => handleKeyPress(e, seat)}
-                        onMouseEnter={() => setHoveredSeat(seat.id)}
-                        onMouseLeave={() => setHoveredSeat(null)}
-                        onFocus={() => setFocusedSeat(seat.id)}
-                        onBlur={() => setFocusedSeat(null)}
-                        className={`
-                          w-6 h-6 rounded-full flex items-center justify-center mx-auto
-                          transition-all duration-300 relative group
-                          ${getSeatColor(seat)}
-                          ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
-                        `}
-                        aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
-                      >
-                        {renderSeatContent(seat)}
-                        
-                        <AnimatePresence>
-                          {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 10 }}
-                              className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
-                                px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
-                            >
-                              Row {seat.row}, Seat {seat.number}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.button>
-                    ))}
+              {/* Regular Zone Label */}
+              <div className="text-center mt-4 sm:mt-6 ml-[48px] sticky left-[48px]">
+                <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 bg-blue-500/10 rounded-full">
+                  <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-500"></div>
+                  <span className="text-white/90 text-xs sm:text-sm font-medium">Regular Zone</span>
                 </div>
               </div>
-            ))}
+              
+              {/* Regular Rows */}
+              {['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'].map(row => (
+                <div key={row} className="grid grid-cols-[48px_1fr] gap-2 items-center">
+                  <div className="flex justify-center items-center w-8 h-8 text-white/60 text-sm font-medium 
+                    bg-gray-800/30 rounded-lg sticky left-0">{row}</div>
+                  <div className="grid grid-cols-[repeat(10,28px)_48px_repeat(10,28px)] sm:grid-cols-[repeat(10,32px)_48px_repeat(10,32px)] justify-center">
+                    {/* First half of seats */}
+                    {seats
+                      .filter(seat => seat.row === row && seat.number <= 10)
+                      .sort((a, b) => a.number - b.number)
+                      .map((seat) => (
+                        <motion.button
+                          key={seat.id}
+                          onClick={(e) => handleSeatClick(seat, e)}
+                          onKeyDown={(e) => handleKeyPress(e, seat)}
+                          onMouseEnter={() => setHoveredSeat(seat.id)}
+                          onMouseLeave={() => setHoveredSeat(null)}
+                          onFocus={() => setFocusedSeat(seat.id)}
+                          onBlur={() => setFocusedSeat(null)}
+                          className={`
+                            w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mx-auto
+                            transition-all duration-300 relative group
+                            ${getSeatColor(seat)}
+                            ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
+                          `}
+                          aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
+                        >
+                          {renderSeatContent(seat)}
+                          
+                          <AnimatePresence>
+                            {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
+                                  px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
+                              >
+                                Row {seat.row}, Seat {seat.number}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.button>
+                      ))}
+
+                    {/* Walkway */}
+                    <div className="w-12 h-5 sm:h-6 border-x border-blue-500/20 col-span-1 mx-auto"></div>
+
+                    {/* Second half of seats */}
+                    {seats
+                      .filter(seat => seat.row === row && seat.number > 10)
+                      .sort((a, b) => a.number - b.number)
+                      .map((seat) => (
+                        <motion.button
+                          key={seat.id}
+                          onClick={(e) => handleSeatClick(seat, e)}
+                          onKeyDown={(e) => handleKeyPress(e, seat)}
+                          onMouseEnter={() => setHoveredSeat(seat.id)}
+                          onMouseLeave={() => setHoveredSeat(null)}
+                          onFocus={() => setFocusedSeat(seat.id)}
+                          onBlur={() => setFocusedSeat(null)}
+                          className={`
+                            w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center mx-auto
+                            transition-all duration-300 relative group
+                            ${getSeatColor(seat)}
+                            ${hoveredSeat === seat.id || focusedSeat === seat.id ? 'scale-125 z-10' : ''}
+                          `}
+                          aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
+                        >
+                          {renderSeatContent(seat)}
+                          
+                          <AnimatePresence>
+                            {(hoveredSeat === seat.id || focusedSeat === seat.id) && seat.status !== SeatStatus.UNAVAILABLE && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs
+                                  px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
+                              >
+                                Row {seat.row}, Seat {seat.number}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.button>
+                      ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -430,6 +435,7 @@ const SeatMap = ({
             onConfirm={handleTicketTypeSelect}
             onClose={() => setSelectedSeatForModal(null)}
             userType={userType}
+            onUserTypeChange={onUserTypeChange}
           />
         )}
       </AnimatePresence>

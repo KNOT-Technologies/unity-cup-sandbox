@@ -43,7 +43,7 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({ onTranslation
   };
 
   return (
-    <div className={`bg-gray-800/20 backdrop-blur-xl rounded-xl p-5 
+    <div className={`bg-gray-800/20 backdrop-blur-xl rounded-xl p-3 sm:p-6 
       border border-gray-700/20 
       hover:border-amber-500/20 transition-all duration-500 
       hover:shadow-2xl hover:shadow-amber-500/5
@@ -53,26 +53,26 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({ onTranslation
       before:transition-opacity before:duration-500 ${className}`}>
       
       <div className="relative">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-3 sm:mb-6">
           <div className="relative">
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-            <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+            <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg sm:rounded-xl p-2 sm:p-2.5 relative
               backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
-              <Headphones className="w-5 h-5 text-amber-400" />
+              <Headphones className="w-4 h-4 sm:w-6 sm:h-6 text-amber-400" />
             </div>
           </div>
-          <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+          <h3 className="text-sm sm:text-lg font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
             Translation Headphones
           </h3>
         </div>
 
-        <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
+        <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-3 sm:mb-6"></div>
       
-        <div className="space-y-4">
-          <div className="flex gap-2">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="flex gap-1.5 sm:gap-2">
             <button
               onClick={() => handleTranslationToggle(true)}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all duration-300 
+              className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 
                 relative overflow-hidden group ${
                 needsTranslation
                   ? 'bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 shadow-lg shadow-amber-500/20'
@@ -87,7 +87,7 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({ onTranslation
             </button>
             <button
               onClick={() => handleTranslationToggle(false)}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all duration-300 
+              className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 
                 relative overflow-hidden group ${
                 !needsTranslation
                   ? 'bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 shadow-lg shadow-amber-500/20'
@@ -108,18 +108,18 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({ onTranslation
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="space-y-2"
+              className="space-y-1.5 sm:space-y-2"
             >
-              <label className="block text-sm font-medium text-white/60">
+              <label className="block text-xs sm:text-sm font-medium text-white/60">
                 Select your preferred language:
               </label>
               <select
                 value={selectedLanguage}
                 onChange={(e) => handleLanguageChange(e.target.value)}
-                className="w-full bg-gray-800/20 backdrop-blur-sm text-white py-2.5 px-4 rounded-lg 
+                className="w-full bg-gray-800/20 backdrop-blur-sm text-white py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg 
                   border border-gray-700/30 hover:border-amber-500/20
                   focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/20 
-                  font-medium transition-all duration-300 appearance-none
+                  font-medium transition-all duration-300 appearance-none text-sm sm:text-base
                   bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNCA2TDggMTBMMTIgNiIgc3Ryb2tlPSIjZDk3NzA2IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==')] 
                   bg-[length:16px] bg-no-repeat bg-[center_right_1rem]
                   hover:bg-gray-800/30 shadow-sm shadow-amber-500/5
