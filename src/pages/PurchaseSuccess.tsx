@@ -1,211 +1,242 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { CheckCircle, Calendar, MapPin, Headphones, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import type { SelectedSeat, UserType } from '../types/tickets';
-
-interface OrderDetails {
-  seats: SelectedSeat[];
-  userType: UserType;
-  translationPreference?: {
-    needed: boolean;
-    language?: string;
-  };
-  email: string;
-}
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import {
+    CheckCircle,
+    ArrowLeft,
+    Mail,
+    Clock,
+    Smartphone,
+    Shield,
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 
 const PurchaseSuccess = () => {
-  const navigate = useNavigate();
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+    const navigate = useNavigate();
+    const { paymentId } = useParams<{ paymentId: string }>();
+    const [customerEmail, setCustomerEmail] = useState("");
+    const [customerName, setCustomerName] = useState("");
+    const [totalAmount, setTotalAmount] = useState(0);
+    const [currency, setCurrency] = useState("USD");
 
-  useEffect(() => {
-    // Retrieve order details from localStorage
-    const storedSeats = localStorage.getItem('selectedSeats');
-    const storedUserType = localStorage.getItem('userType') as UserType;
-    const storedTranslation = localStorage.getItem('translationPreference');
-    const storedEmail = localStorage.getItem('purchaseEmail');
+    useEffect(() => {
+        // Get customer information from session storage or payment data
+        const paymentData = sessionStorage.getItem("paymentData");
+        if (paymentData) {
+            try {
+                const data = JSON.parse(paymentData);
+                setCustomerEmail(data.email || "");
+                setCustomerName(data.userName || "");
+                setTotalAmount(data.total?.amount || 0);
+                setCurrency(data.total?.currency || "USD");
+            } catch (error) {
+                console.error("Error parsing payment data:", error);
+            }
+        }
 
-    if (storedSeats && storedUserType && storedEmail) {
-      setOrderDetails({
-        seats: JSON.parse(storedSeats),
-        userType: storedUserType,
-        translationPreference: storedTranslation ? JSON.parse(storedTranslation) : undefined,
-        email: storedEmail
-      });
+        // Clean up session storage
+        sessionStorage.removeItem("paymentData");
+        sessionStorage.removeItem("currentQuote");
+        sessionStorage.removeItem("selectedAddons");
+    }, []);
 
-      // Clear storage after retrieving
-      localStorage.removeItem('selectedSeats');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('translationPreference');
-      localStorage.removeItem('purchaseEmail');
-    } else {
-      // If no order details found, redirect to home
-      navigate('/', { replace: true });
-    }
-  }, [navigate]);
+    const currencySymbol = currency === "USD" ? "$" : "EGP";
 
-  if (!orderDetails) {
-    return null;
-  }
-
-  const currency = orderDetails.userType === 'tourist' ? '$' : 'EGP';
-  const total = orderDetails.seats.reduce((sum, seat) => sum + seat.price, 0);
-  const translationFee = orderDetails.translationPreference?.needed 
-    ? (orderDetails.userType === 'tourist' ? 10 : 150) 
-    : 0;
-  const totalWithAddons = total + (translationFee * orderDetails.seats.length);
-
-  return (
-    <div className="min-h-screen bg-black text-white pt-32 pb-16">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-gray-700/20 
-            hover:border-amber-500/20 transition-all duration-500 
-            hover:shadow-2xl hover:shadow-amber-500/5
-            relative before:absolute before:inset-0 
-            before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
-            before:rounded-xl before:opacity-0 hover:before:opacity-100 
-            before:transition-opacity before:duration-500"
-        >
-          <div className="p-8 relative">
-            {/* Success Header */}
-            <div className="text-center mb-8">
-              <div className="inline-block relative mb-4">
-                <div className="absolute -inset-4 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-full p-4 relative
-                  backdrop-blur-xl border border-amber-500/20">
-                  <CheckCircle className="w-12 h-12 text-amber-400" />
-                </div>
-              </div>
-              <h1 className="text-2xl font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent mb-2">
-                Purchase Successful!
-              </h1>
-              <p className="text-white/60">
-                Your tickets have been sent to {orderDetails.email}
-              </p>
-            </div>
-
-            {/* Order Details */}
-            <div className="space-y-6">
-              {/* Show Details */}
-              <div className="bg-gray-800/30 rounded-xl border border-gray-700/30 p-6 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
-                      backdrop-blur-xl border border-amber-500/20">
-                      <Calendar className="w-5 h-5 text-amber-400" />
-                    </div>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-medium text-white/90">Show Details</h2>
-                    <p className="text-sm text-white/60">Sound and Light Show at the Pyramids</p>
-                  </div>
-                </div>
-
-                <div className="pl-12 space-y-3">
-                  {orderDetails.seats.map((seat) => (
-                    <div key={seat.id} className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                            ${seat.zone === 'vip' 
-                              ? 'bg-amber-500/20 text-amber-400'
-                              : 'bg-blue-400/20 text-blue-400'
-                            }`}
-                          >
-                            {seat.zone.toUpperCase()}
-                          </span>
-                          <span className="text-white/90">
-                            Row {seat.row}, Seat {seat.number}
-                          </span>
+    return (
+        <div className="min-h-screen bg-black text-white pt-32 pb-16">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Success Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center mb-12"
+                >
+                    <div className="inline-block relative mb-6">
+                        <div className="absolute -inset-6 bg-gradient-to-r from-green-500/30 to-green-500/0 rounded-full blur-xl opacity-50"></div>
+                        <div className="bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-full p-6 relative backdrop-blur-xl border border-green-500/20">
+                            <CheckCircle className="w-16 h-16 text-green-400" />
                         </div>
-                        <div className="text-sm text-white/60 mt-0.5">
-                          {seat.ticketType === 'senior' ? 'Senior' : 
-                           seat.ticketType === 'student' ? 'Student' : 'Child'} Ticket
+                    </div>
+                    <h1 className="text-3xl font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent mb-4">
+                        Payment Successful!
+                    </h1>
+                    <p className="text-white/60 text-lg mb-2">
+                        Thank you for your purchase, {customerName}
+                    </p>
+                    {paymentId && (
+                        <p className="text-white/40 text-sm">
+                            Payment ID: {paymentId}
+                        </p>
+                    )}
+                </motion.div>
+
+                {/* Payment Summary */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 p-8 mb-8"
+                >
+                    <div className="text-center">
+                        <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-3 w-fit mx-auto mb-4 border border-amber-500/20">
+                            <Shield className="w-8 h-8 text-amber-400" />
                         </div>
-                      </div>
-                      <span className="text-amber-400 font-medium">
-                        {currency} {seat.price}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Add-ons */}
-              {orderDetails.translationPreference?.needed && (
-                <div className="bg-gray-800/30 rounded-xl border border-gray-700/30 p-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-                      <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
-                        backdrop-blur-xl border border-amber-500/20">
-                        <Headphones className="w-5 h-5 text-amber-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-medium text-white/90">Add-ons</h2>
-                      <p className="text-sm text-white/60">Additional services for your experience</p>
-                    </div>
-                  </div>
-
-                  <div className="pl-12">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-white/90">Translation Headphones</div>
-                        <div className="text-sm text-white/60 mt-0.5">
-                          {orderDetails.translationPreference.language} (x{orderDetails.seats.length})
+                        <h2 className="text-xl font-medium text-white mb-4">
+                            Booking Confirmed
+                        </h2>
+                        <div className="bg-gray-900/30 rounded-xl p-6 space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-white/60">
+                                    Total Paid
+                                </span>
+                                <span className="text-2xl font-medium text-green-400">
+                                    {currencySymbol}
+                                    {totalAmount}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-white/60">Customer</span>
+                                <span className="text-white">
+                                    {customerName}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-white/60">Email</span>
+                                <span className="text-white">
+                                    {customerEmail}
+                                </span>
+                            </div>
                         </div>
-                      </div>
-                      <span className="text-amber-400 font-medium">
-                        {currency} {translationFee * orderDetails.seats.length}
-                      </span>
                     </div>
-                  </div>
-                </div>
-              )}
+                </motion.div>
 
-              {/* Total */}
-              <div className="bg-gray-800/30 rounded-xl border border-gray-700/30 p-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-white/60">
-                    <span>Tickets Subtotal</span>
-                    <span>{currency} {total}</span>
-                  </div>
-                  {orderDetails.translationPreference?.needed && (
-                    <div className="flex justify-between text-white/60">
-                      <span>Translation Service</span>
-                      <span>{currency} {translationFee * orderDetails.seats.length}</span>
+                {/* Email Instructions */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-8 mb-8"
+                >
+                    <div className="text-center">
+                        <div className="bg-blue-500/20 rounded-full p-4 w-fit mx-auto mb-4">
+                            <Mail className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <h3 className="text-xl font-medium text-white mb-4">
+                            Check Your Email
+                        </h3>
+                        <p className="text-blue-200 mb-4">
+                            Your tickets are being processed and will be sent
+                            to:
+                        </p>
+                        <div className="bg-blue-500/10 rounded-lg p-4 mb-4">
+                            <p className="text-blue-300 font-medium text-lg">
+                                {customerEmail}
+                            </p>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 text-blue-200/80 text-sm">
+                            <Clock className="w-4 h-4" />
+                            <span>Usually delivered within 5-10 minutes</span>
+                        </div>
                     </div>
-                  )}
-                  <div className="flex justify-between text-lg font-medium pt-2">
-                    <span className="text-white">Total Paid</span>
-                    <span className="text-amber-400">{currency} {totalWithAddons}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                </motion.div>
 
-            {/* Back to Home */}
-            <div className="mt-8 text-center">
-              <button
-                onClick={() => navigate('/')}
-                className="inline-flex items-center gap-2 py-2 px-4 text-white/60 hover:text-white
-                  transition-colors duration-300"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Home</span>
-              </button>
+                {/* What to Expect */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 p-8 mb-8"
+                >
+                    <h3 className="text-lg font-medium text-white mb-6 text-center">
+                        What's Next?
+                    </h3>
+                    <div className="space-y-6">
+                        <div className="flex items-start gap-4">
+                            <div className="bg-amber-500/20 rounded-full p-2 flex-shrink-0">
+                                <Mail className="w-5 h-5 text-amber-400" />
+                            </div>
+                            <div>
+                                <h4 className="text-white font-medium mb-2">
+                                    1. Receive Your Tickets
+                                </h4>
+                                <p className="text-white/60 text-sm">
+                                    Digital tickets with QR codes will be sent
+                                    to your email address
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4">
+                            <div className="bg-amber-500/20 rounded-full p-2 flex-shrink-0">
+                                <Smartphone className="w-5 h-5 text-amber-400" />
+                            </div>
+                            <div>
+                                <h4 className="text-white font-medium mb-2">
+                                    2. Save to Your Phone
+                                </h4>
+                                <p className="text-white/60 text-sm">
+                                    Add tickets to Apple Wallet or save as
+                                    screenshots for easy access
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4">
+                            <div className="bg-amber-500/20 rounded-full p-2 flex-shrink-0">
+                                <CheckCircle className="w-5 h-5 text-amber-400" />
+                            </div>
+                            <div>
+                                <h4 className="text-white font-medium mb-2">
+                                    3. Show at Entry
+                                </h4>
+                                <p className="text-white/60 text-sm">
+                                    Present your QR code at the venue entrance
+                                    for scanning
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Support Notice */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="bg-gray-900/30 rounded-xl p-6 text-center mb-8"
+                >
+                    <p className="text-white/60 text-sm mb-2">
+                        Haven't received your tickets after 15 minutes?
+                    </p>
+                    <p className="text-white/80 text-sm">
+                        Check your spam folder or contact our support team
+                    </p>
+                </motion.div>
+
+                {/* Actions */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="flex flex-col sm:flex-row gap-4 justify-center"
+                >
+                    <button
+                        onClick={() => navigate("/")}
+                        className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Home
+                    </button>
+
+                    <button
+                        onClick={() => navigate("/tickets")}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                    >
+                        Book More Tickets
+                    </button>
+                </motion.div>
             </div>
-          </div>
-        </motion.div>
-      </div>
-    </div>
-  );
+        </div>
+    );
 };
 
-export default PurchaseSuccess; 
+export default PurchaseSuccess;

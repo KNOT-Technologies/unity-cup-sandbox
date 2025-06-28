@@ -41,6 +41,22 @@ export interface ShowTime {
   language: string;
 }
 
+// API-compatible occurrence type
+export interface Occurrence {
+  id: string;
+  startAt: string;
+  language: string;
+  seatMapName: string;
+  availableSeats: {
+    vip: number;
+    regular: number;
+  };
+  totalSeats: {
+    vip: number;
+    regular: number;
+  };
+}
+
 export const PRICING = {
   tourist: {
     regular: {
@@ -70,4 +86,74 @@ export const PRICING = {
       child: 500
     }
   }
-} as const; 
+} as const;
+
+// Quote Management Types
+export interface QuoteData {
+  quoteId: string;
+  occurrenceId: string;
+  expiresAt: string;
+  lines: Array<{
+    label: string;
+    currency: string;
+    amount: number;
+  }>;
+  total: {
+    currency: string;
+    amount: number;
+  };
+}
+
+export interface QuoteState {
+  quote: QuoteData | null;
+  isLoading: boolean;
+  error: string | null;
+  timeRemaining: number; // seconds
+}
+
+export interface SeatSelection {
+  seat: Seat;
+  ticketType: TicketType;
+  price: number;
+}
+
+// Sprint 3 - Add-on Types
+export interface AddonOption {
+  code: string;
+  label: string;
+  extraCost: number;
+}
+
+export interface Addon {
+  _id: string;
+  name: string;
+  type: string;
+  quota?: number;
+  options: AddonOption[];
+}
+
+export interface AddonSelection {
+  seat: string;
+  addonId: string;
+  optionCode: string;
+}
+
+// Sprint 3 - Checkout Types
+export interface CheckoutState {
+  isLoading: boolean;
+  error: string | null;
+  paymobIframeUrl: string | null;
+  pendingPaymentId: string | null;
+}
+
+export interface TicketDetails {
+  id: string;
+  seatNumber: string;
+  seatClass: 'vip' | 'regular';
+  ticketType: TicketType;
+  qrCode: string;
+  addons?: {
+    name: string;
+    option: string;
+  }[];
+} 
