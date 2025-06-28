@@ -7,6 +7,7 @@ import TicketTypeModal from "./TicketTypeModal";
 import { useSeatMap } from "../../hooks/useApi";
 
 interface SeatMapProps {
+<<<<<<< HEAD
     onSeatSelect: (seat: Seat, ticketType: TicketType) => void;
     onSeatDeselect?: (seatId: string) => void;
     occurrenceId?: string;
@@ -28,6 +29,96 @@ const SeatMap = ({
     onUserTypeChange,
     selectedSeatIds = [],
     findPrice,
+=======
+  onSeatSelect: (seat: Seat, ticketType: TicketType) => void;
+  onSeatDeselect?: (seatId: string) => void;
+  selectedDate: Date;
+  selectedShowTime?: string;
+  userType: UserType;
+  onUserTypeChange: (type: UserType) => void;
+  selectedSeatIds?: string[];
+  useCredits?: boolean;
+  creditCosts?: {
+    regular: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+    vip: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+  };
+}
+
+const generateInitialSeats = (): Seat[] => {
+  const seats: Seat[] = [];
+  
+  // VIP rows (A-H)
+  ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].forEach((row) => {
+    // First half (1-10)
+    for (let i = 1; i <= 10; i++) {
+      seats.push({
+        id: `${row}${i}`,
+        row,
+        number: i,
+        zone: 'vip',
+        status: Math.random() > 0.8 ? SeatStatus.UNAVAILABLE : SeatStatus.AVAILABLE
+      });
+    }
+    // Second half (11-20)
+    for (let i = 11; i <= 20; i++) {
+      seats.push({
+        id: `${row}${i}`,
+        row,
+        number: i,
+        zone: 'vip',
+        status: Math.random() > 0.8 ? SeatStatus.UNAVAILABLE : SeatStatus.AVAILABLE
+      });
+    }
+  });
+  
+  // Regular rows (I-P)
+  ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'].forEach((row) => {
+    // First half (1-10)
+    for (let i = 1; i <= 10; i++) {
+      seats.push({
+        id: `${row}${i}`,
+        row,
+        number: i,
+        zone: 'regular',
+        status: Math.random() > 0.8 ? SeatStatus.UNAVAILABLE : SeatStatus.AVAILABLE
+      });
+    }
+    // Second half (11-20)
+    for (let i = 11; i <= 20; i++) {
+      seats.push({
+        id: `${row}${i}`,
+        row,
+        number: i,
+        zone: 'regular',
+        status: Math.random() > 0.8 ? SeatStatus.UNAVAILABLE : SeatStatus.AVAILABLE
+      });
+    }
+  });
+  
+  return seats;
+};
+
+const SeatMap = ({ 
+  onSeatSelect, 
+  onSeatDeselect, 
+  selectedDate, 
+  selectedShowTime, 
+  userType,
+  onUserTypeChange,
+  selectedSeatIds = [],
+  useCredits = false,
+  creditCosts
+>>>>>>> corporate-website
 }: SeatMapProps) => {
     const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
     const [focusedSeat, setFocusedSeat] = useState<string | null>(null);
@@ -153,6 +244,7 @@ const SeatMap = ({
         }
     };
 
+<<<<<<< HEAD
     const getSeatColor = (seat: Seat) => {
         const baseColors = {
             vip: {
@@ -172,6 +264,35 @@ const SeatMap = ({
                     "bg-gray-600/80 cursor-not-allowed ring-1 ring-gray-500/30",
             },
         };
+=======
+  return (
+    <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-gray-700/20 
+      hover:border-amber-500/20 transition-all duration-500 
+      hover:shadow-2xl hover:shadow-amber-500/5
+      relative before:absolute before:inset-0 
+      before:bg-gradient-to-b before:from-amber-500/5 before:to-transparent 
+      before:rounded-xl before:opacity-0 hover:before:opacity-100 
+      before:transition-opacity before:duration-500">
+      
+      <div className="p-3 sm:p-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="relative">
+            <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+            <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+              backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300">
+              <Armchair className="w-5 h-5 text-amber-400" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+              Select Your Seats
+            </h3>
+            <p className="text-sm font-medium text-white/60">
+              {useCredits ? 'Using credits for booking' : 'Regular booking'}
+            </p>
+          </div>
+        </div>
+>>>>>>> corporate-website
 
         return baseColors[seat.zone][seat.status];
     };
@@ -298,6 +419,7 @@ const SeatMap = ({
         );
     };
 
+<<<<<<< HEAD
     if (isLoadingSeatMap) {
         return (
             <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-gray-700/20 p-8 flex items-center justify-center">
@@ -455,6 +577,25 @@ const SeatMap = ({
             </AnimatePresence>
         </div>
     );
+=======
+      {/* Ticket Type Modal */}
+      <AnimatePresence>
+        {selectedSeatForModal && (
+          <TicketTypeModal
+            seat={selectedSeatForModal}
+            userType={userType}
+            onClose={() => setSelectedSeatForModal(null)}
+            onConfirm={handleTicketTypeSelect}
+            onUserTypeChange={onUserTypeChange}
+            position={modalPosition}
+            useCredits={useCredits}
+            creditCosts={creditCosts}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+>>>>>>> corporate-website
 };
 
 export default SeatMap;

@@ -76,7 +76,7 @@ const Navbar = () => {
                 Book Now
               </Link>
               <Link
-                to="/business-portal"
+                to="/business/login"
                 className="text-yellow-400 hover:text-yellow-300 px-5 py-2
                   font-medium tracking-wider transition-colors duration-300
                   border border-yellow-400/30 hover:border-yellow-300/50 rounded-xl
@@ -138,7 +138,7 @@ const Navbar = () => {
             Book Now
           </Link>
           <Link
-            to="/business-portal"
+            to="/business/login"
             className="block mt-2 text-yellow-400 hover:text-yellow-300 px-4 py-3
               font-medium tracking-wider transition-colors duration-300 text-center
               border border-yellow-400/30 hover:border-yellow-300/50 rounded-xl

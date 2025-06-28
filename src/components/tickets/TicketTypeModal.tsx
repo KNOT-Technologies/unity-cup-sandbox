@@ -15,18 +15,36 @@ interface TicketTypeModalProps {
         seatClass: "vip" | "regular",
         category: TicketType
     ) => number;
+  useCredits?: boolean;
+  creditCosts?: {
+    regular: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+    vip: {
+      senior: number;
+      adult: number;
+      student: number;
+      child: number;
+    };
+  };
 }
 
-const TicketTypeModal = ({
-    seat,
-    userType,
-    onClose,
-    onConfirm,
-    onUserTypeChange,
-    position,
-    findPrice,
+const TicketTypeModal = ({ 
+  seat, 
+  userType, 
+  onClose, 
+  onConfirm, 
+  onUserTypeChange, 
+  position,
+  useCredits = false,
+  creditCosts,
+  findPrice
 }: TicketTypeModalProps) => {
-    const currency = userType === "tourist" ? "$" : "EGP";
+  const pricing = useCredits && creditCosts ? creditCosts[seat.zone] : null;
+  const currency = userType === 'tourist' ? '$' : 'EGP';
 
     return (
         <Portal>
@@ -90,39 +108,41 @@ const TicketTypeModal = ({
 
                         <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
 
-                        {/* User Type Selection */}
-                        <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Users className="w-4 h-4 text-amber-400" />
-                                <span className="text-sm font-medium text-white/90">
+                        {/* User Type Selection - Only show if not using credits */}
+                        {!useCredits && (
+              <div className="mb-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                  <Users className="w-4 h-4 text-amber-400" />
+                                  <span className="text-sm font-medium text-white/90">
                                     Select User Type
                                 </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => onUserTypeChange("tourist")}
-                                    className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
-                                        userType === "tourist"
-                                            ? "bg-amber-500/20 border-amber-500 text-amber-400"
-                                            : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
-                                    }`}
-                                >
-                                    Tourist
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onUserTypeChange("local")}
-                                    className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
-                                        userType === "local"
-                                            ? "bg-amber-500/20 border-amber-500 text-amber-400"
-                                            : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
-                                    }`}
-                                >
-                                    Local
-                                </button>
-                            </div>
-                        </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                  <button
+                                      type="button"
+                                      onClick={() => onUserTypeChange("tourist")}
+                                      className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
+                                          userType === "tourist"
+                                              ? "bg-amber-500/20 border-amber-500 text-amber-400"
+                                              : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
+                                      }`}
+                                  >
+                                      Tourist
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={() => onUserTypeChange("local")}
+                                      className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
+                                          userType === "local"
+                                              ? "bg-amber-500/20 border-amber-500 text-amber-400"
+                                              : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
+                                      }`}
+                                  >
+                                      Local
+                                  </button>
+                              </div>
+                          </div>
+            )}
 
                         <div className="space-y-2">
                             {(
@@ -138,44 +158,33 @@ const TicketTypeModal = ({
                     before:bg-gradient-to-r before:from-amber-500/0 before:via-amber-500/5 before:to-amber-500/0 
                     before:rounded-lg before:opacity-0 group-hover:before:opacity-100 
                     before:transition-opacity before:duration-300 before:delay-200"
-                                >
-                                    <div className="flex items-center justify-between relative z-10">
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className="text-white/90 capitalize group-hover:text-white 
-                        transition-colors duration-300 delay-200"
-                                            >
-                                                {type}
-                                            </span>
-                                            <span
-                                                className="text-xs text-white/60 group-hover:text-white/80 
-                        transition-colors duration-300 delay-200"
-                                            >
-                                                {type === "senior"
-                                                    ? "(>80)"
-                                                    : type === "student"
-                                                    ? "(<16)"
-                                                    : type === "child"
-                                                    ? "(<6)"
-                                                    : ""}
-                                            </span>
-                                        </div>
-                                        <span
-                                            className="text-amber-400 font-medium group-hover:text-amber-300
-                      transition-colors duration-300 delay-200 min-w-[80px] text-right"
-                                        >
-                                            {currency}{" "}
-                                            {findPrice(
+                >
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/90 capitalize group-hover:text-white 
+                        transition-colors duration-300 delay-200">
+                        {type}
+                      </span>
+                      <span className="text-xs text-white/60 group-hover:text-white/80 
+                        transition-colors duration-300 delay-200">
+                        {type === 'senior' ? '(>80)' : 
+                         type === 'student' ? '(<16)' : 
+                         type === 'child' ? '(<6)' : ''}
+                      </span>
+                    </div>
+                    <span className="text-amber-400 font-medium group-hover:text-amber-300
+                      transition-colors duration-300 delay-200 min-w-[80px] text-right">
+                      {useCredits && pricing ? `${pricing[type]} credits` : `${currency} ${findPrice(
                                                 userType,
                                                 seat.zone as "vip" | "regular",
                                                 type
-                                            )}
-                                        </span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                                            )}`}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
                     <div className="absolute -inset-6 z-0"></div>
 
