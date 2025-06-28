@@ -14,6 +14,8 @@ const Checkout = () => {
     const [quote, setQuote] = useState<QuoteData | null>(null);
     const [email, setEmail] = useState("");
     const [userName, setUserName] = useState("");
+    const [dateOfBirth, setDateOfBirth] = useState("");
+    const [nationality, setNationality] = useState("");
     const [addons, setAddons] = useState<AddonSelection[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,13 @@ const Checkout = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!quote || !email.trim() || !userName.trim()) {
+        if (
+            !quote ||
+            !email.trim() ||
+            !userName.trim() ||
+            !dateOfBirth.trim() ||
+            !nationality.trim()
+        ) {
             setError("Please fill in all required fields");
             return;
         }
@@ -110,6 +118,8 @@ const Checkout = () => {
                 paymentMethod: "card",
                 email: email.trim(),
                 userName: userName.trim(),
+                dateOfBirth: dateOfBirth.trim(),
+                nationality: nationality.trim(),
                 redirectionUrl: `${window.location.origin}/success`,
                 addons: addons.length > 0 ? addons : undefined,
             });
@@ -126,6 +136,8 @@ const Checkout = () => {
                         },
                         email: email.trim(),
                         userName: userName.trim(),
+                        dateOfBirth: dateOfBirth.trim(),
+                        nationality: nationality.trim(),
                     },
                 },
             });
@@ -227,6 +239,171 @@ const Checkout = () => {
                                 />
                                 <p className="text-sm text-white/40 mt-2">
                                     Name that will appear on your tickets
+                                </p>
+                            </div>
+
+                            {/* Date of Birth Input */}
+                            <div>
+                                <label className="block text-sm font-medium text-white/60 mb-2">
+                                    Date of Birth
+                                </label>
+                                <input
+                                    type="date"
+                                    value={dateOfBirth}
+                                    onChange={(e) =>
+                                        setDateOfBirth(e.target.value)
+                                    }
+                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-4 py-3
+                    text-white placeholder-white/40 focus:outline-none focus:ring-2 
+                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
+                                    required
+                                />
+                                <p className="text-sm text-white/40 mt-2">
+                                    Required for ticket validation
+                                </p>
+                            </div>
+
+                            {/* Nationality Input */}
+                            <div>
+                                <label className="block text-sm font-medium text-white/60 mb-2">
+                                    Nationality
+                                </label>
+                                <select
+                                    value={nationality}
+                                    onChange={(e) =>
+                                        setNationality(e.target.value)
+                                    }
+                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-4 py-3
+                    text-white focus:outline-none focus:ring-2 
+                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
+                                    required
+                                >
+                                    <option value="" className="bg-gray-800">
+                                        Select your nationality
+                                    </option>
+                                    <option
+                                        value="Egyptian"
+                                        className="bg-gray-800"
+                                    >
+                                        Egyptian
+                                    </option>
+                                    <option
+                                        value="American"
+                                        className="bg-gray-800"
+                                    >
+                                        American
+                                    </option>
+                                    <option
+                                        value="British"
+                                        className="bg-gray-800"
+                                    >
+                                        British
+                                    </option>
+                                    <option
+                                        value="Canadian"
+                                        className="bg-gray-800"
+                                    >
+                                        Canadian
+                                    </option>
+                                    <option
+                                        value="French"
+                                        className="bg-gray-800"
+                                    >
+                                        French
+                                    </option>
+                                    <option
+                                        value="German"
+                                        className="bg-gray-800"
+                                    >
+                                        German
+                                    </option>
+                                    <option
+                                        value="Italian"
+                                        className="bg-gray-800"
+                                    >
+                                        Italian
+                                    </option>
+                                    <option
+                                        value="Spanish"
+                                        className="bg-gray-800"
+                                    >
+                                        Spanish
+                                    </option>
+                                    <option
+                                        value="Australian"
+                                        className="bg-gray-800"
+                                    >
+                                        Australian
+                                    </option>
+                                    <option
+                                        value="Japanese"
+                                        className="bg-gray-800"
+                                    >
+                                        Japanese
+                                    </option>
+                                    <option
+                                        value="Chinese"
+                                        className="bg-gray-800"
+                                    >
+                                        Chinese
+                                    </option>
+                                    <option
+                                        value="Indian"
+                                        className="bg-gray-800"
+                                    >
+                                        Indian
+                                    </option>
+                                    <option
+                                        value="Brazilian"
+                                        className="bg-gray-800"
+                                    >
+                                        Brazilian
+                                    </option>
+                                    <option
+                                        value="Mexican"
+                                        className="bg-gray-800"
+                                    >
+                                        Mexican
+                                    </option>
+                                    <option
+                                        value="Russian"
+                                        className="bg-gray-800"
+                                    >
+                                        Russian
+                                    </option>
+                                    <option
+                                        value="Saudi Arabian"
+                                        className="bg-gray-800"
+                                    >
+                                        Saudi Arabian
+                                    </option>
+                                    <option
+                                        value="Emirati"
+                                        className="bg-gray-800"
+                                    >
+                                        Emirati
+                                    </option>
+                                    <option
+                                        value="Lebanese"
+                                        className="bg-gray-800"
+                                    >
+                                        Lebanese
+                                    </option>
+                                    <option
+                                        value="Jordanian"
+                                        className="bg-gray-800"
+                                    >
+                                        Jordanian
+                                    </option>
+                                    <option
+                                        value="Other"
+                                        className="bg-gray-800"
+                                    >
+                                        Other
+                                    </option>
+                                </select>
+                                <p className="text-sm text-white/40 mt-2">
+                                    Required for entry documentation
                                 </p>
                             </div>
 

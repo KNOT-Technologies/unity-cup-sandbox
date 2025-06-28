@@ -133,6 +133,8 @@ export interface CheckoutRequest {
   paymentMethod: 'card';
   email: string;
   userName: string;
+  dateOfBirth: string;
+  nationality: string;
   redirectionUrl?: string;
   addons?: AddonSelection[];
 }
