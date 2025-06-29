@@ -50,6 +50,8 @@ interface PaymentData {
     };
     email: string;
     userName: string;
+    creditPurchase?: boolean;
+    creditsAmount?: number;
 }
 
 const PaymentPage = () => {
@@ -73,9 +75,12 @@ const PaymentPage = () => {
             // Store in sessionStorage as backup
             sessionStorage.setItem("paymentData", JSON.stringify(data));
         } else {
-            // No payment data found, redirect back to checkout
+            // No payment data found, redirect back to appropriate page
             showError("Payment session expired. Please try again.");
-            setTimeout(() => navigate("/checkout"), 2000);
+            const redirectPath = data?.creditPurchase
+                ? "/business/credits"
+                : "/checkout";
+            setTimeout(() => navigate(redirectPath), 2000);
             return;
         }
 
@@ -143,16 +148,29 @@ const PaymentPage = () => {
     const handlePaymentSuccess = (paymentId: string) => {
         // Clean up payment data
         sessionStorage.removeItem("paymentData");
-        sessionStorage.removeItem("currentQuote");
-        sessionStorage.removeItem("selectedAddons");
 
-        showSuccess("Payment successful! Redirecting...");
-        setTimeout(() => navigate(`/success/${paymentId}`), 1000);
+        if (paymentData?.creditPurchase) {
+            // Credit purchase success - redirect back to business portal
+            showSuccess(
+                `Credit purchase successful! ${paymentData.creditsAmount} credits have been added to your account.`
+            );
+            setTimeout(() => navigate("/business/credits"), 1500);
+        } else {
+            // Regular ticket purchase - redirect to success page
+            sessionStorage.removeItem("currentQuote");
+            sessionStorage.removeItem("selectedAddons");
+            showSuccess("Payment successful! Redirecting...");
+            setTimeout(() => navigate(`/success/${paymentId}`), 1000);
+        }
     };
 
     const handleGoBack = () => {
-        // Keep payment data in case user wants to try again
-        navigate("/checkout");
+        // Redirect back to appropriate page based on purchase type
+        if (paymentData?.creditPurchase) {
+            navigate("/business/credits");
+        } else {
+            navigate("/checkout");
+        }
     };
 
     const currency = paymentData?.total.currency === "USD" ? "$" : "EGP";
@@ -193,7 +211,11 @@ const PaymentPage = () => {
                     transition-colors duration-300 mb-8 group"
                 >
                     <ArrowLeft className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-300" />
-                    <span>Back to Checkout</span>
+                    <span>
+                        {paymentData?.creditPurchase
+                            ? "Back to Credits"
+                            : "Back to Checkout"}
+                    </span>
                 </motion.button>
 
                 {/* Payment Form */}
@@ -211,7 +233,9 @@ const PaymentPage = () => {
                             Secure Payment
                         </h1>
                         <p className="text-white/60">
-                            Complete your booking with encrypted card payment
+                            {paymentData?.creditPurchase
+                                ? "Complete your credit purchase with encrypted card payment"
+                                : "Complete your booking with encrypted card payment"}
                         </p>
                     </div>
 
@@ -240,6 +264,18 @@ const PaymentPage = () => {
                                         paymentData.email}
                                 </span>
                             </div>
+                            {paymentData?.creditPurchase &&
+                                paymentData.creditsAmount && (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-white/60">
+                                            Credits
+                                        </span>
+                                        <span className="text-white">
+                                            {paymentData.creditsAmount.toLocaleString()}{" "}
+                                            credits
+                                        </span>
+                                    </div>
+                                )}
                             <div className="border-t border-gray-700/30 pt-3">
                                 <div className="flex justify-between">
                                     <span className="text-lg font-medium text-white">

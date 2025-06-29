@@ -1,17 +1,17 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isAuthenticated = localStorage.getItem('businessLoggedIn') === 'true';
+    const isAuthenticated = !!localStorage.getItem("authToken");
 
-  if (!isAuthenticated) {
-    return <Navigate to="/business/login" replace />;
-  }
+    if (!isAuthenticated) {
+        return <Navigate to="/business/login" replace />;
+    }
 
-  return <>{children}</>;
+    return <>{children}</>;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;

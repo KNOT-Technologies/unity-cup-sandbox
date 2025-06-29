@@ -394,4 +394,171 @@ export async function getTicketsByPaymentId(paymentId: string): Promise<TicketsR
     }
     throw error;
   }
+}
+
+// Add credit-related types and functions at the end of the file
+
+// Credit system types
+export interface CreditBundle {
+  id: string;
+  credits: number;
+  expiryMonths: number;
+  price: number;
+  pricePerCredit: number;
+  discount: number;
+}
+
+export interface CreditBundlesResponse {
+  success: boolean;
+  message: string;
+  bundles: CreditBundle[];
+}
+
+export interface CreditPurchaseResponse {
+  success: boolean;
+  clientSecret: string;
+  publicKey: string;
+}
+
+export interface CreditBalance {
+  credits: number;
+  expiresAt: string;
+}
+
+export interface CreditBalanceResponse {
+  success: boolean;
+  total: number;
+  items: CreditBalance[];
+}
+
+export interface CreditTransaction {
+  id: string;
+  date: string;
+  credits: number;
+  amount?: number;
+  type: 'purchase' | 'redemption';
+  description: string;
+}
+
+export interface CreditTransactionsResponse {
+  success: boolean;
+  transactions: CreditTransaction[];
+}
+
+export interface CreditCheckoutRequest {
+  quoteId: string;
+  paymentMethod: 'credits';
+  addons?: AddonSelection[];
+}
+
+export interface CreditCheckoutResponse {
+  success: boolean;
+  tickets: TicketInfo[];
+  remainingCredits: number;
+}
+
+// Add authentication helper
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('authToken') || localStorage.getItem('jwt');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
+
+// Update existing API functions to include auth headers
+async function authenticatedApiRequest<T>(endpoint: string): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  try {
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
+
+    if (response.status === 403) {
+      // Redirect to login on 403
+      window.location.href = '/business/login';
+      throw new APIError(403, 'Authentication required');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new APIError(response.status, errorData.error || errorData.message || `API request failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+async function authenticatedApiRequestWithBody<T>(endpoint: string, options: RequestInit): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  try {
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+      ...options,
+    });
+
+    if (response.status === 403) {
+      // Redirect to login on 403
+      window.location.href = '/business/login';
+      throw new APIError(403, 'Authentication required');
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new APIError(response.status, errorData.error || errorData.message || `API request failed: ${response.statusText}`);
+    }
+
+    // Handle 204 No Content responses
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Credit API functions
+export async function getCreditBundles(): Promise<CreditBundle[]> {
+  const response = await authenticatedApiRequest<CreditBundlesResponse>('/api/v3/credit-bundles');
+  return response.bundles;
+}
+
+export async function purchaseCreditBundle(bundleId: string): Promise<CreditPurchaseResponse> {
+  return await authenticatedApiRequestWithBody<CreditPurchaseResponse>(`/api/v3/credit-bundles/${bundleId}/purchase`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}
+
+export async function getCreditBalance(): Promise<CreditBalanceResponse> {
+  return await authenticatedApiRequest<CreditBalanceResponse>('/api/v3/credits/balance');
+}
+
+export async function getCreditTransactions(limit: number = 10): Promise<CreditTransaction[]> {
+  const response = await authenticatedApiRequest<CreditTransactionsResponse>(`/api/v3/credits/transactions?limit=${limit}`);
+  return response.transactions;
+}
+
+export async function checkoutWithCredits(request: CreditCheckoutRequest): Promise<CreditCheckoutResponse> {
+  return await authenticatedApiRequestWithBody<CreditCheckoutResponse>('/api/v3/checkout', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
 } 

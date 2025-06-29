@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { listOccurrences, getSeatMap, getPrices, createQuote, updateQuote, deleteQuote, type QuoteRequest, type QuoteSeat, type PricingData } from '../api/knot';
+import { listOccurrences, getSeatMap, getPrices, createQuote, updateQuote, deleteQuote, getCreditBundles, getCreditBalance, getCreditTransactions, type QuoteRequest, type QuoteSeat, type PricingData } from '../api/knot';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { QuoteState, UserType, SeatSelection } from '../types/tickets';
 
@@ -257,5 +257,55 @@ export function useQuote(occurrenceId: string | null) {
     createQuote: createQuoteDebounced,
     cancelQuote,
     hasActiveQuote: !!quoteState.quote && quoteState.timeRemaining > 0
+  };
+}
+
+// Credit hooks
+export function useCreditBundles() {
+  const { data, error, isLoading, mutate } = useSWR(
+    '/credit-bundles',
+    getCreditBundles,
+    swrConfig
+  );
+
+  return {
+    bundles: data || [],
+    isLoading,
+    error,
+    refetch: mutate,
+  };
+}
+
+export function useCreditBalance() {
+  const { data, error, isLoading, mutate } = useSWR(
+    '/credits/balance',
+    getCreditBalance,
+    {
+      ...swrConfig,
+      refreshInterval: 10000, // Refresh every 10 seconds for real-time updates
+    }
+  );
+
+  return {
+    balance: data?.total || 0,
+    items: data?.items || [],
+    isLoading,
+    error,
+    refetch: mutate,
+  };
+}
+
+export function useCreditTransactions(limit: number = 10) {
+  const { data, error, isLoading, mutate } = useSWR(
+    `/credits/transactions?limit=${limit}`,
+    () => getCreditTransactions(limit),
+    swrConfig
+  );
+
+  return {
+    transactions: data || [],
+    isLoading,
+    error,
+    refetch: mutate,
   };
 } 
