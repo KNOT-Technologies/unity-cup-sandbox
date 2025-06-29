@@ -29,6 +29,31 @@ interface PixelConfig {
     elementId: string;
     onSuccess: (response: PaymentResponse) => void;
     onError: (error: PaymentError) => void;
+    customStyle?: {
+        Font_Family?: string;
+        Font_Size_Label?: string;
+        Font_Size_Input_Fields?: string;
+        Font_Size_Payment_Button?: string;
+        Font_Weight_Label?: number;
+        Font_Weight_Input_Fields?: number;
+        Font_Weight_Payment_Button?: number;
+        Color_Container?: string;
+        Color_Border_Input_Fields?: string;
+        Color_Border_Payment_Button?: string;
+        Radius_Border?: string;
+        Color_Disabled?: string;
+        Color_Error?: string;
+        Color_Primary?: string;
+        Color_Input_Fields?: string;
+        Text_Color_For_Label?: string;
+        Text_Color_For_Payment_Button?: string;
+        Text_Color_For_Input_Fields?: string;
+        Color_For_Text_Placeholder?: string;
+        Width_of_Container?: string;
+        Vertical_Padding?: string;
+        Vertical_Spacing_between_components?: string;
+        Container_Padding?: string;
+      };
 }
 
 interface PixelSDK {
@@ -112,6 +137,12 @@ const PaymentPage = () => {
                             onError: (error: PaymentError) => {
                                 console.error("Payment error:", error);
                                 setError("Payment failed. Please try again.");
+                            },
+                            customStyle: {
+                                Text_Color_For_Label: "#fff",
+                                Text_Color_For_Payment_Button: "#fff",
+                                Text_Color_For_Input_Fields: "#000",
+                                Color_For_Text_Placeholder: "#808080",
                             },
                         });
                     } catch (error) {

@@ -10,6 +10,7 @@ import Tickets from "./pages/Tickets.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PaymentPage from "./pages/PaymentPage.tsx";
 import PurchaseSuccess from "./pages/PurchaseSuccess.tsx";
+import CreditPurchaseSuccess from "./pages/CreditPurchaseSuccess.tsx";
 import BusinessPortal from "./pages/BusinessPortal.tsx";
 import BusinessLogin from "./pages/BusinessLogin.tsx";
 import ProtectedRoute from "./components/common/ProtectedRoute.tsx";
@@ -96,6 +97,14 @@ function App() {
                                 element={
                                     <ProtectedRoute>
                                         <BusinessPortal />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="credit-success/:paymentId?"
+                                element={
+                                    <ProtectedRoute>
+                                        <CreditPurchaseSuccess />
                                     </ProtectedRoute>
                                 }
                             />

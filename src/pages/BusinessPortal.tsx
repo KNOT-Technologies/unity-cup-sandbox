@@ -26,35 +26,11 @@ import TranslationSelector from "../components/tickets/TranslationSelector";
 import GuestUploadModal from "../components/common/GuestUploadModal";
 import DashboardCharts from "../components/dashboard/DashboardCharts";
 import DemographicCharts from "../components/dashboard/DemographicCharts";
-import { useCreditBalance } from "../hooks/useApi";
+import { useCreditBalance, useCreditBundles } from "../hooks/useApi";
 import { purchaseCreditBundle, checkoutWithCredits } from "../api/knot";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 import type { Seat, TicketType, SelectedSeat } from "../types/tickets";
-
-const creditPackages = [
-    {
-        credits: 100,
-        expiryMonths: 1,
-        price: 450,
-        pricePerCredit: 4.5,
-        discount: 0,
-    },
-    {
-        credits: 500,
-        expiryMonths: 2,
-        price: 2000,
-        pricePerCredit: 4.0,
-        discount: 11,
-    },
-    {
-        credits: 1000,
-        expiryMonths: 3,
-        price: 3500,
-        pricePerCredit: 3.5,
-        discount: 22,
-    },
-];
 
 // Credit costs for different ticket types and zones
 const CREDIT_COSTS = {
@@ -182,6 +158,7 @@ const BusinessPortal = () => {
 
     // API hooks
     const { balance, refetch: refetchBalance } = useCreditBalance();
+    const { bundles: creditPackages, isLoading: bundlesLoading, error: bundlesError } = useCreditBundles();
 
     // UI state
     const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] =
@@ -225,6 +202,13 @@ const BusinessPortal = () => {
         try {
             const response = await purchaseCreditBundle(bundleId);
 
+            // Find the bundle to get its price and currency
+            const bundle = creditPackages.find(pkg => pkg.id === bundleId);
+            if (!bundle) {
+                showError("Credit bundle not found");
+                return;
+            }
+
             // Navigate to payment page with credit purchase data (same pattern as checkout)
             navigate("/payment", {
                 state: {
@@ -232,11 +216,8 @@ const BusinessPortal = () => {
                         clientSecret: response.clientSecret,
                         publicKey: response.publicKey,
                         total: {
-                            amount:
-                                creditPackages.find(
-                                    (pkg) => pkg.credits === credits
-                                )?.price || 0,
-                            currency: "EGP",
+                            amount: bundle.price,
+                            currency: bundle.currency,
                         },
                         email: "business@example.com", // This would come from user data
                         userName: user.name,
@@ -759,81 +740,100 @@ const BusinessPortal = () => {
                     hover:border-amber-500/20 transition-all duration-500 
                     hover:shadow-2xl hover:shadow-amber-500/5"
                                 >
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="border-b border-white/10">
-                                                <th className="px-4 py-3">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <div className="relative">
-                                                            <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                            <div
-                                                                className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                    {bundlesLoading ? (
+                                        <div className="p-8 text-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto"></div>
+                                            <p className="text-white/60 mt-4">Loading credit bundles...</p>
+                                        </div>
+                                    ) : bundlesError ? (
+                                        <div className="p-8 text-center">
+                                            <p className="text-red-400">Failed to load credit bundles</p>
+                                            <button 
+                                                onClick={() => window.location.reload()} 
+                                                className="mt-2 px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                                            >
+                                                Retry
+                                            </button>
+                                        </div>
+                                    ) : creditPackages.length === 0 ? (
+                                        <div className="p-8 text-center">
+                                            <p className="text-white/60">No credit bundles available</p>
+                                        </div>
+                                    ) : (
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="border-b border-white/10">
+                                                    <th className="px-4 py-3">
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <div className="relative">
+                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                <div
+                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20"
-                                                            >
-                                                                <Coins className="w-4 h-4 text-amber-400" />
+                                                                >
+                                                                    <Coins className="w-4 h-4 text-amber-400" />
+                                                                </div>
                                                             </div>
+                                                            <span className="text-white/80 font-semibold text-sm">
+                                                                Credits
+                                                            </span>
                                                         </div>
-                                                        <span className="text-white/80 font-semibold text-sm">
-                                                            Credits
-                                                        </span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-3">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <div className="relative">
-                                                            <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                            <div
-                                                                className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                                    </th>
+                                                    <th className="px-4 py-3">
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <div className="relative">
+                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                <div
+                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20"
-                                                            >
-                                                                <Clock className="w-4 h-4 text-amber-400" />
+                                                                >
+                                                                    <Clock className="w-4 h-4 text-amber-400" />
+                                                                </div>
                                                             </div>
+                                                            <span className="text-white/80 font-semibold text-sm">
+                                                                Expiry
+                                                            </span>
                                                         </div>
-                                                        <span className="text-white/80 font-semibold text-sm">
-                                                            Expiry
-                                                        </span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-3">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <div className="relative">
-                                                            <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                            <div
-                                                                className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                                    </th>
+                                                    <th className="px-4 py-3">
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <div className="relative">
+                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                <div
+                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20"
-                                                            >
-                                                                <CreditCard className="w-4 h-4 text-amber-400" />
+                                                                >
+                                                                    <CreditCard className="w-4 h-4 text-amber-400" />
+                                                                </div>
                                                             </div>
+                                                            <span className="text-white/80 font-semibold text-sm">
+                                                                Total Price
+                                                            </span>
                                                         </div>
-                                                        <span className="text-white/80 font-semibold text-sm">
-                                                            Total Price
-                                                        </span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-3">
-                                                    <div className="flex items-center justify-center gap-1.5">
-                                                        <div className="relative">
-                                                            <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                            <div
-                                                                className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                                    </th>
+                                                    <th className="px-4 py-3">
+                                                        <div className="flex items-center justify-center gap-1.5">
+                                                            <div className="relative">
+                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                <div
+                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20"
-                                                            >
-                                                                <Percent className="w-4 h-4 text-amber-400" />
+                                                                >
+                                                                    <Percent className="w-4 h-4 text-amber-400" />
+                                                                </div>
                                                             </div>
+                                                            <span className="text-white/80 font-semibold text-sm">
+                                                                Price Per Credit
+                                                            </span>
                                                         </div>
-                                                        <span className="text-white/80 font-semibold text-sm">
-                                                            Price Per Credit
-                                                        </span>
-                                                    </div>
-                                                </th>
-                                                <th className="px-4 py-3"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {creditPackages.map(
-                                                (pkg, index) => (
+                                                    </th>
+                                                    <th className="px-4 py-3"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {creditPackages.map((pkg) => (
                                                     <tr
-                                                        key={index}
+                                                        key={pkg.id}
                                                         className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
                                                     >
                                                         <td className="px-4 py-3 text-center">
@@ -846,49 +846,33 @@ const BusinessPortal = () => {
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="text-white/80">
-                                                                {
-                                                                    pkg.expiryMonths
-                                                                }{" "}
-                                                                months
+                                                                {pkg.expiryMonths} months
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="text-2xl font-semibold text-amber-400">
-                                                                ${pkg.price}
+                                                                {pkg.currency} {pkg.price}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <div className="flex items-center justify-center gap-2">
                                                                 <span className="text-white/80">
-                                                                    $
-                                                                    {
-                                                                        pkg.pricePerCredit
-                                                                    }
-                                                                    /credit
+                                                                    {pkg.currency} {pkg.pricePerCredit}/credit
                                                                 </span>
-                                                                {pkg.discount >
-                                                                    0 && (
+                                                                {pkg.discount > 0 && (
                                                                     <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-medium">
-                                                                        {
-                                                                            pkg.discount
-                                                                        }
-                                                                        % OFF
+                                                                        {pkg.discount}% OFF
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <button
-                                                                onClick={() =>
-                                                                    handlePurchase(
-                                                                        "",
-                                                                        pkg.credits
-                                                                    )
-                                                                }
+                                                                onClick={() => handlePurchase(pkg.id, pkg.credits)}
                                                                 className="px-4 py-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
-                                backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
-                                transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
-                                group flex items-center gap-2"
+                                                                backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
+                                                                transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
+                                                                group flex items-center gap-2"
                                                             >
                                                                 <Plus className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
                                                                 <span className="text-emerald-400 font-medium">
@@ -897,10 +881,10 @@ const BusinessPortal = () => {
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                )
-                                            )}
-                                        </tbody>
-                                    </table>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
                                 </motion.div>
                             )}
 

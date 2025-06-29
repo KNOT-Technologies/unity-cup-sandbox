@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_KNOT_API_BASE || 'http://localhost:5000';
+const API_BASE_URL =
+  import.meta.env.VITE_KNOT_API_BASE || "http://localhost:5000";
 
 // API Response Types based on the actual backend response
 export interface Occurrence {
@@ -26,7 +27,7 @@ export interface SeatMapData {
   grid: Array<{
     row: string;
     col: number;
-    class: 'vip' | 'regular';
+    class: "vip" | "regular";
     _id: string;
   }>;
   takenSeats: string[];
@@ -41,9 +42,9 @@ export interface SeatMapResponse {
 }
 
 export interface PriceItem {
-  visitor: 'foreign' | 'local';
-  category: 'senior' | 'adult' | 'student' | 'child';
-  seatClass: 'vip' | 'regular';
+  visitor: "foreign" | "local";
+  category: "senior" | "adult" | "student" | "child";
+  seatClass: "vip" | "regular";
   amount: number;
   _id: string;
 }
@@ -66,14 +67,14 @@ export interface PricesResponse {
 export interface QuoteSeat {
   row: string;
   col: number;
-  category: 'senior' | 'adult' | 'student' | 'child';
+  category: "senior" | "adult" | "student" | "child";
 }
 
 export interface QuoteRequest {
   seats: QuoteSeat[];
-  visitor: 'foreign' | 'local';
+  visitor: "foreign" | "local";
   // `category` kept optional for backward compatibility; will be ignored by backend
-  category?: 'senior' | 'adult' | 'student' | 'child';
+  category?: "senior" | "adult" | "student" | "child";
 }
 
 export interface QuoteLine {
@@ -146,7 +147,7 @@ export interface TicketHolderInfo {
 // Checkout Types (New for Sprint 3)
 export interface CheckoutRequest {
   quoteId: string;
-  paymentMethod: 'card';
+  paymentMethod: "card";
   ticketHolders: TicketHolderInfo[];
   redirectionUrl?: string;
   addons?: AddonSelection[];
@@ -163,8 +164,8 @@ export interface CheckoutResponse {
 export interface TicketInfo {
   id: string;
   seatNumber: string;
-  seatClass: 'vip' | 'regular';
-  ticketType: 'senior' | 'adult' | 'student' | 'child';
+  seatClass: "vip" | "regular";
+  ticketType: "senior" | "adult" | "student" | "child";
   qrCode: string;
   addons?: Array<{
     name: string;
@@ -184,22 +185,25 @@ export interface TicketsResponse {
 class APIError extends Error {
   constructor(public status: number, message: string) {
     super(message);
-    this.name = 'APIError';
+    this.name = "APIError";
   }
 }
 
 async function apiRequest<T>(endpoint: string): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     if (!response.ok) {
-      throw new APIError(response.status, `API request failed: ${response.statusText}`);
+      throw new APIError(
+        response.status,
+        `API request failed: ${response.statusText}`
+      );
     }
 
     return await response.json();
@@ -207,24 +211,35 @@ async function apiRequest<T>(endpoint: string): Promise<T> {
     if (error instanceof APIError) {
       throw error;
     }
-    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new APIError(
+      0,
+      `Network error: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 
-async function apiRequestWithBody<T>(endpoint: string, options: RequestInit): Promise<T> {
+async function apiRequestWithBody<T>(
+  endpoint: string,
+  options: RequestInit
+): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       ...options,
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new APIError(response.status, errorData.error || `API request failed: ${response.statusText}`);
+      throw new APIError(
+        response.status,
+        errorData.error || `API request failed: ${response.statusText}`
+      );
     }
 
     // Handle 204 No Content responses
@@ -237,17 +252,26 @@ async function apiRequestWithBody<T>(endpoint: string, options: RequestInit): Pr
     if (error instanceof APIError) {
       throw error;
     }
-    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new APIError(
+      0,
+      `Network error: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 
 export async function listOccurrences(eventId: string): Promise<Occurrence[]> {
-  const response = await apiRequest<OccurrencesResponse>(`/api/v3/events/${eventId}/occurrences`);
+  const response = await apiRequest<OccurrencesResponse>(
+    `/api/v3/events/${eventId}/occurrences`
+  );
   return response.occurrences;
 }
 
 export async function getSeatMap(occurrenceId: string): Promise<SeatMapData> {
-  const response = await apiRequest<SeatMapResponse>(`/api/v3/occurrences/${occurrenceId}/seatmap`);
+  const response = await apiRequest<SeatMapResponse>(
+    `/api/v3/occurrences/${occurrenceId}/seatmap`
+  );
   return response.seatMap;
 }
 
@@ -259,23 +283,31 @@ export interface PricingData {
 }
 
 export async function getPrices(occurrenceId: string): Promise<PricingData> {
-  const response = await apiRequest<PricesResponse>(`/api/v3/occurrences/${occurrenceId}/prices`);
-  
+  const response = await apiRequest<PricesResponse>(
+    `/api/v3/occurrences/${occurrenceId}/prices`
+  );
+
   return {
     localPrices: response.priceMatrix?.prices || [],
-    localCurrency: response.priceMatrix?.currency || 'EGP',
+    localCurrency: response.priceMatrix?.currency || "EGP",
     foreignPrices: response.foreignPriceMatrix?.prices || [],
-    foreignCurrency: response.foreignPriceMatrix?.currency || 'USD'
+    foreignCurrency: response.foreignPriceMatrix?.currency || "USD",
   };
 }
 
 // Quote Management API Functions
-export async function createQuote(occurrenceId: string, request: QuoteRequest): Promise<Quote> {
+export async function createQuote(
+  occurrenceId: string,
+  request: QuoteRequest
+): Promise<Quote> {
   try {
-    const response = await apiRequestWithBody<Quote>(`/api/v3/occurrences/${occurrenceId}/quote`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    const response = await apiRequestWithBody<Quote>(
+      `/api/v3/occurrences/${occurrenceId}/quote`,
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      }
+    );
     return response;
   } catch (error) {
     if (error instanceof APIError) {
@@ -283,8 +315,9 @@ export async function createQuote(occurrenceId: string, request: QuoteRequest): 
       throw {
         status: error.status,
         error: error.message,
-        seat: error.message.includes('SEAT_ALREADY_TAKEN') ? 
-               error.message.split('seat": "')[1]?.split('"')[0] : undefined
+        seat: error.message.includes("SEAT_ALREADY_TAKEN")
+          ? error.message.split('seat": "')[1]?.split('"')[0]
+          : undefined,
       };
     }
     throw error;
@@ -292,20 +325,27 @@ export async function createQuote(occurrenceId: string, request: QuoteRequest): 
 }
 
 // New: modify existing quote without resetting expiry
-export async function updateQuote(quoteId: string, request: QuoteRequest): Promise<Quote> {
+export async function updateQuote(
+  quoteId: string,
+  request: QuoteRequest
+): Promise<Quote> {
   try {
-    const response = await apiRequestWithBody<Quote>(`/api/v3/quotes/${quoteId}`, {
-      method: 'PUT',
-      body: JSON.stringify(request),
-    });
+    const response = await apiRequestWithBody<Quote>(
+      `/api/v3/quotes/${quoteId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(request),
+      }
+    );
     return response;
   } catch (error) {
     if (error instanceof APIError) {
       throw {
         status: error.status,
         error: error.message,
-        seat: error.message.includes('SEAT_ALREADY_TAKEN') ?
-               error.message.split('seat": "')[1]?.split('"')[0] : undefined
+        seat: error.message.includes("SEAT_ALREADY_TAKEN")
+          ? error.message.split('seat": "')[1]?.split('"')[0]
+          : undefined,
       };
     }
     throw error;
@@ -314,15 +354,18 @@ export async function updateQuote(quoteId: string, request: QuoteRequest): Promi
 
 export async function refreshQuote(quoteId: string): Promise<string> {
   try {
-    const response = await apiRequestWithBody<RefreshResponse>(`/api/v3/quotes/${quoteId}/refresh`, {
-      method: 'PUT',
-    });
-    return response.expiresAt || '';
+    const response = await apiRequestWithBody<RefreshResponse>(
+      `/api/v3/quotes/${quoteId}/refresh`,
+      {
+        method: "PUT",
+      }
+    );
+    return response.expiresAt || "";
   } catch (error) {
     if (error instanceof APIError) {
       throw {
         status: error.status,
-        error: error.message
+        error: error.message,
       };
     }
     throw error;
@@ -332,13 +375,13 @@ export async function refreshQuote(quoteId: string): Promise<string> {
 export async function deleteQuote(quoteId: string): Promise<void> {
   try {
     await apiRequestWithBody<void>(`/api/v3/quotes/${quoteId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   } catch (error) {
     if (error instanceof APIError) {
       throw {
         status: error.status,
-        error: error.message
+        error: error.message,
       };
     }
     throw error;
@@ -348,13 +391,15 @@ export async function deleteQuote(quoteId: string): Promise<void> {
 // Add-on Management API Functions (New for Sprint 3)
 export async function getAddons(occurrenceId: string): Promise<Addon[]> {
   try {
-    const response = await apiRequest<AddonsResponse>(`/api/v3/occurrences/${occurrenceId}/addons`);
+    const response = await apiRequest<AddonsResponse>(
+      `/api/v3/occurrences/${occurrenceId}/addons`
+    );
     return response.addons;
   } catch (error) {
     if (error instanceof APIError) {
       throw {
         status: error.status,
-        error: error.message
+        error: error.message,
       };
     }
     throw error;
@@ -362,18 +407,23 @@ export async function getAddons(occurrenceId: string): Promise<Addon[]> {
 }
 
 // Checkout API Function (New for Sprint 3)
-export async function processCheckout(request: CheckoutRequest): Promise<CheckoutResponse> {
+export async function processCheckout(
+  request: CheckoutRequest
+): Promise<CheckoutResponse> {
   try {
-    const response = await apiRequestWithBody<CheckoutResponse>('/api/v3/checkout', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    const response = await apiRequestWithBody<CheckoutResponse>(
+      "/api/v3/checkout",
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      }
+    );
     return response;
   } catch (error) {
     if (error instanceof APIError) {
       throw {
         status: error.status,
-        error: error.message
+        error: error.message,
       };
     }
     throw error;
@@ -381,15 +431,19 @@ export async function processCheckout(request: CheckoutRequest): Promise<Checkou
 }
 
 // Tickets API Function (Get tickets by payment ID)
-export async function getTicketsByPaymentId(paymentId: string): Promise<TicketsResponse> {
+export async function getTicketsByPaymentId(
+  paymentId: string
+): Promise<TicketsResponse> {
   try {
-    const response = await apiRequest<TicketsResponse>(`/api/v3/payments/${paymentId}/tickets`);
+    const response = await apiRequest<TicketsResponse>(
+      `/api/v3/payments/${paymentId}/tickets`
+    );
     return response;
   } catch (error) {
     if (error instanceof APIError) {
       throw {
         status: error.status,
-        error: error.message
+        error: error.message,
       };
     }
     throw error;
@@ -406,12 +460,22 @@ export interface CreditBundle {
   price: number;
   pricePerCredit: number;
   discount: number;
+  currency: string;
+}
+
+// Backend response structure
+export interface BackendCreditBundle {
+  _id: string;
+  credits: number;
+  price: number;
+  currency: string;
+  expiresAfterMonths: number;
 }
 
 export interface CreditBundlesResponse {
   success: boolean;
   message: string;
-  bundles: CreditBundle[];
+  bundles: BackendCreditBundle[];
 }
 
 export interface CreditPurchaseResponse {
@@ -436,7 +500,7 @@ export interface CreditTransaction {
   date: string;
   credits: number;
   amount?: number;
-  type: 'purchase' | 'redemption';
+  type: "purchase" | "redemption";
   description: string;
 }
 
@@ -447,7 +511,7 @@ export interface CreditTransactionsResponse {
 
 export interface CreditCheckoutRequest {
   quoteId: string;
-  paymentMethod: 'credits';
+  paymentMethod: "credits";
   addons?: AddonSelection[];
 }
 
@@ -459,22 +523,23 @@ export interface CreditCheckoutResponse {
 
 // Add authentication helper
 function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('authToken') || localStorage.getItem('jwt');
+  const token =
+    localStorage.getItem("authToken") || localStorage.getItem("jwt");
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
-  
+
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 
 // Update existing API functions to include auth headers
 async function authenticatedApiRequest<T>(endpoint: string): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: getAuthHeaders(),
@@ -482,13 +547,18 @@ async function authenticatedApiRequest<T>(endpoint: string): Promise<T> {
 
     if (response.status === 403) {
       // Redirect to login on 403
-      window.location.href = '/business/login';
-      throw new APIError(403, 'Authentication required');
+      window.location.href = "/business/login";
+      throw new APIError(403, "Authentication required");
     }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new APIError(response.status, errorData.error || errorData.message || `API request failed: ${response.statusText}`);
+      throw new APIError(
+        response.status,
+        errorData.error ||
+          errorData.message ||
+          `API request failed: ${response.statusText}`
+      );
     }
 
     return await response.json();
@@ -496,13 +566,21 @@ async function authenticatedApiRequest<T>(endpoint: string): Promise<T> {
     if (error instanceof APIError) {
       throw error;
     }
-    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new APIError(
+      0,
+      `Network error: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 
-async function authenticatedApiRequestWithBody<T>(endpoint: string, options: RequestInit): Promise<T> {
+async function authenticatedApiRequestWithBody<T>(
+  endpoint: string,
+  options: RequestInit
+): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: getAuthHeaders(),
@@ -511,13 +589,18 @@ async function authenticatedApiRequestWithBody<T>(endpoint: string, options: Req
 
     if (response.status === 403) {
       // Redirect to login on 403
-      window.location.href = '/business/login';
-      throw new APIError(403, 'Authentication required');
+      window.location.href = "/business/login";
+      throw new APIError(403, "Authentication required");
     }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new APIError(response.status, errorData.error || errorData.message || `API request failed: ${response.statusText}`);
+      throw new APIError(
+        response.status,
+        errorData.error ||
+          errorData.message ||
+          `API request failed: ${response.statusText}`
+      );
     }
 
     // Handle 204 No Content responses
@@ -530,35 +613,84 @@ async function authenticatedApiRequestWithBody<T>(endpoint: string, options: Req
     if (error instanceof APIError) {
       throw error;
     }
-    throw new APIError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new APIError(
+      0,
+      `Network error: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 
 // Credit API functions
 export async function getCreditBundles(): Promise<CreditBundle[]> {
-  const response = await authenticatedApiRequest<CreditBundlesResponse>('/api/v3/credit-bundles');
-  return response.bundles;
+  const response = await authenticatedApiRequest<CreditBundlesResponse>(
+    "/api/v3/credit-bundles"
+  );
+
+  // Transform backend response to frontend format
+  return response.bundles.map((bundle) => {
+    const pricePerCredit = bundle.price / bundle.credits;
+
+    // Calculate discount based on price per credit (lower price per credit = higher discount)
+    // This is a simple heuristic - you might want to adjust this logic
+    const basePricePerCredit = 4.5; // Assuming 4.5 is the base price
+    const discount = Math.max(
+      0,
+      Math.round(
+        ((basePricePerCredit - pricePerCredit) / basePricePerCredit) * 100
+      )
+    );
+
+    return {
+      id: bundle._id,
+      credits: bundle.credits,
+      expiryMonths: bundle.expiresAfterMonths,
+      price: bundle.price,
+      pricePerCredit: Math.round(pricePerCredit * 100) / 100, // Round to 2 decimal places
+      discount,
+      currency: bundle.currency,
+    };
+  });
 }
 
-export async function purchaseCreditBundle(bundleId: string): Promise<CreditPurchaseResponse> {
-  return await authenticatedApiRequestWithBody<CreditPurchaseResponse>(`/api/v3/credit-bundles/${bundleId}/purchase`, {
-    method: 'POST',
-    body: JSON.stringify({}),
-  });
+export async function purchaseCreditBundle(
+  bundleId: string
+): Promise<CreditPurchaseResponse> {
+  return await authenticatedApiRequestWithBody<CreditPurchaseResponse>(
+    `/api/v3/credit-bundles/${bundleId}/purchase`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        redirectionUrl: `${window.location.origin}/business/credit-success`,
+      }),
+    }
+  );
 }
 
 export async function getCreditBalance(): Promise<CreditBalanceResponse> {
-  return await authenticatedApiRequest<CreditBalanceResponse>('/api/v3/credits/balance');
+  return await authenticatedApiRequest<CreditBalanceResponse>(
+    "/api/v3/credits/balance"
+  );
 }
 
-export async function getCreditTransactions(limit: number = 10): Promise<CreditTransaction[]> {
-  const response = await authenticatedApiRequest<CreditTransactionsResponse>(`/api/v3/credits/transactions?limit=${limit}`);
+export async function getCreditTransactions(
+  limit: number = 10
+): Promise<CreditTransaction[]> {
+  const response = await authenticatedApiRequest<CreditTransactionsResponse>(
+    `/api/v3/credits/transactions?limit=${limit}`
+  );
   return response.transactions;
 }
 
-export async function checkoutWithCredits(request: CreditCheckoutRequest): Promise<CreditCheckoutResponse> {
-  return await authenticatedApiRequestWithBody<CreditCheckoutResponse>('/api/v3/checkout', {
-    method: 'POST',
-    body: JSON.stringify(request),
-  });
-} 
+export async function checkoutWithCredits(
+  request: CreditCheckoutRequest
+): Promise<CreditCheckoutResponse> {
+  return await authenticatedApiRequestWithBody<CreditCheckoutResponse>(
+    "/api/v3/checkout",
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    }
+  );
+}

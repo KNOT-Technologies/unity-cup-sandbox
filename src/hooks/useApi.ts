@@ -1,7 +1,20 @@
-import useSWR from 'swr';
-import { listOccurrences, getSeatMap, getPrices, createQuote, updateQuote, deleteQuote, getCreditBundles, getCreditBalance, getCreditTransactions, type QuoteRequest, type QuoteSeat, type PricingData } from '../api/knot';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { QuoteState, UserType, SeatSelection } from '../types/tickets';
+import useSWR from "swr";
+import {
+  listOccurrences,
+  getSeatMap,
+  getPrices,
+  createQuote,
+  updateQuote,
+  deleteQuote,
+  getCreditBundles,
+  getCreditBalance,
+  getCreditTransactions,
+  type QuoteRequest,
+  type QuoteSeat,
+  type PricingData,
+} from "../api/knot";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { QuoteState, UserType, SeatSelection } from "../types/tickets";
 
 // SWR configuration with 30s cache and revalidate on window focus
 const swrConfig = {
@@ -15,7 +28,7 @@ const swrConfig = {
 export function useSchedule(eventId: string | null) {
   const { data, error, isLoading, mutate } = useSWR(
     eventId ? `/events/${eventId}/occurrences` : null,
-    () => eventId ? listOccurrences(eventId) : null,
+    () => (eventId ? listOccurrences(eventId) : null),
     swrConfig
   );
 
@@ -30,7 +43,7 @@ export function useSchedule(eventId: string | null) {
 export function useSeatMap(occurrenceId: string | null) {
   const { data, error, isLoading, mutate } = useSWR(
     occurrenceId ? `/occurrences/${occurrenceId}/seatmap` : null,
-    () => occurrenceId ? getSeatMap(occurrenceId) : null,
+    () => (occurrenceId ? getSeatMap(occurrenceId) : null),
     swrConfig
   );
 
@@ -45,15 +58,15 @@ export function useSeatMap(occurrenceId: string | null) {
 export function usePrices(occurrenceId: string | null) {
   const { data, error, isLoading, mutate } = useSWR(
     occurrenceId ? `/occurrences/${occurrenceId}/prices` : null,
-    () => occurrenceId ? getPrices(occurrenceId) : null,
+    () => (occurrenceId ? getPrices(occurrenceId) : null),
     swrConfig
   );
 
   const defaultPricing: PricingData = {
     localPrices: [],
-    localCurrency: 'EGP',
+    localCurrency: "EGP",
     foreignPrices: [],
-    foreignCurrency: 'USD'
+    foreignCurrency: "USD",
   };
 
   return {
@@ -75,38 +88,40 @@ export function useQuote(occurrenceId: string | null) {
     timeRemaining: 0,
   });
 
-  const timeoutRef = useRef<number | undefined>(undefined);
-  const refreshIntervalRef = useRef<number | undefined>(undefined);
-  const debounceTimeoutRef = useRef<number | undefined>(undefined);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Load quote from sessionStorage on mount
   useEffect(() => {
-    const savedQuoteId = sessionStorage.getItem('quoteId');
-    const savedQuote = sessionStorage.getItem('quote');
-    
+    const savedQuoteId = sessionStorage.getItem("quoteId");
+    const savedQuote = sessionStorage.getItem("quote");
+
     if (savedQuoteId && savedQuote && occurrenceId) {
       try {
         const parsedQuote = JSON.parse(savedQuote);
         const expiresAt = new Date(parsedQuote.expiresAt);
         const now = new Date();
-        
+
         // Check if quote is still valid
         if (expiresAt > now && parsedQuote.occurrenceId === occurrenceId) {
-          setQuoteState(prev => ({
+          setQuoteState((prev) => ({
             ...prev,
             quote: parsedQuote,
-            timeRemaining: Math.floor((expiresAt.getTime() - now.getTime()) / 1000)
+            timeRemaining: Math.floor(
+              (expiresAt.getTime() - now.getTime()) / 1000
+            ),
           }));
           startCountdown(expiresAt);
         } else {
           // Quote expired, clean up
-          sessionStorage.removeItem('quoteId');
-          sessionStorage.removeItem('quote');
+          sessionStorage.removeItem("quoteId");
+          sessionStorage.removeItem("quote");
         }
       } catch (error) {
-        console.warn('Failed to restore quote from sessionStorage:', error);
-        sessionStorage.removeItem('quoteId');
-        sessionStorage.removeItem('quote');
+        console.warn("Failed to restore quote from sessionStorage:", error);
+        sessionStorage.removeItem("quoteId");
+        sessionStorage.removeItem("quote");
       }
     }
   }, [occurrenceId]);
@@ -115,24 +130,24 @@ export function useQuote(occurrenceId: string | null) {
     const updateCountdown = () => {
       const now = new Date();
       const timeLeft = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
-      
+
       if (timeLeft <= 0) {
         // Quote expired
-        setQuoteState(prev => ({
+        setQuoteState((prev) => ({
           ...prev,
           quote: null,
           timeRemaining: 0,
-          error: 'Quote expired'
+          error: "Quote expired",
         }));
-        sessionStorage.removeItem('quoteId');
-        sessionStorage.removeItem('quote');
+        sessionStorage.removeItem("quoteId");
+        sessionStorage.removeItem("quote");
         clearInterval(refreshIntervalRef.current);
         return;
       }
-      
-      setQuoteState(prev => ({
+
+      setQuoteState((prev) => ({
         ...prev,
-        timeRemaining: timeLeft
+        timeRemaining: timeLeft,
       }));
     };
 
@@ -140,74 +155,76 @@ export function useQuote(occurrenceId: string | null) {
     timeoutRef.current = setInterval(updateCountdown, 1000);
   }, []);
 
-  const createQuoteDebounced = useCallback(async (
-    selections: SeatSelection[],
-    userType: UserType
-  ) => {
-    if (!occurrenceId || selections.length === 0) {
-      return;
-    }
-
-    // Clear existing debounce
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // Debounce for 200ms
-    debounceTimeoutRef.current = setTimeout(async () => {
-      try {
-        setQuoteState(prev => ({ ...prev, isLoading: true, error: null }));
-
-        // Transform selections to API format with per-seat categories
-        const seats: QuoteSeat[] = selections.map(selection => ({
-          row: selection.seat.row,
-          col: selection.seat.number,
-          category: selection.ticketType
-        }));
-
-        const visitor = userType === 'tourist' ? 'foreign' as const : 'local' as const;
-
-        const request: QuoteRequest = {
-          seats,
-          visitor
-        };
-
-        let quote;
-        if (quoteState.quote) {
-          // Update existing quote without resetting expiry
-          quote = await updateQuote(quoteState.quote.quoteId, request);
-        } else {
-          quote = await createQuote(occurrenceId, request);
-        }
-        const expiresAt = new Date(quote.expiresAt);
-
-        setQuoteState(prev => ({
-          ...prev,
-          quote,
-          isLoading: false,
-          error: null
-        }));
-
-        // Save/update sessionStorage
-        sessionStorage.setItem('quoteId', quote.quoteId);
-        sessionStorage.setItem('quote', JSON.stringify(quote));
-
-        // Only start a new countdown if this is a brand-new quote
-        if (!quoteState.quote) {
-          startCountdown(expiresAt);
-        }
-      } catch (error: unknown) {
-        console.error('Failed to create quote:', error);
-        setQuoteState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: error && typeof error === 'object' && 'error' in error 
-            ? String(error.error) 
-            : 'Failed to create quote'
-        }));
+  const createQuoteDebounced = useCallback(
+    async (selections: SeatSelection[], userType: UserType) => {
+      if (!occurrenceId || selections.length === 0) {
+        return;
       }
-    }, 200);
-  }, [occurrenceId, startCountdown, quoteState.quote]);
+
+      // Clear existing debounce
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Debounce for 200ms
+      debounceTimeoutRef.current = setTimeout(async () => {
+        try {
+          setQuoteState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+          // Transform selections to API format with per-seat categories
+          const seats: QuoteSeat[] = selections.map((selection) => ({
+            row: selection.seat.row,
+            col: selection.seat.number,
+            category: selection.ticketType,
+          }));
+
+          const visitor =
+            userType === "tourist" ? ("foreign" as const) : ("local" as const);
+
+          const request: QuoteRequest = {
+            seats,
+            visitor,
+          };
+
+          let quote;
+          if (quoteState.quote) {
+            // Update existing quote without resetting expiry
+            quote = await updateQuote(quoteState.quote.quoteId, request);
+          } else {
+            quote = await createQuote(occurrenceId, request);
+          }
+          const expiresAt = new Date(quote.expiresAt);
+
+          setQuoteState((prev) => ({
+            ...prev,
+            quote,
+            isLoading: false,
+            error: null,
+          }));
+
+          // Save/update sessionStorage
+          sessionStorage.setItem("quoteId", quote.quoteId);
+          sessionStorage.setItem("quote", JSON.stringify(quote));
+
+          // Only start a new countdown if this is a brand-new quote
+          if (!quoteState.quote) {
+            startCountdown(expiresAt);
+          }
+        } catch (error: unknown) {
+          console.error("Failed to create quote:", error);
+          setQuoteState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error:
+              error && typeof error === "object" && "error" in error
+                ? String(error.error)
+                : "Failed to create quote",
+          }));
+        }
+      }, 200);
+    },
+    [occurrenceId, startCountdown, quoteState.quote]
+  );
 
   const cancelQuote = useCallback(async () => {
     if (!quoteState.quote) return;
@@ -215,19 +232,19 @@ export function useQuote(occurrenceId: string | null) {
     try {
       await deleteQuote(quoteState.quote.quoteId);
     } catch (error) {
-      console.warn('Failed to delete quote on server:', error);
+      console.warn("Failed to delete quote on server:", error);
     } finally {
       // Clear local state regardless of API response
       setQuoteState({
         quote: null,
         isLoading: false,
         error: null,
-        timeRemaining: 0
+        timeRemaining: 0,
       });
-      
-      sessionStorage.removeItem('quoteId');
-      sessionStorage.removeItem('quote');
-      
+
+      sessionStorage.removeItem("quoteId");
+      sessionStorage.removeItem("quote");
+
       if (timeoutRef.current) {
         clearInterval(timeoutRef.current);
       }
@@ -256,14 +273,14 @@ export function useQuote(occurrenceId: string | null) {
     ...quoteState,
     createQuote: createQuoteDebounced,
     cancelQuote,
-    hasActiveQuote: !!quoteState.quote && quoteState.timeRemaining > 0
+    hasActiveQuote: !!quoteState.quote && quoteState.timeRemaining > 0,
   };
 }
 
 // Credit hooks
 export function useCreditBundles() {
   const { data, error, isLoading, mutate } = useSWR(
-    '/credit-bundles',
+    "/credit-bundles",
     getCreditBundles,
     swrConfig
   );
@@ -278,7 +295,7 @@ export function useCreditBundles() {
 
 export function useCreditBalance() {
   const { data, error, isLoading, mutate } = useSWR(
-    '/credits/balance',
+    "/credits/balance",
     getCreditBalance,
     {
       ...swrConfig,
@@ -308,4 +325,4 @@ export function useCreditTransactions(limit: number = 10) {
     error,
     refetch: mutate,
   };
-} 
+}
