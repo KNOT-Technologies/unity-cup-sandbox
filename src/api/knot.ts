@@ -62,10 +62,18 @@ export interface PricesResponse {
 }
 
 // Quote Management Types
-export interface QuoteRequest {
-  seats: Array<{ row: string; col: number }>;
-  visitor: 'foreign' | 'local';
+// Updated for per-seat categories
+export interface QuoteSeat {
+  row: string;
+  col: number;
   category: 'senior' | 'adult' | 'student' | 'child';
+}
+
+export interface QuoteRequest {
+  seats: QuoteSeat[];
+  visitor: 'foreign' | 'local';
+  // `category` kept optional for backward compatibility; will be ignored by backend
+  category?: 'senior' | 'adult' | 'student' | 'child';
 }
 
 export interface QuoteLine {
@@ -127,14 +135,19 @@ export interface AddonSelection {
   optionCode: string;
 }
 
+// Checkout Types (Updated for multi-ticket-holder support)
+export interface TicketHolderInfo {
+  fullName: string;
+  dateOfBirth: string; // ISO-8601 date string
+  nationality: string;
+  email: string;
+}
+
 // Checkout Types (New for Sprint 3)
 export interface CheckoutRequest {
   quoteId: string;
   paymentMethod: 'card';
-  email: string;
-  userName: string;
-  dateOfBirth: string;
-  nationality: string;
+  ticketHolders: TicketHolderInfo[];
   redirectionUrl?: string;
   addons?: AddonSelection[];
 }
@@ -271,6 +284,27 @@ export async function createQuote(occurrenceId: string, request: QuoteRequest): 
         status: error.status,
         error: error.message,
         seat: error.message.includes('SEAT_ALREADY_TAKEN') ? 
+               error.message.split('seat": "')[1]?.split('"')[0] : undefined
+      };
+    }
+    throw error;
+  }
+}
+
+// New: modify existing quote without resetting expiry
+export async function updateQuote(quoteId: string, request: QuoteRequest): Promise<Quote> {
+  try {
+    const response = await apiRequestWithBody<Quote>(`/api/v3/quotes/${quoteId}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+    return response;
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw {
+        status: error.status,
+        error: error.message,
+        seat: error.message.includes('SEAT_ALREADY_TAKEN') ?
                error.message.split('seat": "')[1]?.split('"')[0] : undefined
       };
     }

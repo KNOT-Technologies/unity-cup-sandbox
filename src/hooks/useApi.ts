@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { listOccurrences, getSeatMap, getPrices, createQuote, refreshQuote, deleteQuote, type QuoteRequest, type PricingData } from '../api/knot';
+import { listOccurrences, getSeatMap, getPrices, createQuote, updateQuote, deleteQuote, type QuoteRequest, type QuoteSeat, type PricingData } from '../api/knot';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { QuoteState, UserType, SeatSelection } from '../types/tickets';
 
@@ -98,7 +98,6 @@ export function useQuote(occurrenceId: string | null) {
             timeRemaining: Math.floor((expiresAt.getTime() - now.getTime()) / 1000)
           }));
           startCountdown(expiresAt);
-          startAutoRefresh(savedQuoteId);
         } else {
           // Quote expired, clean up
           sessionStorage.removeItem('quoteId');
@@ -141,52 +140,7 @@ export function useQuote(occurrenceId: string | null) {
     timeoutRef.current = setInterval(updateCountdown, 1000);
   }, []);
 
-  const startAutoRefresh = useCallback((quoteId: string) => {
-    // Refresh every 30 seconds
-    refreshIntervalRef.current = setInterval(async () => {
-      try {
-        const newExpiresAt = await refreshQuote(quoteId);
-        const expiresDate = new Date(newExpiresAt);
-        
-        setQuoteState(prev => {
-          if (prev.quote) {
-            const updatedQuote = {
-              ...prev.quote,
-              expiresAt: newExpiresAt
-            };
-            sessionStorage.setItem('quote', JSON.stringify(updatedQuote));
-            return {
-              ...prev,
-              quote: updatedQuote,
-              error: null
-            };
-          }
-          return prev;
-        });
-        
-        // Restart countdown with new expiry time
-        if (timeoutRef.current) {
-          clearInterval(timeoutRef.current);
-        }
-        startCountdown(expiresDate);
-             } catch (error: unknown) {
-         if (error && typeof error === 'object' && 'status' in error && error.status === 404) {
-          // Quote not found or expired
-          setQuoteState(prev => ({
-            ...prev,
-            quote: null,
-            timeRemaining: 0,
-            error: 'Quote expired or not found'
-          }));
-          sessionStorage.removeItem('quoteId');
-          sessionStorage.removeItem('quote');
-          clearInterval(refreshIntervalRef.current);
-        }
-      }
-    }, 30000);
-  }, [startCountdown]);
-
-    const createQuoteDebounced = useCallback(async (
+  const createQuoteDebounced = useCallback(async (
     selections: SeatSelection[],
     userType: UserType
   ) => {
@@ -204,41 +158,27 @@ export function useQuote(occurrenceId: string | null) {
       try {
         setQuoteState(prev => ({ ...prev, isLoading: true, error: null }));
 
-        // Cancel existing quote first to avoid seat conflicts
-        if (quoteState.quote) {
-          try {
-            await deleteQuote(quoteState.quote.quoteId);
-            // Clear intervals
-            if (timeoutRef.current) {
-              clearInterval(timeoutRef.current);
-            }
-            if (refreshIntervalRef.current) {
-              clearInterval(refreshIntervalRef.current);
-            }
-          } catch (error) {
-            console.warn('Failed to cancel previous quote:', error);
-            // Continue anyway - maybe the quote already expired
-          }
-        }
-
-        // Transform selections to API format
-        const seats = selections.map(selection => ({
+        // Transform selections to API format with per-seat categories
+        const seats: QuoteSeat[] = selections.map(selection => ({
           row: selection.seat.row,
-          col: selection.seat.number
+          col: selection.seat.number,
+          category: selection.ticketType
         }));
 
-        // Use the first selection's ticket type for the quote
-        // (API requires single category per quote)
-        const category = selections[0].ticketType;
         const visitor = userType === 'tourist' ? 'foreign' as const : 'local' as const;
 
         const request: QuoteRequest = {
           seats,
-          visitor,
-          category
+          visitor
         };
 
-        const quote = await createQuote(occurrenceId, request);
+        let quote;
+        if (quoteState.quote) {
+          // Update existing quote without resetting expiry
+          quote = await updateQuote(quoteState.quote.quoteId, request);
+        } else {
+          quote = await createQuote(occurrenceId, request);
+        }
         const expiresAt = new Date(quote.expiresAt);
 
         setQuoteState(prev => ({
@@ -248,14 +188,14 @@ export function useQuote(occurrenceId: string | null) {
           error: null
         }));
 
-        // Save to sessionStorage
+        // Save/update sessionStorage
         sessionStorage.setItem('quoteId', quote.quoteId);
         sessionStorage.setItem('quote', JSON.stringify(quote));
 
-        // Start countdown and auto-refresh
-        startCountdown(expiresAt);
-        startAutoRefresh(quote.quoteId);
-
+        // Only start a new countdown if this is a brand-new quote
+        if (!quoteState.quote) {
+          startCountdown(expiresAt);
+        }
       } catch (error: unknown) {
         console.error('Failed to create quote:', error);
         setQuoteState(prev => ({
@@ -267,7 +207,7 @@ export function useQuote(occurrenceId: string | null) {
         }));
       }
     }, 200);
-  }, [occurrenceId, startCountdown, startAutoRefresh, quoteState.quote]);
+  }, [occurrenceId, startCountdown, quoteState.quote]);
 
   const cancelQuote = useCallback(async () => {
     if (!quoteState.quote) return;

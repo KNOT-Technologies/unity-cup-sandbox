@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Headphones, AlertCircle } from "lucide-react";
+import { Headphones, AlertCircle, Info } from "lucide-react";
 import { getAddons } from "../../api/knot";
-import type { Addon } from "../../types/tickets";
+import type { Addon, AddonOption } from "../../types/tickets";
 
 const TOP_20_LANGUAGES = [
     "French",
@@ -29,12 +29,14 @@ interface TranslationSelectorProps {
     onTranslationChange: (needsTranslation: boolean, language?: string) => void;
     occurrenceId?: string;
     className?: string;
+    currency?: "EGP" | "USD";
 }
 
 const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     onTranslationChange,
     occurrenceId,
     className = "",
+    currency = "EGP",
 }) => {
     const [needsTranslation, setNeedsTranslation] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState<string>("English");
@@ -42,10 +44,17 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Load add-ons when occurrence changes
+    // Reset translation preferences when occurrence changes
     useEffect(() => {
         if (occurrenceId) {
             loadAddons();
+        } else {
+            // Reset addons when occurrence is cleared
+            setAddons([]);
+
+            // Reset translation preferences
+            setNeedsTranslation(false);
+            onTranslationChange(false);
         }
     }, [occurrenceId]);
 
@@ -67,11 +76,57 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
 
     const handleTranslationToggle = (value: boolean) => {
         setNeedsTranslation(value);
+
+        // Get price information from the selected addon option
+        let prices = null;
+        if (value && translationAddon && translationAddon.options.length > 0) {
+            const option =
+                translationAddon.options.find(
+                    (opt) => opt.label === selectedLanguage
+                ) || translationAddon.options[0];
+            prices = option.prices || { USD: 3, EGP: 50 };
+        }
+
+        // Save translation preference with price information
+        sessionStorage.setItem(
+            "translationPreference",
+            JSON.stringify({
+                needed: value,
+                language: value ? selectedLanguage : undefined,
+                prices: prices,
+            })
+        );
+
         onTranslationChange(value, value ? selectedLanguage : undefined);
     };
 
     const handleLanguageChange = (language: string) => {
         setSelectedLanguage(language);
+
+        // Get price information for the selected language
+        let prices = null;
+        if (
+            needsTranslation &&
+            translationAddon &&
+            translationAddon.options.length > 0
+        ) {
+            const option =
+                translationAddon.options.find(
+                    (opt) => opt.label === language
+                ) || translationAddon.options[0];
+            prices = option.prices || { USD: 3, EGP: 50 };
+        }
+
+        // Save translation preference with updated language and price
+        sessionStorage.setItem(
+            "translationPreference",
+            JSON.stringify({
+                needed: needsTranslation,
+                language: language,
+                prices: prices,
+            })
+        );
+
         onTranslationChange(needsTranslation, language);
     };
 
@@ -81,6 +136,21 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     );
     const hasQuota = translationAddon && (translationAddon.quota || 0) > 0;
     const isAvailable = !loading && !error && hasQuota;
+    const noOccurrenceSelected = !occurrenceId;
+
+    // Get currency symbol
+    const getCurrencySymbol = (curr: "EGP" | "USD" = currency) => {
+        return curr === "USD" ? "$" : "£";
+    };
+
+    // Format price for display with both currencies
+    const formatPriceDisplay = (option: AddonOption) => {
+        if (!option?.prices) {
+            return `${getCurrencySymbol()}${option?.extraCost || 0}`;
+        }
+
+        return `${getCurrencySymbol("USD")}${option.prices.USD} for tourists`;
+    };
 
     return (
         <div
@@ -121,18 +191,34 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                                 </p>
                             </div>
                         )}
-                        {!loading && !error && !hasQuota && (
+                        {noOccurrenceSelected && (
                             <div className="flex items-center gap-1 mt-1">
-                                <AlertCircle className="w-3 h-3 text-red-400" />
-                                <p className="text-xs text-red-400">Sold out</p>
+                                <Info className="w-3 h-3 text-blue-400" />
+                                <p className="text-xs text-blue-400">
+                                    Select a show time to check availability
+                                </p>
                             </div>
                         )}
+                        {!loading &&
+                            !error &&
+                            !noOccurrenceSelected &&
+                            !hasQuota && (
+                                <div className="flex items-center gap-1 mt-1">
+                                    <AlertCircle className="w-3 h-3 text-red-400" />
+                                    <p className="text-xs text-red-400">
+                                        Sold out
+                                    </p>
+                                </div>
+                            )}
                         {isAvailable && translationAddon && (
                             <p className="text-xs text-amber-400 mt-1">
-                                Available (+$
-                                {translationAddon.options[0]?.extraCost ||
-                                    50}{" "}
-                                per seat)
+                                Available (
+                                {translationAddon.options[0]
+                                    ? formatPriceDisplay(
+                                          translationAddon.options[0]
+                                      )
+                                    : "£50 / $3"}{" "}
+                                per headphone)
                             </p>
                         )}
                     </div>
@@ -144,17 +230,17 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                     <div className="flex gap-1.5 sm:gap-2">
                         <button
                             onClick={() => handleTranslationToggle(true)}
-                            disabled={!isAvailable}
+                            disabled={!isAvailable || noOccurrenceSelected}
                             className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 
                 relative overflow-hidden group ${
                     needsTranslation
                         ? "bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 shadow-lg shadow-amber-500/20"
                         : `${
-                              isAvailable
+                              isAvailable && !noOccurrenceSelected
                                   ? "bg-gray-800/30 text-white hover:bg-gray-700/30 hover:shadow-lg hover:shadow-amber-500/5"
                                   : "bg-gray-800/20 text-gray-500 cursor-not-allowed"
                           }`
-                } ${!isAvailable ? "opacity-50" : ""}`}
+                } ${!isAvailable || noOccurrenceSelected ? "opacity-50" : ""}`}
                         >
                             {needsTranslation && (
                                 <div
@@ -189,17 +275,18 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="space-y-1.5 sm:space-y-2"
+                            className="space-y-3 sm:space-y-4"
                         >
-                            <label className="block text-xs sm:text-sm font-medium text-white/60">
-                                Select your preferred language:
-                            </label>
-                            <select
-                                value={selectedLanguage}
-                                onChange={(e) =>
-                                    handleLanguageChange(e.target.value)
-                                }
-                                className="w-full bg-gray-800/20 backdrop-blur-sm text-white py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg 
+                            <div className="space-y-1.5 sm:space-y-2">
+                                <label className="block text-xs sm:text-sm font-medium text-white/60">
+                                    Select your preferred language:
+                                </label>
+                                <select
+                                    value={selectedLanguage}
+                                    onChange={(e) =>
+                                        handleLanguageChange(e.target.value)
+                                    }
+                                    className="w-full bg-gray-800/20 backdrop-blur-sm text-white py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg 
                   border border-gray-700/30 hover:border-amber-500/20
                   focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/20 
                   font-medium transition-all duration-300 appearance-none text-sm sm:text-base
@@ -207,29 +294,38 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                   bg-[length:16px] bg-no-repeat bg-[center_right_1rem]
                   hover:bg-gray-800/30 shadow-sm shadow-amber-500/5
                   hover:shadow-md hover:shadow-amber-500/10"
-                            >
-                                {translationAddon &&
-                                translationAddon.options.length > 0
-                                    ? translationAddon.options.map((option) => (
-                                          <option
-                                              key={option.code}
-                                              value={option.label}
-                                              className="font-medium bg-gray-800"
-                                          >
-                                              {option.label} (+$
-                                              {option.extraCost})
-                                          </option>
-                                      ))
-                                    : TOP_20_LANGUAGES.map((language) => (
-                                          <option
-                                              key={language}
-                                              value={language}
-                                              className="font-medium bg-gray-800"
-                                          >
-                                              {language}
-                                          </option>
-                                      ))}
-                            </select>
+                                >
+                                    {translationAddon &&
+                                    translationAddon.options.length > 0
+                                        ? translationAddon.options.map(
+                                              (option) => (
+                                                  <option
+                                                      key={option.code}
+                                                      value={option.label}
+                                                      className="font-medium bg-gray-800"
+                                                  >
+                                                      {option.label} (
+                                                      {formatPriceDisplay(
+                                                          option
+                                                      )}
+                                                      )
+                                                  </option>
+                                              )
+                                          )
+                                        : TOP_20_LANGUAGES.map((language) => (
+                                              <option
+                                                  key={language}
+                                                  value={language}
+                                                  className="font-medium bg-gray-800"
+                                              >
+                                                  {language}
+                                              </option>
+                                          ))}
+                                </select>
+                                <p className="text-xs text-white/40 mt-1">
+                                    One headphone will be provided for each seat
+                                </p>
+                            </div>
                         </motion.div>
                     )}
                 </div>

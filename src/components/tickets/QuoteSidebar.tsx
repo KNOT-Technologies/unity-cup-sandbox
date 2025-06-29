@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, X, AlertCircle, Ticket } from "lucide-react";
-import type { QuoteState, SeatSelection } from "../../types/tickets";
+import { Clock, X, AlertCircle, Ticket, Headphones } from "lucide-react";
+import type { QuoteState, SeatSelection, QuoteData } from "../../types/tickets";
 
 interface QuoteSidebarProps {
     quoteState: QuoteState;
@@ -9,6 +9,68 @@ interface QuoteSidebarProps {
     onRemoveSeat: (seatId: string) => void;
     onProceedToCheckout?: () => void;
 }
+
+const TranslationSection = ({
+    selections,
+    quote,
+}: {
+    selections: SeatSelection[];
+    quote: QuoteData;
+}) => {
+    // Check if we have any translation preferences in sessionStorage
+    const translationPreference = sessionStorage.getItem(
+        "translationPreference"
+    );
+
+    if (!translationPreference || selections.length === 0) return null;
+
+    try {
+        const preference = JSON.parse(translationPreference);
+
+        if (!preference.needed || !preference.language) return null;
+
+        const count = selections.length;
+        const price = preference.prices
+            ? quote.total.currency === "USD"
+                ? preference.prices.USD
+                : preference.prices.EGP
+            : quote.total.currency === "USD"
+            ? 3
+            : 50;
+
+        const currencySymbol = quote.total.currency === "USD" ? "$" : "EGP";
+
+        return (
+            <div className="mt-4">
+                <div className="flex items-center gap-2 mb-2">
+                    <Headphones className="w-4 h-4 text-amber-400" />
+                    <h4 className="text-sm font-medium text-white/90">
+                        Translation Headphones
+                    </h4>
+                </div>
+
+                <div className="p-3 bg-gray-800/40 rounded-lg border border-gray-700/30">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <div className="text-white font-medium">
+                                {preference.language}
+                            </div>
+                            <div className="text-xs text-white/60 mt-1">
+                                {count} × headphone{count > 1 ? "s" : ""} (one
+                                per seat)
+                            </div>
+                        </div>
+                        <span className="text-amber-400 font-medium">
+                            {currencySymbol} {price * count}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    } catch {
+        return null;
+    }
+};
 
 const QuoteSidebar = ({
     quoteState,
@@ -25,9 +87,11 @@ const QuoteSidebar = ({
         return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
     };
 
+    // With a 600-second (10-minute) hold we widen the warning windows.
+    // Green: more than 5 min left, Yellow: 2–5 min, Red: <2 min.
     const getTimeColor = (seconds: number) => {
-        if (seconds > 60) return "text-green-400";
-        if (seconds > 30) return "text-yellow-400";
+        if (seconds > 300) return "text-green-400";
+        if (seconds > 120) return "text-yellow-400";
         return "text-red-400";
     };
 
@@ -175,6 +239,13 @@ const QuoteSidebar = ({
                                     ))}
                                 </AnimatePresence>
 
+                                {quote && (
+                                    <TranslationSection
+                                        selections={selections}
+                                        quote={quote}
+                                    />
+                                )}
+
                                 {selections.length === 6 && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
@@ -201,19 +272,31 @@ const QuoteSidebar = ({
                                 </h4>
 
                                 <div className="space-y-2">
-                                    {quote.lines.map((line, index) => (
+                                    {selections.map((selection, index) => (
                                         <div
                                             key={index}
                                             className="flex justify-between text-sm"
                                         >
                                             <span className="text-white/70">
-                                                {line.label}
+                                                {selection.seat.zone === "vip"
+                                                    ? "VIP"
+                                                    : "Regular"}{" "}
+                                                •{" "}
+                                                {quote.total.currency === "USD"
+                                                    ? "Tourist"
+                                                    : "Local"}{" "}
+                                                {selection.ticketType
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                    selection.ticketType.slice(
+                                                        1
+                                                    )}
                                             </span>
                                             <span className="text-amber-400 font-medium">
-                                                {line.currency === "USD"
+                                                {quote.total.currency === "USD"
                                                     ? "$"
                                                     : "EGP"}{" "}
-                                                {line.amount}
+                                                {selection.price}
                                             </span>
                                         </div>
                                     ))}
@@ -229,7 +312,60 @@ const QuoteSidebar = ({
                                         {quote.total.currency === "USD"
                                             ? "$"
                                             : "EGP"}{" "}
-                                        {quote.total.amount}
+                                        {(() => {
+                                            // Calculate tickets total
+                                            const ticketsTotal =
+                                                selections.reduce(
+                                                    (total, selection) =>
+                                                        total + selection.price,
+                                                    0
+                                                );
+
+                                            // Calculate headphones total if needed
+                                            let headphonesTotal = 0;
+                                            try {
+                                                const translationPreference =
+                                                    sessionStorage.getItem(
+                                                        "translationPreference"
+                                                    );
+                                                if (translationPreference) {
+                                                    const preference =
+                                                        JSON.parse(
+                                                            translationPreference
+                                                        );
+                                                    if (
+                                                        preference.needed &&
+                                                        preference.language
+                                                    ) {
+                                                        const price =
+                                                            preference.prices
+                                                                ? quote.total
+                                                                      .currency ===
+                                                                  "USD"
+                                                                    ? preference
+                                                                          .prices
+                                                                          .USD
+                                                                    : preference
+                                                                          .prices
+                                                                          .EGP
+                                                                : quote.total
+                                                                      .currency ===
+                                                                  "USD"
+                                                                ? 3
+                                                                : 50;
+                                                        headphonesTotal =
+                                                            price *
+                                                            selections.length;
+                                                    }
+                                                }
+                                            } catch {
+                                                // Ignore errors
+                                            }
+
+                                            return (
+                                                ticketsTotal + headphonesTotal
+                                            );
+                                        })()}
                                     </span>
                                 </div>
                             </motion.div>
@@ -254,17 +390,18 @@ const QuoteSidebar = ({
                             <div className="w-full bg-gray-700/30 rounded-full h-1">
                                 <motion.div
                                     className={`h-1 rounded-full transition-colors duration-300 ${
-                                        timeRemaining > 60
+                                        timeRemaining > 300
                                             ? "bg-green-400"
-                                            : timeRemaining > 30
+                                            : timeRemaining > 120
                                             ? "bg-yellow-400"
                                             : "bg-red-400"
                                     }`}
                                     initial={{ width: "100%" }}
                                     animate={{
+                                        // 600 s is the full duration now.
                                         width: `${Math.max(
                                             0,
-                                            (timeRemaining / 90) * 100
+                                            (timeRemaining / 600) * 100
                                         )}%`,
                                     }}
                                     transition={{ duration: 1, ease: "linear" }}
@@ -283,7 +420,56 @@ const QuoteSidebar = ({
                                         focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
                                 >
                                     Proceed to Checkout • {currency}{" "}
-                                    {quote.total.amount}
+                                    {(() => {
+                                        // Calculate tickets total
+                                        const ticketsTotal = selections.reduce(
+                                            (total, selection) =>
+                                                total + selection.price,
+                                            0
+                                        );
+
+                                        // Calculate headphones total if needed
+                                        let headphonesTotal = 0;
+                                        try {
+                                            const translationPreference =
+                                                sessionStorage.getItem(
+                                                    "translationPreference"
+                                                );
+                                            if (translationPreference) {
+                                                const preference = JSON.parse(
+                                                    translationPreference
+                                                );
+                                                if (
+                                                    preference.needed &&
+                                                    preference.language
+                                                ) {
+                                                    const price =
+                                                        preference.prices
+                                                            ? quote.total
+                                                                  .currency ===
+                                                              "USD"
+                                                                ? preference
+                                                                      .prices
+                                                                      .USD
+                                                                : preference
+                                                                      .prices
+                                                                      .EGP
+                                                            : quote.total
+                                                                  .currency ===
+                                                              "USD"
+                                                            ? 3
+                                                            : 50;
+                                                    headphonesTotal =
+                                                        price *
+                                                        selections.length;
+                                                }
+                                            }
+                                        } catch {
+                                            // Ignore errors
+                                        }
+
+                                        return ticketsTotal + headphonesTotal;
+                                    })()}
                                 </motion.button>
                             )}
                         </div>

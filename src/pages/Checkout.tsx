@@ -1,25 +1,89 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, ArrowLeft, AlertCircle, Clock } from "lucide-react";
+import {
+    CreditCard,
+    ArrowLeft,
+    AlertCircle,
+    Clock,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { processCheckout } from "../api/knot";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
-import type { QuoteData, AddonSelection } from "../types/tickets";
+import type { QuoteData, SeatSelection } from "../types/tickets";
+
+interface AddonWithPrice {
+    seat: string;
+    addonId: string;
+    optionCode: string;
+    addonName?: string;
+    optionLabel?: string;
+    price?: {
+        EGP: number;
+        USD: number;
+    };
+}
+
+// New: Ticket holder details interface
+interface TicketHolder {
+    fullName: string;
+    dateOfBirth: string;
+    nationality: string;
+    email: string;
+    open: boolean; // for accordion
+}
+
+// New: Validation errors interface
+interface ValidationErrors {
+    [ticketIndex: number]: {
+        fullName?: string;
+        dateOfBirth?: string;
+        nationality?: string;
+        email?: string;
+    };
+}
+
+const NATIONALITIES = [
+    "Egyptian",
+    "American",
+    "British",
+    "Canadian",
+    "French",
+    "German",
+    "Italian",
+    "Spanish",
+    "Australian",
+    "Japanese",
+    "Chinese",
+    "Indian",
+    "Brazilian",
+    "Mexican",
+    "Russian",
+    "Saudi Arabian",
+    "Emirati",
+    "Lebanese",
+    "Jordanian",
+    "Other",
+];
 
 const Checkout = () => {
     const navigate = useNavigate();
     const { toasts, removeToast, showError } = useToast();
 
     const [quote, setQuote] = useState<QuoteData | null>(null);
-    const [email, setEmail] = useState("");
-    const [userName, setUserName] = useState("");
-    const [dateOfBirth, setDateOfBirth] = useState("");
-    const [nationality, setNationality] = useState("");
-    const [addons, setAddons] = useState<AddonSelection[]>([]);
+    const [addons, setAddons] = useState<AddonWithPrice[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [timeRemaining, setTimeRemaining] = useState(0);
+    const [seatSelections, setSeatSelections] = useState<SeatSelection[]>([]);
+    // New: ticket holders state
+    const [ticketHolders, setTicketHolders] = useState<TicketHolder[]>([]);
+    // New: validation errors state
+    const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+        {}
+    );
 
     useEffect(() => {
         // Get quote from sessionStorage
@@ -43,7 +107,39 @@ const Checkout = () => {
         if (storedAddons) {
             setAddons(JSON.parse(storedAddons));
         }
+
+        // Get stored seat selections if any
+        const storedSelections = sessionStorage.getItem("seatSelections");
+        if (storedSelections) {
+            setSeatSelections(JSON.parse(storedSelections));
+        }
+
+        // Clear translation preferences from sessionStorage
+        sessionStorage.removeItem("translationPreference");
     }, [navigate]);
+
+    // New: Initialize ticket holders when seatSelections or quote changes
+    useEffect(() => {
+        const count =
+            seatSelections.length > 0
+                ? seatSelections.length
+                : quote?.lines.length || 0;
+        setTicketHolders((prev) => {
+            if (prev.length === count) return prev;
+            // Fill with empty details, keep previous if possible
+            return Array.from(
+                { length: count },
+                (_, i) =>
+                    prev[i] || {
+                        fullName: "",
+                        dateOfBirth: "",
+                        nationality: isTouristPricing() ? "" : "Egyptian",
+                        email: "",
+                        open: true, // all forms open by default
+                    }
+            );
+        });
+    }, [seatSelections, quote]);
 
     // Timer countdown
     useEffect(() => {
@@ -78,28 +174,198 @@ const Checkout = () => {
         return "text-red-400";
     };
 
+    // Determine if the user selected tourist or local seats
+    const isTouristPricing = () => {
+        if (!quote) return false;
+        return (
+            quote.lines.some((line) =>
+                line.label.toLowerCase().includes("tourist")
+            ) || quote.total.currency === "USD"
+        );
+    };
+
     const calculateAddonTotal = () => {
-        // This would be calculated based on real addon data
-        // For now, using a placeholder
-        return addons.length * 50; // $50 per addon
+        // Sum up prices based on the user type (tourist or local)
+        const currencyKey = isTouristPricing() ? "USD" : "EGP";
+
+        return addons.reduce((total, addon) => {
+            if (addon.price) {
+                return total + addon.price[currencyKey];
+            }
+            // Fallback to fixed price if no price info
+            return total + (currencyKey === "USD" ? 3 : 50);
+        }, 0);
     };
 
     const calculateTotal = () => {
+        // Calculate the total based on the actual seat selections
+        if (seatSelections.length > 0) {
+            const ticketsTotal = seatSelections.reduce(
+                (sum, selection) => sum + selection.price,
+                0
+            );
+            return ticketsTotal + calculateAddonTotal();
+        }
+
+        // Fallback to quote total if seat selections are not available
         if (!quote) return 0;
         return quote.total.amount + calculateAddonTotal();
+    };
+
+    // Get the appropriate currency symbol
+    const getCurrencySymbol = () => {
+        if (!quote) return "£";
+        return quote.total.currency === "USD" ? "$" : "£";
+    };
+
+    // Helper function to calculate age from date of birth
+    const calculateAge = (dateOfBirth: string) => {
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (
+            monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < birthDate.getDate())
+        ) {
+            age--;
+        }
+
+        return age;
+    };
+
+    // Helper function to get ticket type from index
+    const getTicketTypeForIndex = (index: number) => {
+        return (
+            seatSelections[index]?.ticketType ||
+            quote?.lines[index]?.label?.toLowerCase() ||
+            ""
+        );
+    };
+
+    // New: Validation function
+    const validateTicketHolders = () => {
+        const errors: ValidationErrors = {};
+        let hasErrors = false;
+
+        ticketHolders.forEach((holder, index) => {
+            const holderErrors: {
+                fullName?: string;
+                dateOfBirth?: string;
+                nationality?: string;
+                email?: string;
+            } = {};
+
+            // Validate full name
+            if (!holder.fullName.trim()) {
+                holderErrors.fullName = "Full name is required";
+                hasErrors = true;
+            }
+
+            // Validate date of birth
+            if (!holder.dateOfBirth.trim()) {
+                holderErrors.dateOfBirth = "Date of birth is required";
+                hasErrors = true;
+            } else {
+                // Age validation based on ticket type
+                const age = calculateAge(holder.dateOfBirth);
+                const ticketType = getTicketTypeForIndex(index).toLowerCase();
+
+                if (ticketType.includes("senior")) {
+                    console.log(age);
+                    if (age < 80) {
+                        holderErrors.dateOfBirth =
+                            "Senior tickets require age 80 or above";
+                        hasErrors = true;
+                    }
+                } else if (ticketType.includes("adult")) {
+                    if (age < 18 || age >= 80) {
+                        holderErrors.dateOfBirth =
+                            "Adult tickets require age between 18-79";
+                        hasErrors = true;
+                    }
+                } else if (ticketType.includes("student")) {
+                    if (age < 16 || age >= 30) {
+                        holderErrors.dateOfBirth =
+                            "Student tickets require age between 16-29";
+                        hasErrors = true;
+                    }
+                } else if (ticketType.includes("child")) {
+                    if (age >= 16) {
+                        holderErrors.dateOfBirth =
+                            "Child tickets require age under 16";
+                        hasErrors = true;
+                    }
+                }
+            }
+
+            // Validate nationality
+            if (!holder.nationality.trim()) {
+                holderErrors.nationality = "Nationality is required";
+                hasErrors = true;
+            }
+
+            // Validate email - only for first ticket holder
+            if (index === 0) {
+                if (!holder.email.trim()) {
+                    holderErrors.email = "Email address is required";
+                    hasErrors = true;
+                } else if (
+                    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(holder.email.trim())
+                ) {
+                    holderErrors.email = "Please enter a valid email address";
+                    hasErrors = true;
+                }
+            }
+
+            if (Object.keys(holderErrors).length > 0) {
+                errors[index] = holderErrors;
+            }
+        });
+
+        setValidationErrors(errors);
+        return !hasErrors;
+    };
+
+    // New: Clear validation error for specific field
+    const clearValidationError = (
+        ticketIndex: number,
+        field: keyof Omit<TicketHolder, "open">
+    ) => {
+        setValidationErrors((prev) => {
+            const newErrors = { ...prev };
+            if (newErrors[ticketIndex]) {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [field]: _removed, ...rest } = newErrors[ticketIndex];
+                if (Object.keys(rest).length === 0) {
+                    delete newErrors[ticketIndex];
+                } else {
+                    newErrors[ticketIndex] = rest;
+                }
+            }
+            return newErrors;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (
-            !quote ||
-            !email.trim() ||
-            !userName.trim() ||
-            !dateOfBirth.trim() ||
-            !nationality.trim()
-        ) {
-            setError("Please fill in all required fields");
+        if (!quote) {
+            setError("Quote not found. Please try again.");
+            return;
+        }
+
+        // Validate all fields
+        if (!validateTicketHolders()) {
+            setError("Please fill in all required fields correctly");
+            // Auto-open sections with errors
+            setTicketHolders((prev) =>
+                prev.map((holder, index) => ({
+                    ...holder,
+                    open: validationErrors[index] ? true : holder.open,
+                }))
+            );
             return;
         }
 
@@ -116,10 +382,12 @@ const Checkout = () => {
             const checkoutResponse = await processCheckout({
                 quoteId: quote.quoteId,
                 paymentMethod: "card",
-                email: email.trim(),
-                userName: userName.trim(),
-                dateOfBirth: dateOfBirth.trim(),
-                nationality: nationality.trim(),
+                ticketHolders: ticketHolders.map((holder, index) => ({
+                    fullName: holder.fullName.trim(),
+                    dateOfBirth: holder.dateOfBirth.trim(),
+                    nationality: holder.nationality.trim(),
+                    email: index === 0 ? holder.email.trim() : "",
+                })),
                 redirectionUrl: `${window.location.origin}/success`,
                 addons: addons.length > 0 ? addons : undefined,
             });
@@ -134,10 +402,16 @@ const Checkout = () => {
                             amount: calculateTotal(),
                             currency: quote.total.currency,
                         },
-                        email: email.trim(),
-                        userName: userName.trim(),
-                        dateOfBirth: dateOfBirth.trim(),
-                        nationality: nationality.trim(),
+                        email: ticketHolders[0].email.trim(),
+                        userName: ticketHolders
+                            .map((holder) => holder.fullName.trim())
+                            .join(","),
+                        dateOfBirth: ticketHolders
+                            .map((holder) => holder.dateOfBirth.trim())
+                            .join(","),
+                        nationality: ticketHolders
+                            .map((holder) => holder.nationality.trim())
+                            .join(","),
                     },
                 },
             });
@@ -156,7 +430,26 @@ const Checkout = () => {
         }
     };
 
-    const currency = quote?.total.currency === "USD" ? "$" : "EGP";
+    // Updated: handle ticket holder field change with validation clearing
+    const handleTicketHolderChange = (
+        idx: number,
+        field: keyof TicketHolder,
+        value: string | boolean
+    ) => {
+        setTicketHolders((prev) =>
+            prev.map((holder, i) =>
+                i === idx ? { ...holder, [field]: value } : holder
+            )
+        );
+
+        // Clear validation error when user starts typing
+        if (typeof value === "string" && value.trim() && field !== "open") {
+            clearValidationError(
+                idx,
+                field as keyof Omit<TicketHolder, "open">
+            );
+        }
+    };
 
     if (!quote) {
         return (
@@ -219,215 +512,235 @@ const Checkout = () => {
                             </motion.div>
                         )}
 
+                        {/* Multiple ticket holder forms */}
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Full Name Input */}
-                            <div>
-                                <label className="block text-sm font-medium text-white/60 mb-2">
-                                    Full Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={userName}
-                                    onChange={(e) =>
-                                        setUserName(e.target.value)
-                                    }
-                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-4 py-3
-                    text-white placeholder-white/40 focus:outline-none focus:ring-2 
-                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
-                                    placeholder="John Smith"
-                                    required
-                                />
-                                <p className="text-sm text-white/40 mt-2">
-                                    Name that will appear on your tickets
-                                </p>
-                            </div>
+                            {ticketHolders.map((holder, idx) => {
+                                const ticketType =
+                                    seatSelections[idx]?.ticketType ||
+                                    quote?.lines[idx]?.label ||
+                                    "Ticket";
+                                // Nationality logic
+                                const tourist = isTouristPricing();
+                                const nationalityOptions = tourist
+                                    ? NATIONALITIES.filter(
+                                          (n) => n !== "Egyptian"
+                                      )
+                                    : ["Egyptian"];
 
-                            {/* Date of Birth Input */}
-                            <div>
-                                <label className="block text-sm font-medium text-white/60 mb-2">
-                                    Date of Birth
-                                </label>
-                                <input
-                                    type="date"
-                                    value={dateOfBirth}
-                                    onChange={(e) =>
-                                        setDateOfBirth(e.target.value)
-                                    }
-                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-4 py-3
-                    text-white placeholder-white/40 focus:outline-none focus:ring-2 
-                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
-                                    required
-                                />
-                                <p className="text-sm text-white/40 mt-2">
-                                    Required for ticket validation
-                                </p>
-                            </div>
+                                const errors = validationErrors[idx] || {};
+                                const hasErrors =
+                                    Object.keys(errors).length > 0;
 
-                            {/* Nationality Input */}
-                            <div>
-                                <label className="block text-sm font-medium text-white/60 mb-2">
-                                    Nationality
-                                </label>
-                                <select
-                                    value={nationality}
-                                    onChange={(e) =>
-                                        setNationality(e.target.value)
-                                    }
-                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-4 py-3
-                    text-white focus:outline-none focus:ring-2 
-                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
-                                    required
-                                >
-                                    <option value="" className="bg-gray-800">
-                                        Select your nationality
-                                    </option>
-                                    <option
-                                        value="Egyptian"
-                                        className="bg-gray-800"
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`mb-4 border rounded-lg ${
+                                            hasErrors
+                                                ? "border-red-500/50 bg-red-500/5"
+                                                : "border-gray-700/30"
+                                        }`}
                                     >
-                                        Egyptian
-                                    </option>
-                                    <option
-                                        value="American"
-                                        className="bg-gray-800"
-                                    >
-                                        American
-                                    </option>
-                                    <option
-                                        value="British"
-                                        className="bg-gray-800"
-                                    >
-                                        British
-                                    </option>
-                                    <option
-                                        value="Canadian"
-                                        className="bg-gray-800"
-                                    >
-                                        Canadian
-                                    </option>
-                                    <option
-                                        value="French"
-                                        className="bg-gray-800"
-                                    >
-                                        French
-                                    </option>
-                                    <option
-                                        value="German"
-                                        className="bg-gray-800"
-                                    >
-                                        German
-                                    </option>
-                                    <option
-                                        value="Italian"
-                                        className="bg-gray-800"
-                                    >
-                                        Italian
-                                    </option>
-                                    <option
-                                        value="Spanish"
-                                        className="bg-gray-800"
-                                    >
-                                        Spanish
-                                    </option>
-                                    <option
-                                        value="Australian"
-                                        className="bg-gray-800"
-                                    >
-                                        Australian
-                                    </option>
-                                    <option
-                                        value="Japanese"
-                                        className="bg-gray-800"
-                                    >
-                                        Japanese
-                                    </option>
-                                    <option
-                                        value="Chinese"
-                                        className="bg-gray-800"
-                                    >
-                                        Chinese
-                                    </option>
-                                    <option
-                                        value="Indian"
-                                        className="bg-gray-800"
-                                    >
-                                        Indian
-                                    </option>
-                                    <option
-                                        value="Brazilian"
-                                        className="bg-gray-800"
-                                    >
-                                        Brazilian
-                                    </option>
-                                    <option
-                                        value="Mexican"
-                                        className="bg-gray-800"
-                                    >
-                                        Mexican
-                                    </option>
-                                    <option
-                                        value="Russian"
-                                        className="bg-gray-800"
-                                    >
-                                        Russian
-                                    </option>
-                                    <option
-                                        value="Saudi Arabian"
-                                        className="bg-gray-800"
-                                    >
-                                        Saudi Arabian
-                                    </option>
-                                    <option
-                                        value="Emirati"
-                                        className="bg-gray-800"
-                                    >
-                                        Emirati
-                                    </option>
-                                    <option
-                                        value="Lebanese"
-                                        className="bg-gray-800"
-                                    >
-                                        Lebanese
-                                    </option>
-                                    <option
-                                        value="Jordanian"
-                                        className="bg-gray-800"
-                                    >
-                                        Jordanian
-                                    </option>
-                                    <option
-                                        value="Other"
-                                        className="bg-gray-800"
-                                    >
-                                        Other
-                                    </option>
-                                </select>
-                                <p className="text-sm text-white/40 mt-2">
-                                    Required for entry documentation
-                                </p>
-                            </div>
-
-                            {/* Email Input */}
-                            <div>
-                                <label className="block text-sm font-medium text-white/60 mb-2">
-                                    Email Address
-                                </label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-gray-800/30 border border-gray-700/30 rounded-lg px-4 py-3
-                    text-white placeholder-white/40 focus:outline-none focus:ring-2 
-                    focus:ring-amber-500/50 focus:border-amber-500/30 transition-all duration-300"
-                                    placeholder="your@email.com"
-                                    required
-                                />
-                                <p className="text-sm text-white/40 mt-2">
-                                    Your tickets will be sent to this email
-                                    address
-                                </p>
-                            </div>
-
+                                        <button
+                                            type="button"
+                                            className={`w-full flex justify-between items-center px-4 py-3 rounded-t-lg focus:outline-none ${
+                                                hasErrors
+                                                    ? "bg-red-500/10"
+                                                    : "bg-gray-800/40"
+                                            }`}
+                                            onClick={() =>
+                                                handleTicketHolderChange(
+                                                    idx,
+                                                    "open",
+                                                    !holder.open
+                                                )
+                                            }
+                                        >
+                                            <span
+                                                className={`font-medium ${
+                                                    hasErrors
+                                                        ? "text-red-400"
+                                                        : "text-white/90"
+                                                }`}
+                                            >
+                                                Ticket {idx + 1}: {ticketType}
+                                            </span>
+                                            {holder.open ? (
+                                                <ChevronUp className="w-4 h-4" />
+                                            ) : (
+                                                <ChevronDown className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                        {holder.open && (
+                                            <div className="p-4 space-y-4">
+                                                {/* Full Name Input */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-white/60 mb-2">
+                                                        Full Name *
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={holder.fullName}
+                                                        onChange={(e) =>
+                                                            handleTicketHolderChange(
+                                                                idx,
+                                                                "fullName",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className={`w-full border rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                                                            errors.fullName
+                                                                ? "bg-red-500/10 border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50"
+                                                                : "bg-gray-800/30 border-gray-700/30 focus:ring-amber-500/50 focus:border-amber-500/30"
+                                                        }`}
+                                                        placeholder="John Smith"
+                                                        required
+                                                    />
+                                                    {errors.fullName ? (
+                                                        <p className="text-sm text-red-400 mt-1">
+                                                            {errors.fullName}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-sm text-white/40 mt-2">
+                                                            Name that will
+                                                            appear on your
+                                                            tickets
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                {/* Date of Birth Input */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-white/60 mb-2">
+                                                        Date of Birth *
+                                                    </label>
+                                                    <input
+                                                        type="date"
+                                                        value={
+                                                            holder.dateOfBirth
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleTicketHolderChange(
+                                                                idx,
+                                                                "dateOfBirth",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className={`w-full border rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                                                            errors.dateOfBirth
+                                                                ? "bg-red-500/10 border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50"
+                                                                : "bg-gray-800/30 border-gray-700/30 focus:ring-amber-500/50 focus:border-amber-500/30"
+                                                        }`}
+                                                        required
+                                                    />
+                                                    {errors.dateOfBirth ? (
+                                                        <p className="text-sm text-red-400 mt-1">
+                                                            {errors.dateOfBirth}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-sm text-white/40 mt-2">
+                                                            Required for ticket
+                                                            validation
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                {/* Nationality Input */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-white/60 mb-2">
+                                                        Nationality *
+                                                    </label>
+                                                    <select
+                                                        value={
+                                                            holder.nationality
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleTicketHolderChange(
+                                                                idx,
+                                                                "nationality",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className={`w-full border rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 transition-all duration-300 ${
+                                                            errors.nationality
+                                                                ? "bg-red-500/10 border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50"
+                                                                : "bg-gray-800/30 border-gray-700/30 focus:ring-amber-500/50 focus:border-amber-500/30"
+                                                        }`}
+                                                        required
+                                                        disabled={!tourist}
+                                                    >
+                                                        <option
+                                                            value=""
+                                                            className="bg-gray-800"
+                                                        >
+                                                            {tourist
+                                                                ? "Select your nationality"
+                                                                : "Egyptian"}
+                                                        </option>
+                                                        {nationalityOptions.map(
+                                                            (nat) => (
+                                                                <option
+                                                                    key={nat}
+                                                                    value={nat}
+                                                                    className="bg-gray-800"
+                                                                >
+                                                                    {nat}
+                                                                </option>
+                                                            )
+                                                        )}
+                                                    </select>
+                                                    {errors.nationality ? (
+                                                        <p className="text-sm text-red-400 mt-1">
+                                                            {errors.nationality}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-sm text-white/40 mt-2">
+                                                            Required for entry
+                                                            documentation
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                {/* Email Input - Only show for first ticket holder */}
+                                                {idx === 0 && (
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-white/60 mb-2">
+                                                            Email Address *
+                                                        </label>
+                                                        <input
+                                                            type="email"
+                                                            value={holder.email}
+                                                            onChange={(e) =>
+                                                                handleTicketHolderChange(
+                                                                    idx,
+                                                                    "email",
+                                                                    e.target
+                                                                        .value
+                                                                )
+                                                            }
+                                                            className={`w-full border rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-all duration-300 ${
+                                                                errors.email
+                                                                    ? "bg-red-500/10 border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50"
+                                                                    : "bg-gray-800/30 border-gray-700/30 focus:ring-amber-500/50 focus:border-amber-500/30"
+                                                            }`}
+                                                            placeholder="your@email.com"
+                                                            required
+                                                        />
+                                                        {errors.email ? (
+                                                            <p className="text-sm text-red-400 mt-1">
+                                                                {errors.email}
+                                                            </p>
+                                                        ) : (
+                                                            <p className="text-sm text-white/40 mt-2">
+                                                                Your tickets
+                                                                will be sent to
+                                                                this email
+                                                                address
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                             {/* Payment Method */}
                             <div>
                                 <label className="block text-sm font-medium text-white/60 mb-2">
@@ -447,14 +760,11 @@ const Checkout = () => {
                                     </div>
                                 </div>
                             </div>
-
                             {/* Submit Button */}
                             <button
                                 type="submit"
                                 disabled={loading || timeRemaining < 5}
-                                className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 
-                  disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg 
-                  transition-colors duration-300 flex items-center justify-center gap-2"
+                                className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors duration-300 flex items-center justify-center gap-2"
                             >
                                 {loading ? (
                                     <>
@@ -468,7 +778,6 @@ const Checkout = () => {
                                     </>
                                 )}
                             </button>
-
                             {timeRemaining < 30 && timeRemaining > 0 && (
                                 <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                                     <p className="text-yellow-400 text-sm">
@@ -504,31 +813,75 @@ const Checkout = () => {
                         </div>
 
                         <div className="space-y-4">
-                            {/* Quote Lines */}
-                            {quote.lines.map((line, index) => (
-                                <div
-                                    key={index}
-                                    className="flex justify-between text-sm"
-                                >
-                                    <span className="text-white/80">
-                                        {line.label}
-                                    </span>
-                                    <span className="text-white">
-                                        {currency} {line.amount}
-                                    </span>
-                                </div>
-                            ))}
+                            {/* Use seat selections for accurate ticket information */}
+                            {seatSelections.length > 0
+                                ? seatSelections.map((selection, index) => (
+                                      <div
+                                          key={index}
+                                          className="flex justify-between text-sm"
+                                      >
+                                          <span className="text-white/80">
+                                              {selection.seat.zone === "vip"
+                                                  ? "VIP"
+                                                  : "Regular"}{" "}
+                                              • Row {selection.seat.row}, Seat{" "}
+                                              {selection.seat.number}
+                                              <br />
+                                              <span className="text-white/60 capitalize">
+                                                  {selection.ticketType}
+                                              </span>
+                                          </span>
+                                          <span className="text-white">
+                                              {getCurrencySymbol()}{" "}
+                                              {selection.price}
+                                          </span>
+                                      </div>
+                                  ))
+                                : // Fallback to quote lines if no seat selections available
+                                  quote?.lines.map((line, index) => (
+                                      <div
+                                          key={index}
+                                          className="flex justify-between text-sm"
+                                      >
+                                          <span className="text-white/80">
+                                              {line.label}
+                                          </span>
+                                          <span className="text-white">
+                                              {getCurrencySymbol()}{" "}
+                                              {line.amount}
+                                          </span>
+                                      </div>
+                                  ))}
 
                             {/* Add-ons */}
                             {addons.length > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-white/80">
-                                        Translation Headphones ({addons.length})
-                                    </span>
-                                    <span className="text-white">
-                                        {currency} {calculateAddonTotal()}
-                                    </span>
-                                </div>
+                                <>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-white/80 font-medium">
+                                            Add-ons
+                                        </span>
+                                    </div>
+                                    {addons.map((addon, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex justify-between text-sm pl-2"
+                                        >
+                                            <span className="text-white/80">
+                                                {addon.addonName ||
+                                                    "Translation Headphone"}{" "}
+                                                -{" "}
+                                                {addon.optionLabel ||
+                                                    "Selected Language"}
+                                            </span>
+                                            <span className="text-white">
+                                                {getCurrencySymbol()}{" "}
+                                                {isTouristPricing()
+                                                    ? addon.price?.USD || 3
+                                                    : addon.price?.EGP || 50}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </>
                             )}
 
                             <div className="border-t border-gray-700/30 pt-4">
@@ -537,7 +890,7 @@ const Checkout = () => {
                                         Total
                                     </span>
                                     <span className="text-lg font-medium text-amber-400">
-                                        {currency} {calculateTotal()}
+                                        {getCurrencySymbol()} {calculateTotal()}
                                     </span>
                                 </div>
                             </div>

@@ -121,7 +121,11 @@ export interface SeatSelection {
 export interface AddonOption {
   code: string;
   label: string;
-  extraCost: number;
+  extraCost?: number; // Make optional for backward compatibility
+  prices?: {
+    EGP: number;
+    USD: number;
+  };
 }
 
 export interface Addon {

@@ -23,6 +23,10 @@ import { ToastContainer } from "../components/common/Toast";
 interface TranslationPreference {
     needed: boolean;
     language?: string;
+    prices?: {
+        EGP: number;
+        USD: number;
+    };
 }
 
 const Tickets = () => {
@@ -224,6 +228,17 @@ const Tickets = () => {
         quoteState.createQuote(newSelections, userType);
     };
 
+    // Handle user type changes - only allow if no seats are selected
+    const handleUserTypeChange = (newUserType: UserType) => {
+        if (seatSelections.length > 0) {
+            showWarning(
+                `You can only select ${userType} tickets for this order`
+            );
+            return;
+        }
+        setUserType(newUserType);
+    };
+
     const handleSeatRemove = (seatId: string) => {
         const newSelections = seatSelections.filter(
             (selection) => selection.seat.id !== seatId
@@ -240,7 +255,31 @@ const Tickets = () => {
     };
 
     const handleTranslationChange = (needed: boolean, language?: string) => {
-        setTranslationPreference({ needed, language });
+        // Default prices if not provided from API
+        const defaultPrices = {
+            EGP: 50,
+            USD: 3,
+        };
+
+        const preference = {
+            needed,
+            language,
+            prices: defaultPrices, // In a real app, these would come from the API
+        };
+
+        // Update state
+        setTranslationPreference(preference);
+
+        // Store in sessionStorage for other components to access
+        if (needed && language) {
+            sessionStorage.setItem(
+                "translationPreference",
+                JSON.stringify(preference)
+            );
+        } else {
+            // Clear if translation is not needed
+            sessionStorage.removeItem("translationPreference");
+        }
     };
 
     const handleProceedToCheckout = () => {
@@ -252,24 +291,40 @@ const Tickets = () => {
             JSON.stringify(quoteState.quote)
         );
 
+        // Store seat selections for accurate price breakdown
+        sessionStorage.setItem(
+            "seatSelections",
+            JSON.stringify(seatSelections)
+        );
+
+        // Clear any previous addon selections
+        sessionStorage.removeItem("selectedAddons");
+
         // Convert translation preferences to addon selections if needed
         if (translationPreference.needed && translationPreference.language) {
-            const seatLabels = seatSelections.map(
-                (selection) => `${selection.seat.row}-${selection.seat.number}`
-            );
-            // Create placeholder addon selections - real addon IDs would come from the API
-            const addonSelections = seatLabels.map((seatLabel) => ({
-                seat: seatLabel,
-                addonId: "translation-headphone-addon-id", // This would be the real addon ID from the API
-                optionCode:
-                    translationPreference.language
-                        ?.toLowerCase()
-                        .substring(0, 2) || "en",
-            }));
-            sessionStorage.setItem(
-                "selectedAddons",
-                JSON.stringify(addonSelections)
-            );
+            // Create one addon selection per seat
+            const addonSelections = seatSelections.map((selection) => {
+                const seatLabel = `${selection.seat.row}-${selection.seat.number}`;
+
+                return {
+                    seat: seatLabel,
+                    addonId: "translation-headphone-addon-id", // This would be the real addon ID from the API
+                    optionCode:
+                        translationPreference.language
+                            ?.toLowerCase()
+                            .substring(0, 2) || "en",
+                    addonName: "Translation Headphone",
+                    optionLabel: translationPreference.language,
+                    price: translationPreference.prices,
+                };
+            });
+
+            if (addonSelections.length > 0) {
+                sessionStorage.setItem(
+                    "selectedAddons",
+                    JSON.stringify(addonSelections)
+                );
+            }
         }
 
         // Mark that user is going to checkout so we can detect return
@@ -341,6 +396,9 @@ const Tickets = () => {
                                 onTranslationChange={handleTranslationChange}
                                 occurrenceId={selectedOccurrenceId}
                                 className="h-full"
+                                currency={
+                                    userType === "tourist" ? "USD" : "EGP"
+                                }
                             />
                         </div>
 
@@ -352,7 +410,7 @@ const Tickets = () => {
                             >
                                 <SeatMap
                                     userType={userType}
-                                    onUserTypeChange={setUserType}
+                                    onUserTypeChange={handleUserTypeChange}
                                     onSeatSelect={handleSeatSelect}
                                     onSeatDeselect={handleSeatRemove}
                                     selectedSeatIds={seatSelections.map(
@@ -360,6 +418,7 @@ const Tickets = () => {
                                     )}
                                     occurrenceId={selectedOccurrenceId}
                                     findPrice={findPrice}
+                                    selectedDate={selectedDate}
                                 />
                             </motion.div>
                         )}
@@ -386,7 +445,6 @@ const Tickets = () => {
                                 !quoteState.hasActiveQuote && (
                                     <TicketSummary
                                         selectedSeats={[]} // Empty array since we're using seatSelections now
-                                        userType={userType}
                                         onRemoveSeat={handleSeatRemove}
                                         className="max-h-[calc(100vh-10rem)] overflow-y-auto"
                                         onProceedToCheckout={
@@ -394,6 +452,9 @@ const Tickets = () => {
                                         }
                                         translationPreference={
                                             translationPreference
+                                        }
+                                        isTouristPricing={
+                                            userType === "tourist"
                                         }
                                     />
                                 )}

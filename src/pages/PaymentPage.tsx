@@ -228,13 +228,16 @@ const PaymentPage = () => {
                             <div className="flex justify-between text-sm">
                                 <span className="text-white/60">Customer</span>
                                 <span className="text-white">
-                                    {paymentData.userName}
+                                    {paymentData.userName
+                                        .split(",")[0]
+                                        ?.trim() || paymentData.userName}
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-white/60">Email</span>
                                 <span className="text-white">
-                                    {paymentData.email}
+                                    {paymentData.email.split(",")[0]?.trim() ||
+                                        paymentData.email}
                                 </span>
                             </div>
                             <div className="border-t border-gray-700/30 pt-3">

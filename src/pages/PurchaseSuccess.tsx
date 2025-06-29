@@ -24,8 +24,11 @@ const PurchaseSuccess = () => {
         if (paymentData) {
             try {
                 const data = JSON.parse(paymentData);
-                setCustomerEmail(data.email || "");
-                setCustomerName(data.userName || "");
+                const firstEmail = (data.email || "").split(",")[0] || "";
+                const firstName = (data.userName || "").split(",")[0] || "";
+
+                setCustomerEmail(firstEmail.trim());
+                setCustomerName(firstName.trim());
                 setTotalAmount(data.total?.amount || 0);
                 setCurrency(data.total?.currency || "USD");
             } catch (error) {
@@ -174,8 +177,7 @@ const PurchaseSuccess = () => {
                                     2. Save to Your Phone
                                 </h4>
                                 <p className="text-white/60 text-sm">
-                                    Add tickets to Apple Wallet or save as
-                                    screenshots for easy access
+                                    Download the tickets to your phone
                                 </p>
                             </div>
                         </div>
