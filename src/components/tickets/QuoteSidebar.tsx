@@ -10,6 +10,48 @@ interface QuoteSidebarProps {
     onProceedToCheckout?: () => void;
 }
 
+// Helper function to calculate total including addons
+const calculateTotal = (selections: SeatSelection[], currency: string) => {
+    // Calculate tickets total
+    const ticketsTotal = selections.reduce(
+        (total, selection) => total + selection.price,
+        0
+    );
+
+    // Calculate headphones total if needed
+    let headphonesTotal = 0;
+    try {
+        const translationPreference = sessionStorage.getItem(
+            "translationPreference"
+        );
+        if (translationPreference) {
+            const preference = JSON.parse(translationPreference);
+            if (
+                preference.needed &&
+                preference.language &&
+                selections.length > 0
+            ) {
+                const price = preference.prices
+                    ? currency === "USD"
+                        ? preference.prices.USD
+                        : preference.prices.EGP
+                    : currency === "USD"
+                    ? 3
+                    : 50;
+                headphonesTotal = price * selections.length;
+            }
+        }
+    } catch {
+        // Ignore errors
+    }
+
+    return {
+        ticketsTotal,
+        headphonesTotal,
+        grandTotal: ticketsTotal + headphonesTotal,
+    };
+};
+
 const TranslationSection = ({
     selections,
     quote,
@@ -300,6 +342,34 @@ const QuoteSidebar = ({
                                             </span>
                                         </div>
                                     ))}
+
+                                    {/* Translation headphones line item */}
+                                    {(() => {
+                                        const { headphonesTotal } =
+                                            calculateTotal(
+                                                selections,
+                                                quote.total.currency
+                                            );
+                                        if (headphonesTotal > 0) {
+                                            const currency =
+                                                quote.total.currency === "USD"
+                                                    ? "$"
+                                                    : "EGP";
+                                            return (
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-white/70">
+                                                        Translation Headphones (
+                                                        {selections.length}×)
+                                                    </span>
+                                                    <span className="text-amber-400 font-medium">
+                                                        {currency}{" "}
+                                                        {headphonesTotal}
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
 
                                 <div className="h-px bg-gradient-to-r from-amber-500/20 via-amber-500/40 to-amber-500/20 my-3"></div>
@@ -312,60 +382,12 @@ const QuoteSidebar = ({
                                         {quote.total.currency === "USD"
                                             ? "$"
                                             : "EGP"}{" "}
-                                        {(() => {
-                                            // Calculate tickets total
-                                            const ticketsTotal =
-                                                selections.reduce(
-                                                    (total, selection) =>
-                                                        total + selection.price,
-                                                    0
-                                                );
-
-                                            // Calculate headphones total if needed
-                                            let headphonesTotal = 0;
-                                            try {
-                                                const translationPreference =
-                                                    sessionStorage.getItem(
-                                                        "translationPreference"
-                                                    );
-                                                if (translationPreference) {
-                                                    const preference =
-                                                        JSON.parse(
-                                                            translationPreference
-                                                        );
-                                                    if (
-                                                        preference.needed &&
-                                                        preference.language
-                                                    ) {
-                                                        const price =
-                                                            preference.prices
-                                                                ? quote.total
-                                                                      .currency ===
-                                                                  "USD"
-                                                                    ? preference
-                                                                          .prices
-                                                                          .USD
-                                                                    : preference
-                                                                          .prices
-                                                                          .EGP
-                                                                : quote.total
-                                                                      .currency ===
-                                                                  "USD"
-                                                                ? 3
-                                                                : 50;
-                                                        headphonesTotal =
-                                                            price *
-                                                            selections.length;
-                                                    }
-                                                }
-                                            } catch {
-                                                // Ignore errors
-                                            }
-
-                                            return (
-                                                ticketsTotal + headphonesTotal
-                                            );
-                                        })()}
+                                        {
+                                            calculateTotal(
+                                                selections,
+                                                quote.total.currency
+                                            ).grandTotal
+                                        }
                                     </span>
                                 </div>
                             </motion.div>
@@ -420,56 +442,12 @@ const QuoteSidebar = ({
                                         focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
                                 >
                                     Proceed to Checkout • {currency}{" "}
-                                    {(() => {
-                                        // Calculate tickets total
-                                        const ticketsTotal = selections.reduce(
-                                            (total, selection) =>
-                                                total + selection.price,
-                                            0
-                                        );
-
-                                        // Calculate headphones total if needed
-                                        let headphonesTotal = 0;
-                                        try {
-                                            const translationPreference =
-                                                sessionStorage.getItem(
-                                                    "translationPreference"
-                                                );
-                                            if (translationPreference) {
-                                                const preference = JSON.parse(
-                                                    translationPreference
-                                                );
-                                                if (
-                                                    preference.needed &&
-                                                    preference.language
-                                                ) {
-                                                    const price =
-                                                        preference.prices
-                                                            ? quote.total
-                                                                  .currency ===
-                                                              "USD"
-                                                                ? preference
-                                                                      .prices
-                                                                      .USD
-                                                                : preference
-                                                                      .prices
-                                                                      .EGP
-                                                            : quote.total
-                                                                  .currency ===
-                                                              "USD"
-                                                            ? 3
-                                                            : 50;
-                                                    headphonesTotal =
-                                                        price *
-                                                        selections.length;
-                                                }
-                                            }
-                                        } catch {
-                                            // Ignore errors
-                                        }
-
-                                        return ticketsTotal + headphonesTotal;
-                                    })()}
+                                    {
+                                        calculateTotal(
+                                            selections,
+                                            quote.total.currency
+                                        ).grandTotal
+                                    }
                                 </motion.button>
                             )}
                         </div>

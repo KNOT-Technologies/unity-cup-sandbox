@@ -248,59 +248,39 @@ const SeatMap = ({
     const renderSeatContent = (seat: Seat) => {
         if (seat.status === SeatStatus.SELECTED) {
             return (
-                <Check className="w-3 h-3 md:w-4 md:h-4 text-white stroke-[3]" />
+                <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 text-white stroke-[3]" />
             );
         }
         return null;
     };
 
-    const renderSeatRow = (
-        row: string,
-        rowSeats: Seat[],
-        maxSeatsPerRow: number
-    ) => {
-        // Calculate dynamic seat distribution
-        const totalSeats = rowSeats.length;
-        const seatsPerSide = Math.ceil(maxSeatsPerRow / 2);
-
+    const renderSeatRow = (row: string, rowSeats: Seat[]) => {
         // Sort seats by number to ensure proper ordering
         const sortedSeats = rowSeats.sort((a, b) => a.number - b.number);
+        const totalSeats = sortedSeats.length;
 
-        // Split seats evenly between first and second half
-        const firstHalfCount = Math.floor(totalSeats / 2);
-        const firstHalf = sortedSeats.slice(0, firstHalfCount);
-        const secondHalf = sortedSeats.slice(firstHalfCount);
-
-        // Create dynamic grid template - removed unused variable
+        // Calculate seats per side more intelligently
+        const seatsPerSide = Math.ceil(totalSeats / 2);
+        const firstHalf = sortedSeats.slice(0, seatsPerSide);
+        const secondHalf = sortedSeats.slice(seatsPerSide);
 
         return (
             <div
                 key={row}
-                className="grid grid-cols-[48px_1fr] gap-2 items-center"
+                className="grid grid-cols-[32px_1fr] sm:grid-cols-[40px_1fr] gap-1 sm:gap-2 items-center"
             >
-                <div className="flex justify-center items-center w-8 h-8 text-white/60 text-sm font-medium bg-gray-800/30 rounded-lg sticky left-0">
+                <div className="flex justify-center items-center w-6 h-6 sm:w-8 sm:h-8 text-white/60 text-xs sm:text-sm font-medium bg-gray-800/30 rounded-lg sticky left-0 z-10">
                     {row}
                 </div>
-                <div
-                    className="justify-center hidden sm:grid"
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${seatsPerSide}, 32px) 48px repeat(${seatsPerSide}, 32px)`,
-                    }}
-                >
-                    {/* First half of seats */}
-                    {Array.from({ length: seatsPerSide }, (_, index) => {
-                        const seat = firstHalf[index];
-                        if (!seat) {
-                            return (
-                                <div
-                                    key={`empty-first-${index}`}
-                                    className="w-6 h-6 mx-auto"
-                                ></div>
-                            );
-                        }
 
-                        return (
+                {/* Desktop version */}
+                <div className="hidden sm:flex items-center justify-center gap-1">
+                    {/* First half container */}
+                    <div
+                        className="flex items-center justify-end gap-1"
+                        style={{ minWidth: `${seatsPerSide * 28}px` }}
+                    >
+                        {firstHalf.map((seat) => (
                             <motion.button
                                 key={seat.id}
                                 onClick={(e) => handleSeatClick(seat, e)}
@@ -310,7 +290,7 @@ const SeatMap = ({
                                 onFocus={() => setFocusedSeat(seat.id)}
                                 onBlur={() => setFocusedSeat(null)}
                                 className={`
-                                    w-6 h-6 rounded-full flex items-center justify-center mx-auto
+                                    w-6 h-6 rounded-full flex items-center justify-center
                                     transition-all duration-300 relative group
                                     ${getSeatColor(seat)}
                                     ${
@@ -341,25 +321,18 @@ const SeatMap = ({
                                         )}
                                 </AnimatePresence>
                             </motion.button>
-                        );
-                    })}
+                        ))}
+                    </div>
 
                     {/* Walkway */}
-                    <div className="w-12 h-6 border-x border-amber-500/20 col-span-1 mx-auto"></div>
+                    <div className="w-12 h-6 border-x border-amber-500/20 mx-2"></div>
 
-                    {/* Second half of seats */}
-                    {Array.from({ length: seatsPerSide }, (_, index) => {
-                        const seat = secondHalf[index];
-                        if (!seat) {
-                            return (
-                                <div
-                                    key={`empty-second-${index}`}
-                                    className="w-6 h-6 mx-auto"
-                                ></div>
-                            );
-                        }
-
-                        return (
+                    {/* Second half container */}
+                    <div
+                        className="flex items-center justify-start gap-1"
+                        style={{ minWidth: `${seatsPerSide * 28}px` }}
+                    >
+                        {secondHalf.map((seat) => (
                             <motion.button
                                 key={seat.id}
                                 onClick={(e) => handleSeatClick(seat, e)}
@@ -369,7 +342,7 @@ const SeatMap = ({
                                 onFocus={() => setFocusedSeat(seat.id)}
                                 onBlur={() => setFocusedSeat(null)}
                                 className={`
-                                    w-6 h-6 rounded-full flex items-center justify-center mx-auto
+                                    w-6 h-6 rounded-full flex items-center justify-center
                                     transition-all duration-300 relative group
                                     ${getSeatColor(seat)}
                                     ${
@@ -400,131 +373,72 @@ const SeatMap = ({
                                         )}
                                 </AnimatePresence>
                             </motion.button>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
 
-                {/* Mobile version */}
-                <div
-                    className="grid sm:hidden justify-center"
-                    style={{
-                        gridTemplateColumns: `repeat(${seatsPerSide}, 28px) 48px repeat(${seatsPerSide}, 28px)`,
-                    }}
-                >
-                    {/* First half of seats */}
-                    {Array.from({ length: seatsPerSide }, (_, index) => {
-                        const seat = firstHalf[index];
-                        if (!seat) {
-                            return (
-                                <div
-                                    key={`mobile-empty-first-${index}`}
-                                    className="w-5 h-5 mx-auto"
-                                ></div>
-                            );
-                        }
-
-                        return (
+                {/* Mobile version - show all seats */}
+                <div className="flex sm:hidden items-center justify-center gap-0.5">
+                    {/* First half container */}
+                    <div
+                        className="flex items-center justify-end gap-0.5"
+                        style={{ minWidth: `${seatsPerSide * 18}px` }}
+                    >
+                        {firstHalf.map((seat) => (
                             <motion.button
                                 key={`mobile-${seat.id}`}
                                 onClick={(e) => handleSeatClick(seat, e)}
                                 onKeyDown={(e) => handleKeyPress(e, seat)}
-                                onMouseEnter={() => setHoveredSeat(seat.id)}
-                                onMouseLeave={() => setHoveredSeat(null)}
                                 onFocus={() => setFocusedSeat(seat.id)}
                                 onBlur={() => setFocusedSeat(null)}
                                 className={`
-                                    w-5 h-5 rounded-full flex items-center justify-center mx-auto
-                                    transition-all duration-300 relative group
+                                    w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0
+                                    transition-all duration-200 relative active:scale-110
                                     ${getSeatColor(seat)}
                                     ${
-                                        hoveredSeat === seat.id ||
                                         focusedSeat === seat.id
-                                            ? "scale-125 z-10"
+                                            ? "scale-110 z-10"
                                             : ""
                                     }
                                 `}
                                 aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
                             >
                                 {renderSeatContent(seat)}
-
-                                <AnimatePresence>
-                                    {(hoveredSeat === seat.id ||
-                                        focusedSeat === seat.id) &&
-                                        seat.status !==
-                                            SeatStatus.UNAVAILABLE && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: 10 }}
-                                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
-                                            >
-                                                Row {seat.row}, Seat{" "}
-                                                {seat.number}
-                                            </motion.div>
-                                        )}
-                                </AnimatePresence>
                             </motion.button>
-                        );
-                    })}
+                        ))}
+                    </div>
 
                     {/* Walkway */}
-                    <div className="w-12 h-5 border-x border-amber-500/20 col-span-1 mx-auto"></div>
+                    <div className="w-6 h-4 border-x border-amber-500/20 mx-1 flex-shrink-0"></div>
 
-                    {/* Second half of seats */}
-                    {Array.from({ length: seatsPerSide }, (_, index) => {
-                        const seat = secondHalf[index];
-                        if (!seat) {
-                            return (
-                                <div
-                                    key={`mobile-empty-second-${index}`}
-                                    className="w-5 h-5 mx-auto"
-                                ></div>
-                            );
-                        }
-
-                        return (
+                    {/* Second half container */}
+                    <div
+                        className="flex items-center justify-start gap-0.5"
+                        style={{ minWidth: `${seatsPerSide * 18}px` }}
+                    >
+                        {secondHalf.map((seat) => (
                             <motion.button
                                 key={`mobile-second-${seat.id}`}
                                 onClick={(e) => handleSeatClick(seat, e)}
                                 onKeyDown={(e) => handleKeyPress(e, seat)}
-                                onMouseEnter={() => setHoveredSeat(seat.id)}
-                                onMouseLeave={() => setHoveredSeat(null)}
                                 onFocus={() => setFocusedSeat(seat.id)}
                                 onBlur={() => setFocusedSeat(seat.id)}
                                 className={`
-                                    w-5 h-5 rounded-full flex items-center justify-center mx-auto
-                                    transition-all duration-300 relative group
+                                    w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0
+                                    transition-all duration-200 relative active:scale-110
                                     ${getSeatColor(seat)}
                                     ${
-                                        hoveredSeat === seat.id ||
                                         focusedSeat === seat.id
-                                            ? "scale-125 z-10"
+                                            ? "scale-110 z-10"
                                             : ""
                                     }
                                 `}
                                 aria-label={`Row ${seat.row}, Seat ${seat.number} (${seat.zone} zone)`}
                             >
                                 {renderSeatContent(seat)}
-
-                                <AnimatePresence>
-                                    {(hoveredSeat === seat.id ||
-                                        focusedSeat === seat.id) &&
-                                        seat.status !==
-                                            SeatStatus.UNAVAILABLE && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: 10 }}
-                                                className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-20 pointer-events-none"
-                                            >
-                                                Row {seat.row}, Seat{" "}
-                                                {seat.number}
-                                            </motion.div>
-                                        )}
-                                </AnimatePresence>
                             </motion.button>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
             </div>
         );
@@ -532,16 +446,20 @@ const SeatMap = ({
 
     if (isLoadingSeatMap) {
         return (
-            <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-gray-700/20 p-8 flex items-center justify-center">
-                <div className="text-white/60">Loading seat map...</div>
+            <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-gray-700/20 p-4 sm:p-8 flex items-center justify-center">
+                <div className="text-white/60 text-sm sm:text-base">
+                    Loading seat map...
+                </div>
             </div>
         );
     }
 
     if (seatMapError) {
         return (
-            <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-red-500/20 p-8 flex items-center justify-center">
-                <div className="text-red-400">Failed to load seat map</div>
+            <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl border border-red-500/20 p-4 sm:p-8 flex items-center justify-center">
+                <div className="text-red-400 text-sm sm:text-base">
+                    Failed to load seat map
+                </div>
             </div>
         );
     }
@@ -557,21 +475,21 @@ const SeatMap = ({
       before:transition-opacity before:duration-500"
         >
             <div className="p-3 sm:p-5">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                     <div className="relative">
-                        <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                        <div className="absolute -inset-1 sm:-inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
                         <div
-                            className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative
+                            className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1.5 sm:p-2 relative
               backdrop-blur-xl border border-amber-500/20 group-hover:border-amber-500/30 transition-colors duration-300"
                         >
-                            <Armchair className="w-5 h-5 text-amber-400" />
+                            <Armchair className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                        <h3 className="text-sm sm:text-base font-medium bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
                             Select Your Seats
                         </h3>
-                        <p className="text-sm font-medium text-white/60">
+                        <p className="text-xs sm:text-sm font-medium text-white/60">
                             {useCredits
                                 ? "Using credits for booking"
                                 : "Regular booking"}
@@ -579,19 +497,19 @@ const SeatMap = ({
                     </div>
                 </div>
 
-                <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
+                <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-3 sm:mb-4"></div>
 
                 <div
-                    className="relative overflow-x-auto pb-4 sm:pb-0"
+                    className="relative overflow-x-auto pb-2 sm:pb-4 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent"
                     ref={mapRef}
                 >
-                    <div className="min-w-[800px] sm:min-w-0">
+                    <div className="min-w-fit">
                         {/* Stage */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="ml-[48px] w-[calc(100%-48px)] h-12 sm:h-16 bg-gradient-to-t from-amber-500/20 to-amber-500/5
-                rounded-xl mb-6 sm:mb-8 flex items-center justify-center border border-amber-500/20
+                            className="ml-[32px] sm:ml-[40px] w-[calc(100%-32px)] sm:w-[calc(100%-40px)] h-8 sm:h-12 lg:h-16 bg-gradient-to-t from-amber-500/20 to-amber-500/5
+                rounded-xl mb-4 sm:mb-6 lg:mb-8 flex items-center justify-center border border-amber-500/20
                 relative overflow-hidden group"
                         >
                             <div
@@ -599,7 +517,7 @@ const SeatMap = ({
                 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                             ></div>
                             <span
-                                className="text-white/90 text-sm font-medium relative z-10 group-hover:text-amber-400 
+                                className="text-white/90 text-xs sm:text-sm font-medium relative z-10 group-hover:text-amber-400 
                 transition-colors duration-300"
                             >
                                 Stage
@@ -607,12 +525,12 @@ const SeatMap = ({
                         </motion.div>
 
                         {/* Seat Grid */}
-                        <div className="flex flex-col gap-3 sm:gap-4">
+                        <div className="flex flex-col gap-1 sm:gap-3 lg:gap-4">
                             {/* Show message if no seats available */}
                             {seatLayout.vipRows.length === 0 &&
                                 seatLayout.regularRows.length === 0 && (
-                                    <div className="text-center py-8">
-                                        <div className="text-white/60">
+                                    <div className="text-center py-4 sm:py-8">
+                                        <div className="text-white/60 text-sm sm:text-base">
                                             No seats available for this show
                                         </div>
                                     </div>
@@ -621,9 +539,9 @@ const SeatMap = ({
                             {/* VIP Zone - Only show if there are VIP seats */}
                             {seatLayout.vipRows.length > 0 && (
                                 <>
-                                    <div className="text-center ml-[48px] sticky left-[48px]">
-                                        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 bg-amber-500/10 rounded-full">
-                                            <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-amber-500"></div>
+                                    <div className="text-center ml-[32px] sm:ml-[40px] sticky left-[32px] sm:left-[40px]">
+                                        <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 bg-amber-500/10 rounded-full">
+                                            <div className="w-1 sm:w-1.5 lg:w-2 h-1 sm:h-1.5 lg:h-2 rounded-full bg-amber-500"></div>
                                             <span className="text-white/90 text-xs sm:text-sm font-medium">
                                                 VIP Zone
                                             </span>
@@ -634,8 +552,7 @@ const SeatMap = ({
                                     {seatLayout.vipRows.map((row) =>
                                         renderSeatRow(
                                             row,
-                                            seatLayout.vipSeats[row],
-                                            seatLayout.maxSeatsPerRow
+                                            seatLayout.vipSeats[row]
                                         )
                                     )}
                                 </>
@@ -644,9 +561,9 @@ const SeatMap = ({
                             {/* Regular Zone - Only show if there are Regular seats */}
                             {seatLayout.regularRows.length > 0 && (
                                 <>
-                                    <div className="text-center mt-4 sm:mt-6 ml-[48px] sticky left-[48px]">
-                                        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 bg-blue-500/10 rounded-full">
-                                            <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-500"></div>
+                                    <div className="text-center mt-2 sm:mt-4 lg:mt-6 ml-[32px] sm:ml-[40px] sticky left-[32px] sm:left-[40px]">
+                                        <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 bg-blue-500/10 rounded-full">
+                                            <div className="w-1 sm:w-1.5 lg:w-2 h-1 sm:h-1.5 lg:h-2 rounded-full bg-blue-500"></div>
                                             <span className="text-white/90 text-xs sm:text-sm font-medium">
                                                 Regular Zone
                                             </span>
@@ -657,8 +574,7 @@ const SeatMap = ({
                                     {seatLayout.regularRows.map((row) =>
                                         renderSeatRow(
                                             row,
-                                            seatLayout.regularSeats[row],
-                                            seatLayout.maxSeatsPerRow
+                                            seatLayout.regularSeats[row]
                                         )
                                     )}
                                 </>

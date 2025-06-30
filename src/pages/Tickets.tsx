@@ -117,6 +117,7 @@ const Tickets = () => {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
+                timeZone: "Africa/Cairo",
             }),
             language: occurrence.language,
         }));
@@ -158,6 +159,26 @@ const Tickets = () => {
             sessionStorage.removeItem("fromCheckout");
         }
     }, [quoteState.hasActiveQuote, quoteState.timeRemaining]);
+
+    // Clear quote state if user has completed payment (detected by cleared storage)
+    useEffect(() => {
+        // Only check if we have an active quote
+        if (!quoteState.hasActiveQuote) return;
+
+        const currentQuote = sessionStorage.getItem("currentQuote");
+        const storedSelections = sessionStorage.getItem("seatSelections");
+        const selectedAddons = sessionStorage.getItem("selectedAddons");
+
+        // If all selection storage is cleared but we still have a quote state,
+        // it means user completed payment and the quote is stale (backend deleted it)
+        if (!currentQuote && !storedSelections && !selectedAddons) {
+            console.log(
+                "Detected stale quote after payment completion, clearing..."
+            );
+            quoteState.cancelQuote();
+            setSeatSelections([]);
+        }
+    }, [quoteState.hasActiveQuote]);
 
     const handleWarningConfirm = () => {
         setShowWarningModal(false);
@@ -364,6 +385,7 @@ const Tickets = () => {
         const storedSelections = sessionStorage.getItem("seatSelections");
         const storedOccurrence = sessionStorage.getItem("selectedOccurrenceId");
         const storedDate = sessionStorage.getItem("selectedDate");
+
         if (storedSelections) {
             try {
                 const parsed: SeatSelection[] = JSON.parse(storedSelections);

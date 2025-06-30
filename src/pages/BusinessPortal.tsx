@@ -446,6 +446,7 @@ const BusinessPortal = () => {
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: false,
+                    timeZone: "Africa/Cairo",
                 }),
                 language: occurrence.language,
             }));
@@ -1076,8 +1077,8 @@ const BusinessPortal = () => {
                                 <div className="w-full px-4 sm:px-6">
                                     <div className="space-y-4 sm:space-y-6">
                                         {/* Available Credits Display and Action Buttons */}
-                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                                            <div className="bg-amber-500/10 backdrop-blur-sm rounded-xl border border-amber-500/20 p-3 flex-1">
+                                        <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+                                            <div className="bg-amber-500/10 backdrop-blur-sm rounded-xl border border-amber-500/20 p-3 sm:flex-1">
                                                 <div className="flex items-center gap-2">
                                                     <Coins className="w-4 h-4 text-amber-400" />
                                                     <span className="text-white/90 text-sm">
@@ -1085,7 +1086,7 @@ const BusinessPortal = () => {
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2">
+                                            {/* <div className="flex gap-2">
                                                 {(
                                                     [
                                                         "local",
@@ -1110,37 +1111,39 @@ const BusinessPortal = () => {
                                                             : "Tourist"}
                                                     </button>
                                                 ))}
+                                            </div> */}
+                                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                                                <button
+                                                    onClick={() =>
+                                                        navigate(
+                                                            "/business/credits"
+                                                        )
+                                                    }
+                                                    className="px-3 py-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
+                              backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
+                              transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
+                              flex items-center justify-center gap-2"
+                                                >
+                                                    <Plus className="w-4 h-4 text-emerald-400" />
+                                                    <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">
+                                                        Buy Credits
+                                                    </span>
+                                                </button>
+                                                <button
+                                                    onClick={
+                                                        handleUploadGuestDetails
+                                                    }
+                                                    className="px-3 py-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 
+                              backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
+                              transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
+                              flex items-center justify-center gap-2"
+                                                >
+                                                    <Upload className="w-4 h-4 text-purple-400" />
+                                                    <span className="text-purple-400 text-sm font-medium whitespace-nowrap">
+                                                        Upload Guest Details
+                                                    </span>
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={() =>
-                                                    navigate(
-                                                        "/business/credits"
-                                                    )
-                                                }
-                                                className="px-3 py-3 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
-                          backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
-                          transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
-                          flex items-center justify-center gap-2 flex-1 sm:flex-initial"
-                                            >
-                                                <Plus className="w-4 h-4 text-emerald-400" />
-                                                <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">
-                                                    Buy Credits
-                                                </span>
-                                            </button>
-                                            <button
-                                                onClick={
-                                                    handleUploadGuestDetails
-                                                }
-                                                className="px-3 py-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 
-                          backdrop-blur-xl border border-purple-500/20 hover:border-purple-500/40 
-                          transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20
-                          flex items-center justify-center gap-2 flex-1 sm:flex-initial"
-                                            >
-                                                <Upload className="w-4 h-4 text-purple-400" />
-                                                <span className="text-purple-400 text-sm font-medium whitespace-nowrap">
-                                                    Upload Guest Details
-                                                </span>
-                                            </button>
                                         </div>
 
                                         <div className="space-y-4">
@@ -1198,36 +1201,32 @@ const BusinessPortal = () => {
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.3 }}
-                                                className="overflow-x-auto pb-4 -mx-4 sm:mx-0 px-4 sm:px-0"
+                                                className="w-full"
                                             >
-                                                <div className="min-w-[800px] lg:min-w-0">
-                                                    <SeatMap
-                                                        userType={visitorType}
-                                                        onUserTypeChange={
-                                                            setVisitorType
-                                                        }
-                                                        onSeatSelect={
-                                                            handleSeatSelect
-                                                        }
-                                                        onSeatDeselect={
-                                                            handleSeatRemove
-                                                        }
-                                                        selectedSeatIds={selectedSeats.map(
-                                                            (seat) => seat.id
-                                                        )}
-                                                        selectedDate={
-                                                            selectedDate
-                                                        }
-                                                        occurrenceId={
-                                                            selectedOccurrenceId
-                                                        }
-                                                        useCredits={true}
-                                                        creditCosts={
-                                                            dynamicCreditCosts
-                                                        }
-                                                        findPrice={findPrice}
-                                                    />
-                                                </div>
+                                                <SeatMap
+                                                    userType={visitorType}
+                                                    onUserTypeChange={
+                                                        setVisitorType
+                                                    }
+                                                    onSeatSelect={
+                                                        handleSeatSelect
+                                                    }
+                                                    onSeatDeselect={
+                                                        handleSeatRemove
+                                                    }
+                                                    selectedSeatIds={selectedSeats.map(
+                                                        (seat) => seat.id
+                                                    )}
+                                                    selectedDate={selectedDate}
+                                                    occurrenceId={
+                                                        selectedOccurrenceId
+                                                    }
+                                                    useCredits={true}
+                                                    creditCosts={
+                                                        dynamicCreditCosts
+                                                    }
+                                                    findPrice={findPrice}
+                                                />
                                             </motion.div>
                                         )}
 

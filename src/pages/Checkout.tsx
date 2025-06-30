@@ -400,6 +400,11 @@ const Checkout = () => {
                 addons: addons.length > 0 ? addons : undefined,
             });
 
+            // Clear all selection storage after successful checkout
+            sessionStorage.removeItem("currentQuote");
+            sessionStorage.removeItem("selectedAddons");
+            sessionStorage.removeItem("seatSelections");
+
             // Navigate to payment page with credentials
             navigate("/payment", {
                 state: {
