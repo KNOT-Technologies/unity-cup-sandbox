@@ -26,7 +26,11 @@ const TOP_20_LANGUAGES = [
 ];
 
 interface TranslationSelectorProps {
-    onTranslationChange: (needsTranslation: boolean, language?: string) => void;
+    onTranslationChange: (
+        needsTranslation: boolean,
+        language?: string,
+        addonId?: string
+    ) => void;
     occurrenceId?: string;
     className?: string;
     currency?: "EGP" | "USD";
@@ -97,7 +101,11 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
             })
         );
 
-        onTranslationChange(value, value ? selectedLanguage : undefined);
+        onTranslationChange(
+            value,
+            value ? selectedLanguage : undefined,
+            value ? translationAddon?._id : undefined
+        );
     };
 
     const handleLanguageChange = (language: string) => {
@@ -127,7 +135,11 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
             })
         );
 
-        onTranslationChange(needsTranslation, language);
+        onTranslationChange(
+            needsTranslation,
+            language,
+            needsTranslation ? translationAddon?._id : undefined
+        );
     };
 
     // Get translation addon and check availability

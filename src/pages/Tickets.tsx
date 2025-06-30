@@ -23,6 +23,7 @@ import { ToastContainer } from "../components/common/Toast";
 interface TranslationPreference {
     needed: boolean;
     language?: string;
+    addonId?: string;
     prices?: {
         EGP: number;
         USD: number;
@@ -264,7 +265,18 @@ const Tickets = () => {
         }
     };
 
-    const handleTranslationChange = (needed: boolean, language?: string) => {
+    // NEW: Cancel seat hold entirely (quote + selections)
+    const handleCancelSeatHold = () => {
+        setSeatSelections([]); // Clear all selected seats
+        quoteState.cancelQuote(); // Remove the quote from both client & server
+        sessionStorage.removeItem("seatSelections"); // Ensure persistence layer is cleared
+    };
+
+    const handleTranslationChange = (
+        needed: boolean,
+        language?: string,
+        addonId?: string
+    ) => {
         // Default prices if not provided from API
         const defaultPrices = {
             EGP: 50,
@@ -274,6 +286,7 @@ const Tickets = () => {
         const preference = {
             needed,
             language,
+            addonId,
             prices: defaultPrices, // In a real app, these would come from the API
         };
 
@@ -311,14 +324,18 @@ const Tickets = () => {
         sessionStorage.removeItem("selectedAddons");
 
         // Convert translation preferences to addon selections if needed
-        if (translationPreference.needed && translationPreference.language) {
+        if (
+            translationPreference.needed &&
+            translationPreference.language &&
+            translationPreference.addonId
+        ) {
             // Create one addon selection per seat
             const addonSelections = seatSelections.map((selection) => {
                 const seatLabel = `${selection.seat.row}-${selection.seat.number}`;
 
                 return {
                     seat: seatLabel,
-                    addonId: "translation-headphone-addon-id", // This would be the real addon ID from the API
+                    addonId: translationPreference.addonId,
                     optionCode:
                         translationPreference.language
                             ?.toLowerCase()
@@ -497,7 +514,7 @@ const Tickets = () => {
                                 <QuoteSidebar
                                     quoteState={quoteState}
                                     selections={seatSelections}
-                                    onCancel={quoteState.cancelQuote}
+                                    onCancel={handleCancelSeatHold}
                                     onRemoveSeat={handleSeatRemove}
                                     onProceedToCheckout={
                                         handleProceedToCheckout
