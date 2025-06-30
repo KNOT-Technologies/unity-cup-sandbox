@@ -232,6 +232,73 @@ export function useQuote(occurrenceId: string | null) {
     [occurrenceId, startCountdown, quoteState.quote]
   );
 
+  const applyPromoCode = useCallback(
+    async (promoCode: string, selections: SeatSelection[]) => {
+      if (!occurrenceId || !quoteState.quote) {
+        return;
+      }
+
+      try {
+        setQuoteState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+        const seats: QuoteSeat[] = selections.map((s: SeatSelection) => ({
+          row: s.seat.row,
+          col: s.seat.number,
+          category: s.ticketType,
+        }));
+
+        const visitor = quoteState.quote.lines[0].label.includes("Local")
+          ? "local"
+          : "foreign";
+
+        const request: QuoteRequest = {
+          seats,
+          visitor,
+          ...(promoCode ? { promoCode } : {}),
+        };
+
+        let newQuote;
+        if (quoteState.quote) {
+          newQuote = await updateQuote(quoteState.quote.quoteId, request);
+        } else {
+          newQuote = await createQuote(occurrenceId, request);
+        }
+        const expiresAt = new Date(newQuote.expiresAt);
+
+        setQuoteState((prev) => ({
+          ...prev,
+          quote: newQuote,
+          isLoading: false,
+          error: null,
+        }));
+
+        sessionStorage.setItem("quoteId", newQuote.quoteId);
+        sessionStorage.setItem("quote", JSON.stringify(newQuote));
+
+        startCountdown(expiresAt);
+      } catch (error: unknown) {
+        console.error("Failed to apply promo code:", error);
+
+        // Type guard for API error
+        const getErrorMessage = (e: unknown): string => {
+          if (typeof e === "object" && e !== null && "error" in e) {
+            if ((e as { error: string }).error === "INVALID_PROMO") {
+              return "The promo code is not valid.";
+            }
+          }
+          return "Failed to apply promo code.";
+        };
+
+        setQuoteState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: getErrorMessage(error),
+        }));
+      }
+    },
+    [occurrenceId, quoteState.quote, startCountdown]
+  );
+
   const cancelQuote = useCallback(async () => {
     if (!quoteState.quote) return;
 
@@ -257,6 +324,9 @@ export function useQuote(occurrenceId: string | null) {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
       }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
     }
   }, [quoteState.quote]);
 
@@ -279,7 +349,8 @@ export function useQuote(occurrenceId: string | null) {
     ...quoteState,
     createQuote: createQuoteDebounced,
     cancelQuote,
-    hasActiveQuote: !!quoteState.quote && quoteState.timeRemaining > 0,
+    applyPromoCode,
+    hasActiveQuote: !!quoteState.quote,
   };
 }
 

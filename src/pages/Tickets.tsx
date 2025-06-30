@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "../components/tickets/DatePicker";
@@ -32,7 +32,10 @@ interface TranslationPreference {
 const Tickets = () => {
     const navigate = useNavigate();
     const [userType, setUserType] = useState<UserType>("tourist");
-    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date>(() => {
+        const storedDate = sessionStorage.getItem("selectedDate");
+        return storedDate ? new Date(storedDate) : new Date();
+    });
     const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>();
     const [seatSelections, setSeatSelections] = useState<SeatSelection[]>([]);
     const [translationPreference, setTranslationPreference] =
@@ -56,6 +59,13 @@ const Tickets = () => {
 
     // Toast notifications
     const { toasts, removeToast, showWarning } = useToast();
+
+    // Display toast on quote error
+    useEffect(() => {
+        if (quoteState.error) {
+            showWarning(quoteState.error);
+        }
+    }, [quoteState.error]);
 
     // Warning modal state
     const [showWarningModal, setShowWarningModal] = useState(false);
@@ -249,7 +259,7 @@ const Tickets = () => {
             // Cancel quote if no seats selected
             quoteState.cancelQuote();
         } else {
-            // Update quote with remaining seats
+            // Update quote with new selections
             quoteState.createQuote(newSelections, userType);
         }
     };
@@ -331,6 +341,61 @@ const Tickets = () => {
         sessionStorage.setItem("fromCheckout", "false"); // They're going TO checkout
         navigate("/checkout");
     };
+
+    // Restore selections and occurrence when coming back from checkout
+    useEffect(() => {
+        const storedSelections = sessionStorage.getItem("seatSelections");
+        const storedOccurrence = sessionStorage.getItem("selectedOccurrenceId");
+        const storedDate = sessionStorage.getItem("selectedDate");
+        if (storedSelections) {
+            try {
+                const parsed: SeatSelection[] = JSON.parse(storedSelections);
+                if (parsed.length) {
+                    setSeatSelections(parsed);
+                }
+            } catch {
+                /* ignore */
+            }
+        }
+        if (storedOccurrence) {
+            setSelectedOccurrenceId(storedOccurrence);
+        }
+        if (storedDate) {
+            const d = new Date(storedDate);
+            if (!isNaN(d.getTime())) {
+                setSelectedDate(d);
+            }
+        }
+    }, []);
+
+    // Persist selections and occurrence to sessionStorage whenever they change
+    useEffect(() => {
+        sessionStorage.setItem(
+            "seatSelections",
+            JSON.stringify(seatSelections)
+        );
+        if (selectedOccurrenceId) {
+            sessionStorage.setItem(
+                "selectedOccurrenceId",
+                selectedOccurrenceId
+            );
+        }
+        sessionStorage.setItem("selectedDate", selectedDate.toISOString());
+    }, [seatSelections, selectedOccurrenceId, selectedDate]);
+
+    // Clear selections when the user switches to a different occurrence (show time)
+    const prevOccurrenceRef = useRef<string | undefined>();
+    useEffect(() => {
+        if (
+            prevOccurrenceRef.current &&
+            selectedOccurrenceId &&
+            prevOccurrenceRef.current !== selectedOccurrenceId
+        ) {
+            setSeatSelections([]);
+            quoteState.cancelQuote();
+        }
+        prevOccurrenceRef.current = selectedOccurrenceId;
+    }, [selectedOccurrenceId]);
 
     return (
         <div className="min-h-screen bg-black text-white pt-24 sm:pt-32 pb-16">

@@ -75,6 +75,7 @@ export interface QuoteRequest {
   visitor: "foreign" | "local";
   // `category` kept optional for backward compatibility; will be ignored by backend
   category?: "senior" | "adult" | "student" | "child";
+  promoCode?: string;
 }
 
 // NEW: Credit-based quote request

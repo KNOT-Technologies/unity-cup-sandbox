@@ -9,7 +9,7 @@ import {
     ChevronUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { processCheckout } from "../api/knot";
+import { processCheckout, updateQuote, type QuoteRequest } from "../api/knot";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 import type { QuoteData, SeatSelection } from "../types/tickets";
@@ -83,6 +83,15 @@ const Checkout = () => {
     // New: validation errors state
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
         {}
+    );
+    // Promo code state
+    const appliedPromoLine = quote?.lines.find((l) =>
+        l.label.startsWith("Promo")
+    );
+    const [promoCodeInput, setPromoCodeInput] = useState<string>(
+        appliedPromoLine
+            ? appliedPromoLine.label.split("–")[1]?.split("(")[0]?.trim() || ""
+            : ""
     );
 
     useEffect(() => {
@@ -198,18 +207,17 @@ const Checkout = () => {
     };
 
     const calculateTotal = () => {
-        // Calculate the total based on the actual seat selections
-        if (seatSelections.length > 0) {
-            const ticketsTotal = seatSelections.reduce(
-                (sum, selection) => sum + selection.price,
-                0
-            );
-            return ticketsTotal + calculateAddonTotal();
+        if (quote) {
+            // Always trust backend quote total (includes promo discount)
+            return quote.total.amount + calculateAddonTotal();
         }
 
-        // Fallback to quote total if seat selections are not available
-        if (!quote) return 0;
-        return quote.total.amount + calculateAddonTotal();
+        // Fallback calculation
+        const ticketsTotal = seatSelections.reduce(
+            (sum, selection) => sum + selection.price,
+            0
+        );
+        return ticketsTotal + calculateAddonTotal();
     };
 
     // Get the appropriate currency symbol
@@ -417,7 +425,15 @@ const Checkout = () => {
             });
         } catch (err: unknown) {
             const error = err as { error?: string };
-            if (error.error === "QUOTE_EXPIRED") {
+            if (
+                error.error === "PROMO_LIMIT_REACHED" ||
+                error.error === "PROMO_INVALIDATED"
+            ) {
+                showError(
+                    "Promo code is no longer valid. Please go back and try a different code."
+                );
+                setTimeout(() => navigate("/tickets"), 3000);
+            } else if (error.error === "QUOTE_EXPIRED") {
                 showError(
                     "Your seat hold has expired. Please select seats again."
                 );
@@ -448,6 +464,49 @@ const Checkout = () => {
                 idx,
                 field as keyof Omit<TicketHolder, "open">
             );
+        }
+    };
+
+    const handleApplyPromoCode = async () => {
+        if (!quote) return;
+
+        try {
+            const seats = seatSelections.map((s) => ({
+                row: s.seat.row,
+                col: s.seat.number,
+                category: s.ticketType,
+            }));
+
+            const visitor = isTouristPricing() ? "foreign" : "local";
+
+            interface PromoQuoteRequest extends QuoteRequest {
+                promoCode?: string;
+            }
+            const requestBody: PromoQuoteRequest = {
+                seats,
+                visitor,
+                ...(promoCodeInput.trim()
+                    ? { promoCode: promoCodeInput.trim() }
+                    : {}),
+            };
+
+            const updatedQuote = await updateQuote(quote.quoteId, requestBody);
+
+            setQuote(updatedQuote);
+            sessionStorage.setItem(
+                "currentQuote",
+                JSON.stringify(updatedQuote)
+            );
+            // update applied line
+        } catch (err: unknown) {
+            const error = err as { error?: string };
+            if (error.error === "INVALID_PROMO") {
+                showError("Promo code not valid.");
+            } else if (error.error === "PROMO_LIMIT_REACHED") {
+                showError("Promo code usage limit reached.");
+            } else {
+                showError(error.error || "Failed to apply promo code.");
+            }
         }
     };
 
@@ -814,44 +873,65 @@ const Checkout = () => {
 
                         <div className="space-y-4">
                             {/* Use seat selections for accurate ticket information */}
-                            {seatSelections.length > 0
-                                ? seatSelections.map((selection, index) => (
-                                      <div
-                                          key={index}
-                                          className="flex justify-between text-sm"
-                                      >
-                                          <span className="text-white/80">
-                                              {selection.seat.zone === "vip"
-                                                  ? "VIP"
-                                                  : "Regular"}{" "}
-                                              • Row {selection.seat.row}, Seat{" "}
-                                              {selection.seat.number}
-                                              <br />
-                                              <span className="text-white/60 capitalize">
-                                                  {selection.ticketType}
-                                              </span>
-                                          </span>
-                                          <span className="text-white">
-                                              {getCurrencySymbol()}{" "}
-                                              {selection.price}
-                                          </span>
-                                      </div>
-                                  ))
-                                : // Fallback to quote lines if no seat selections available
-                                  quote?.lines.map((line, index) => (
-                                      <div
-                                          key={index}
-                                          className="flex justify-between text-sm"
-                                      >
-                                          <span className="text-white/80">
-                                              {line.label}
-                                          </span>
-                                          <span className="text-white">
-                                              {getCurrencySymbol()}{" "}
-                                              {line.amount}
-                                          </span>
-                                      </div>
-                                  ))}
+                            {seatSelections.length > 0 && quote ? (
+                                <>
+                                    {seatSelections.map((selection, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex justify-between text-sm"
+                                        >
+                                            <span className="text-white/80">
+                                                {selection.seat.zone === "vip"
+                                                    ? "VIP"
+                                                    : "Regular"}{" "}
+                                                • Row {selection.seat.row}, Seat{" "}
+                                                {selection.seat.number}
+                                                <br />
+                                                <span className="text-white/60 capitalize">
+                                                    {selection.ticketType}
+                                                </span>
+                                            </span>
+                                            <span className="text-white">
+                                                {getCurrencySymbol()}{" "}
+                                                {selection.price}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {/* promo line if exists */}
+                                    {quote.lines
+                                        .filter((l) =>
+                                            l.label.startsWith("Promo")
+                                        )
+                                        .map((line, idx) => (
+                                            <div
+                                                key={`promo-${idx}`}
+                                                className="flex justify-between text-sm"
+                                            >
+                                                <span className="text-red-400">
+                                                    {line.label}
+                                                </span>
+                                                <span className="text-red-400">
+                                                    {getCurrencySymbol()}{" "}
+                                                    {line.amount}
+                                                </span>
+                                            </div>
+                                        ))}
+                                </>
+                            ) : (
+                                quote?.lines.map((line, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex justify-between text-sm"
+                                    >
+                                        <span className="text-white/80">
+                                            {line.label}
+                                        </span>
+                                        <span className="text-white">
+                                            {getCurrencySymbol()} {line.amount}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
 
                             {/* Add-ons */}
                             {addons.length > 0 && (
@@ -892,6 +972,40 @@ const Checkout = () => {
                                     <span className="text-lg font-medium text-amber-400">
                                         {getCurrencySymbol()} {calculateTotal()}
                                     </span>
+                                </div>
+                            </div>
+
+                            {/* Promo code input */}
+                            <div>
+                                <label className="block text-sm font-medium text-white/90 mb-2">
+                                    Promo Code
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={promoCodeInput}
+                                        onChange={(e) =>
+                                            setPromoCodeInput(e.target.value)
+                                        }
+                                        placeholder="Enter code"
+                                        className="flex-grow bg-gray-800/40 border border-gray-700/30 rounded-lg px-3 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleApplyPromoCode}
+                                        disabled={
+                                            promoCodeInput.trim() ===
+                                            (appliedPromoLine
+                                                ? appliedPromoLine.label
+                                                      .split("–")[1]
+                                                      ?.split("(")[0]
+                                                      ?.trim()
+                                                : "")
+                                        }
+                                        className="px-4 py-2 bg-amber-500 text-black rounded-lg font-semibold text-sm hover:bg-amber-400 disabled:bg-gray-600 disabled:cursor-not-allowed"
+                                    >
+                                        Apply
+                                    </button>
                                 </div>
                             </div>
                         </div>
