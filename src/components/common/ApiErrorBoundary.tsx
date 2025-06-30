@@ -13,7 +13,7 @@ interface State {
 }
 
 class ApiErrorBoundary extends Component<Props, State> {
-    private toastTimer: number | null = null;
+    private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(props: Props) {
         super(props);

@@ -384,7 +384,7 @@ const Tickets = () => {
     }, [seatSelections, selectedOccurrenceId, selectedDate]);
 
     // Clear selections when the user switches to a different occurrence (show time)
-    const prevOccurrenceRef = useRef<string | undefined>();
+    const prevOccurrenceRef = useRef<string | undefined>(undefined);
     useEffect(() => {
         if (
             prevOccurrenceRef.current &&

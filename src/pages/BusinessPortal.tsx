@@ -220,10 +220,12 @@ const BusinessPortal = () => {
 
     // Price finding function for SeatMap component
     const findPrice = (
-        userType: string,
+        _userType: string,
         seatClass: "vip" | "regular",
         category: TicketType
     ): number => {
+        // Ensure the parameter is considered used to satisfy TypeScript's unused parameter rule
+        void _userType;
         // When using credits, return credit cost instead of money price
         return findCreditCost(creditPrices ?? null, seatClass, category);
     };
