@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
     Calendar,
     Receipt,
-    Settings,
     LogOut,
     LayoutDashboard,
     CreditCard,
@@ -36,11 +35,6 @@ const sidebarItems: SidebarItem[] = [
         name: "Order History",
         path: "/business/orders",
         icon: <Receipt className="w-6 h-6" />,
-    },
-    {
-        name: "Settings",
-        path: "/business/settings",
-        icon: <Settings className="w-6 h-6" />,
     },
 ];
 

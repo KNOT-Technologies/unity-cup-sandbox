@@ -20,9 +20,6 @@ const ShowTimeSelector = ({
         showTimes.length > 0
             ? showTimes
             : [
-                  { id: "1", time: "19:00", language: "English" },
-                  { id: "2", time: "20:00", language: "Arabic" },
-                  { id: "3", time: "21:00", language: "German" },
               ];
 
     return (

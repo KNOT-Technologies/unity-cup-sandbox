@@ -22,7 +22,6 @@ import DatePicker from "../components/tickets/DatePicker";
 import ShowTimeSelector from "../components/tickets/ShowTimeSelector";
 import SeatMap from "../components/tickets/SeatMap";
 import TicketSummary from "../components/tickets/TicketSummary";
-import TranslationSelector from "../components/tickets/TranslationSelector";
 import GuestUploadModal from "../components/common/GuestUploadModal";
 import CreditQuoteDisplay from "../components/tickets/CreditQuoteDisplay";
 import DashboardCharts from "../components/dashboard/DashboardCharts";
@@ -204,12 +203,6 @@ const BusinessPortal = () => {
     const { creditPrices } = useCreditPrices(selectedOccurrenceId || null);
     const creditQuoteState = useCreditQuote(selectedOccurrenceId || null);
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
-    const [translationPreference, setTranslationPreference] = useState<{
-        needed: boolean;
-        language?: string;
-    }>({
-        needed: false,
-    });
     const [showUploadModal, setShowUploadModal] = useState(false);
 
     // Mock user data - in a real app, this would come from your auth context/state
@@ -321,12 +314,18 @@ const BusinessPortal = () => {
 
     const handleSeatSelect = (seat: Seat, ticketType: TicketType) => {
         const creditCost = findCreditCost(creditPrices, seat.zone, ticketType);
+        
+        // Check if we have guest data available for this seat (only if no existing guest data)
+        const guestIndex = selectedSeats.length % mockGuests.length;
+        const guestInfo = mockGuests[guestIndex];
+        
         const newSelectedSeats = [
             ...selectedSeats,
             {
                 ...seat,
                 ticketType,
                 price: creditCost, // We use this field for credit cost instead of money
+                guestInfo, // Add guest information for new seats
             },
         ];
         setSelectedSeats(newSelectedSeats);
@@ -337,9 +336,13 @@ const BusinessPortal = () => {
             ticketType: selectedSeat.ticketType,
             price: selectedSeat.price,
         }));
+        
+        // Use the guest's visitor type if available, otherwise use the current visitorType state
+        const quoteVisitorType = guestInfo?.visitorType === 'foreign' ? 'foreign' : 'local';
+        
         creditQuoteState.createQuote(
             allSelections,
-            visitorType as "local" | "foreign"
+            quoteVisitorType
         );
     };
 
@@ -358,15 +361,15 @@ const BusinessPortal = () => {
                 ticketType: selectedSeat.ticketType,
                 price: selectedSeat.price,
             }));
+            
+            // Use the visitor type from the first remaining seat, or default to 'local'
+            const primaryVisitorType = newSelectedSeats[0]?.guestInfo?.visitorType === 'foreign' ? 'foreign' : 'local';
+            
             creditQuoteState.createQuote(
                 allSelections,
-                visitorType as "local" | "foreign"
+                primaryVisitorType
             );
         }
-    };
-
-    const handleTranslationChange = (needed: boolean, language?: string) => {
-        setTranslationPreference({ needed, language });
     };
 
     const handleProceedToCheckout = async () => {
@@ -381,10 +384,7 @@ const BusinessPortal = () => {
         }
 
         const totalCreditsFromQuote = creditQuoteState.quote.total.credits;
-        const translationCredits = translationPreference.needed
-            ? selectedSeats.length
-            : 0;
-        const totalWithTranslation = totalCreditsFromQuote + translationCredits;
+        const totalWithTranslation = totalCreditsFromQuote;
 
         if (balance < totalWithTranslation) {
             setShowInsufficientCreditsModal(true);
@@ -481,13 +481,176 @@ const BusinessPortal = () => {
         setShowUploadModal(true);
     };
 
+    // Mock guest data for demo purposes
+    const mockGuests = [
+        {
+            name: "Ahmed Hassan",
+            email: "ahmed.hassan@email.com",
+            age: 45,
+            visitorType: "foreign" as const,
+            translationNeeded: false,
+        },
+        {
+            name: "Sarah Johnson",
+            email: "sarah.johnson@email.com",
+            age: 28,
+            visitorType: "foreign" as const,
+            translationNeeded: true,
+            translationLanguage: "English",
+        },
+        {
+            name: "Fatima Al-Zahra",
+            email: "fatima.alzahra@email.com",
+            age: 52,
+            visitorType: "foreign" as const,
+            translationNeeded: false,
+        },
+        {
+            name: "Michael Chen",
+            email: "michael.chen@email.com",
+            age: 31,
+            visitorType: "foreign" as const,
+            translationNeeded: true,
+            translationLanguage: "English",
+        },
+        {
+            name: "Aisha Mohammed",
+            email: "aisha.mohammed@email.com",
+            age: 22,
+            visitorType: "foreign" as const,
+            translationNeeded: false,
+        },
+        {
+            name: "David Rodriguez",
+            email: "david.rodriguez@email.com",
+            age: 38,
+            visitorType: "foreign" as const,
+            translationNeeded: true,
+            translationLanguage: "Spanish",
+        },
+        {
+            name: "Nour El-Din",
+            email: "nour.eldin@email.com",
+            age: 19,
+            visitorType: "foreign" as const,
+            translationNeeded: false,
+        },
+        {
+            name: "Emma Wilson",
+            email: "emma.wilson@email.com",
+            age: 26,
+            visitorType: "foreign" as const,
+            translationNeeded: true,
+            translationLanguage: "English",
+        },
+    ];
+
     const handleGuestFileUpload = async (): Promise<number> => {
         // In a real app, this would be an API call to process the file
         // For now, we'll simulate processing with a delay
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        // Return a mock number of processed guests
-        return Math.floor(Math.random() * 20) + 10;
+        // Auto-select seats based on uploaded guest data - use all 8 guests
+        const numberOfGuests = mockGuests.length; // Always use all 8 guests
+        const autoSelectedSeats: SelectedSeat[] = [];
+        
+        // Separate guests into VIP and regular based on realistic criteria
+        const vipGuests = mockGuests.filter((guest, index) => 
+            index < 2 || (guest.age >= 65) || (guest.translationNeeded && guest.age >= 30)
+        );
+        const regularGuests = mockGuests.filter((guest, index) => 
+            !(index < 2 || (guest.age >= 65) || (guest.translationNeeded && guest.age >= 30))
+        );
+        
+        // Assign VIP seats together in row A
+        vipGuests.forEach((guest, index) => {
+            const mockSeat: Seat = {
+                id: `A-${index + 1}`, // A1, A2, A3, etc.
+                row: 'A',
+                number: index + 1,
+                zone: 'vip',
+                status: 'available'
+            };
+            
+            // Determine ticket type based on age
+            let ticketType: TicketType = 'adult';
+            if (guest.age < 12) ticketType = 'child';
+            else if (guest.age >= 65) ticketType = 'senior';
+            else if (guest.age < 25) ticketType = 'student';
+            
+            const creditCost = findCreditCost(creditPrices, mockSeat.zone, ticketType);
+            
+            autoSelectedSeats.push({
+                ...mockSeat,
+                ticketType,
+                price: creditCost,
+                guestInfo: guest,
+            });
+        });
+        
+        // Assign regular seats together in rows F and G
+        regularGuests.forEach((guest, index) => {
+            const row = index < 4 ? 'F' : 'G'; // First 4 in row F, rest in row G
+            const seatNumber = index < 4 ? index + 1 : index - 3; // F1-F4, then G1-G4
+            
+            const mockSeat: Seat = {
+                id: `${row}-${seatNumber}`,
+                row: row,
+                number: seatNumber,
+                zone: 'regular',
+                status: 'available'
+            };
+            
+            // Determine ticket type based on age
+            let ticketType: TicketType = 'adult';
+            if (guest.age < 12) ticketType = 'child';
+            else if (guest.age >= 65) ticketType = 'senior';
+            else if (guest.age < 25) ticketType = 'student';
+            
+            const creditCost = findCreditCost(creditPrices, mockSeat.zone, ticketType);
+            
+            autoSelectedSeats.push({
+                ...mockSeat,
+                ticketType,
+                price: creditCost,
+                guestInfo: guest,
+            });
+        });
+        
+        console.log('Auto-selecting seats:', autoSelectedSeats);
+        setSelectedSeats(autoSelectedSeats);
+        
+        // Create credit quote for the auto-selected seats
+        if (autoSelectedSeats.length > 0 && selectedOccurrenceId) {
+            const allSelections = autoSelectedSeats.map((selectedSeat) => ({
+                seat: {
+                    ...selectedSeat,
+                    // Ensure the seat has the correct structure for the API
+                    row: selectedSeat.row,
+                    col: selectedSeat.number, // API expects 'col' but our Seat type uses 'number'
+                    class: selectedSeat.zone, // API expects 'class' but our Seat type uses 'zone'
+                },
+                ticketType: selectedSeat.ticketType,
+                price: selectedSeat.price,
+            }));
+            
+            // Use the visitor type from the first guest, or default to 'local'
+            const primaryVisitorType = autoSelectedSeats[0]?.guestInfo?.visitorType === 'foreign' ? 'foreign' : 'local';
+            
+            console.log('Creating credit quote with:', {
+                selections: allSelections,
+                visitorType: primaryVisitorType,
+                occurrenceId: selectedOccurrenceId
+            });
+            
+            creditQuoteState.createQuote(
+                allSelections,
+                primaryVisitorType
+            );
+        }
+        
+        // Return the number of processed guests
+        return numberOfGuests;
     };
 
     const getPageIcon = () => {
@@ -1188,12 +1351,6 @@ const BusinessPortal = () => {
                                                     className="h-full"
                                                 />
                                             )}
-                                            <TranslationSelector
-                                                onTranslationChange={
-                                                    handleTranslationChange
-                                                }
-                                                className="w-full"
-                                            />
                                         </div>
 
                                         {selectedOccurrenceId && (
@@ -1260,13 +1417,11 @@ const BusinessPortal = () => {
                                             transition={{ duration: 0.3 }}
                                         >
                                             <TicketSummary
+                                                key={`ticket-summary-${selectedSeats.length}-${selectedSeats.some(seat => seat.guestInfo) ? 'with-guests' : 'no-guests'}`}
                                                 selectedSeats={selectedSeats}
                                                 onRemoveSeat={handleSeatRemove}
                                                 onProceedToCheckout={
                                                     handleProceedToCheckout
-                                                }
-                                                translationPreference={
-                                                    translationPreference
                                                 }
                                                 useCredits={true}
                                             />

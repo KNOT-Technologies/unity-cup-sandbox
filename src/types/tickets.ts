@@ -1,16 +1,16 @@
-export type UserType = 'tourist' | 'local';
-export type TicketType = 'senior' | 'adult' | 'student' | 'child';
-export type SeatZone = 'vip' | 'regular';
+export type UserType = "tourist" | "local";
+export type TicketType = "senior" | "adult" | "student" | "child";
+export type SeatZone = "vip" | "regular";
 
 // Define seat status as a const object
 export const SeatStatus = {
-  AVAILABLE: 'available',
-  SELECTED: 'selected',
-  UNAVAILABLE: 'unavailable'
+  AVAILABLE: "available",
+  SELECTED: "selected",
+  UNAVAILABLE: "unavailable",
 } as const;
 
 // Derive the type from the const object
-export type SeatStatus = typeof SeatStatus[keyof typeof SeatStatus];
+export type SeatStatus = (typeof SeatStatus)[keyof typeof SeatStatus];
 
 export interface Seat {
   id: string;
@@ -23,6 +23,14 @@ export interface Seat {
 export interface SelectedSeat extends Seat {
   ticketType: TicketType;
   price: number;
+  guestInfo?: {
+    name: string;
+    email: string;
+    age: number;
+    visitorType: "local" | "foreign";
+    translationNeeded: boolean;
+    translationLanguage?: string;
+  };
 }
 
 export interface PricingTier {
@@ -63,29 +71,29 @@ export const PRICING = {
       senior: 50,
       adult: 45,
       student: 40,
-      child: 30
+      child: 30,
     },
     vip: {
       senior: 80,
       adult: 75,
       student: 70,
-      child: 60
-    }
+      child: 60,
+    },
   },
   local: {
     regular: {
       senior: 400,
       adult: 350,
       student: 300,
-      child: 200
+      child: 200,
     },
     vip: {
       senior: 700,
       adult: 650,
       student: 600,
-      child: 500
-    }
-  }
+      child: 500,
+    },
+  },
 } as const;
 
 // Quote Management Types
@@ -177,11 +185,11 @@ export interface CheckoutState {
 export interface TicketDetails {
   id: string;
   seatNumber: string;
-  seatClass: 'vip' | 'regular';
+  seatClass: "vip" | "regular";
   ticketType: TicketType;
   qrCode: string;
   addons?: {
     name: string;
     option: string;
   }[];
-} 
+}

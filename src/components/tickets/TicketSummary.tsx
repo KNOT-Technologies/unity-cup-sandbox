@@ -117,8 +117,8 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                     hover:border-amber-500/20 transition-all duration-300"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-2">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
                                                 <span
                                                     className={`text-xs px-2 py-0.5 rounded-full font-medium
                           ${
@@ -134,7 +134,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                                     {seat.number}
                                                 </span>
                                             </div>
-                                            <div className="text-sm text-white/60 mt-0.5">
+                                            <div className="text-sm text-white/60 mb-1">
                                                 {seat.ticketType === "senior"
                                                     ? "Senior"
                                                     : seat.ticketType ===
@@ -146,16 +146,69 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                                     : "Adult"}{" "}
                                                 Ticket
                                             </div>
+                                            
+                                            {/* Guest Information */}
+                                            {seat.guestInfo && (
+                                                <div className="mt-3 p-2 bg-gray-700/20 rounded-lg border border-gray-600/30">
+                                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                                        <div>
+                                                            <span className="text-white/40">Name:</span>
+                                                            <span className="text-white/90 ml-1 font-medium">
+                                                                {seat.guestInfo.name}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-white/40">Email:</span>
+                                                            <span className="text-white/90 ml-1 font-medium">
+                                                                {seat.guestInfo.email}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-white/40">Age:</span>
+                                                            <span className="text-white/90 ml-1 font-medium">
+                                                                {seat.guestInfo.age}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-white/40">Type:</span>
+                                                            <span className={`ml-1 font-medium px-1.5 py-0.5 rounded text-xs ${
+                                                                seat.guestInfo.visitorType === 'local'
+                                                                    ? 'bg-green-500/20 text-green-400'
+                                                                    : 'bg-blue-500/20 text-blue-400'
+                                                            }`}>
+                                                                {seat.guestInfo.visitorType === 'local' ? 'Local' : 'Foreign'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Translation Information */}
+                                                    <div className="mt-2 pt-2 border-t border-gray-600/20">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-white/40 text-xs">Translation:</span>
+                                                            {seat.guestInfo.translationNeeded ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-green-400 text-xs font-medium">Yes</span>
+                                                                    <span className="text-white/60 text-xs">
+                                                                        ({seat.guestInfo.translationLanguage})
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-red-400 text-xs font-medium">No</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-amber-400 font-medium">
-                                                {useCredits
-                                                    ? `${seat.price} credits`
-                                                    : `${getCurrencySymbol()}${
-                                                          seat.price
-                                                      }`}
-                                            </span>
+                                        <div className="flex items-center gap-3 ml-4">
+                                            {!useCredits && (
+                                                <span className="text-amber-400 font-medium">
+                                                    {`${getCurrencySymbol()}${
+                                                        seat.price
+                                                    }`}
+                                                </span>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
@@ -260,7 +313,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                 )}
 
                 <div className="flex-none">
-                    {selectedSeats.length > 0 && (
+                    {selectedSeats.length > 0 && !useCredits && (
                         <>
                             <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
 
@@ -268,30 +321,24 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                 <div className="flex justify-between text-white/60">
                                     <span>Tickets Subtotal</span>
                                     <span>
-                                        {useCredits
-                                            ? `${total} credits`
-                                            : `${getCurrencySymbol()}${total}`}
+                                        {`${getCurrencySymbol()}${total}`}
                                     </span>
                                 </div>
                                 {translationPreference?.needed && (
                                     <div className="flex justify-between text-white/60">
                                         <span>Translation Service</span>
                                         <span>
-                                            {useCredits
-                                                ? `${selectedSeats.length} credits`
-                                                : `${getCurrencySymbol()}${
-                                                      translationFee *
-                                                      selectedSeats.length
-                                                  }`}
+                                            {`${getCurrencySymbol()}${
+                                                translationFee *
+                                                selectedSeats.length
+                                            }`}
                                         </span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-lg font-medium pt-2">
                                     <span className="text-white">Total</span>
                                     <span className="text-amber-400">
-                                        {useCredits
-                                            ? `${totalWithAddons} credits`
-                                            : `${getCurrencySymbol()}${totalWithAddons}`}
+                                        {`${getCurrencySymbol()}${totalWithAddons}`}
                                     </span>
                                 </div>
                             </div>
