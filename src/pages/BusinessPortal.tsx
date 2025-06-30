@@ -24,29 +24,55 @@ import SeatMap from "../components/tickets/SeatMap";
 import TicketSummary from "../components/tickets/TicketSummary";
 import TranslationSelector from "../components/tickets/TranslationSelector";
 import GuestUploadModal from "../components/common/GuestUploadModal";
+import CreditQuoteDisplay from "../components/tickets/CreditQuoteDisplay";
 import DashboardCharts from "../components/dashboard/DashboardCharts";
 import DemographicCharts from "../components/dashboard/DemographicCharts";
-import { useCreditBalance, useCreditBundles } from "../hooks/useApi";
-import { purchaseCreditBundle, checkoutWithCredits } from "../api/knot";
+import {
+    useCreditBalance,
+    useCreditBundles,
+    useSchedule,
+    useCreditPrices,
+    useCreditQuote,
+} from "../hooks/useApi";
+import {
+    purchaseCreditBundle,
+    checkoutWithCredits,
+    type CreditPriceMatrix,
+} from "../api/knot";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
-import type { Seat, TicketType, SelectedSeat } from "../types/tickets";
+import type {
+    Seat,
+    TicketType,
+    SelectedSeat,
+    ShowTime,
+    Occurrence,
+    UserType,
+} from "../types/tickets";
 
-// Credit costs for different ticket types and zones
-const CREDIT_COSTS = {
-    regular: {
-        senior: 2,
-        adult: 2,
-        student: 1,
-        child: 1,
-    },
-    vip: {
-        senior: 3,
-        adult: 3,
-        student: 2,
-        child: 2,
-    },
-} as const;
+// Helper function to find credit cost from API pricing data
+const findCreditCost = (
+    creditPrices: CreditPriceMatrix | null | undefined,
+    seatClass: "vip" | "regular",
+    category: TicketType
+): number => {
+    if (!creditPrices?.prices) {
+        // Fallback to hardcoded values if API data not available
+        const fallbackCosts = {
+            regular: { senior: 2, adult: 2, student: 1, child: 1 },
+            vip: { senior: 3, adult: 3, student: 2, child: 2 },
+        };
+        return fallbackCosts[seatClass][category];
+    }
+
+    const priceItem = creditPrices.prices.find(
+        (item) =>
+            item.visitor === "local" &&
+            item.seatClass === seatClass &&
+            item.category === category
+    );
+    return priceItem?.credits || 1;
+};
 
 // Mock invoice data - in a real app, this would come from your backend
 const ticketOrders = [
@@ -144,21 +170,13 @@ const creditPurchases = [
     },
 ];
 
-// Mock show times data
-const mockShowTimes = [
-    { id: "1", time: "19:00", language: "English" },
-    { id: "2", time: "20:00", language: "Arabic" },
-    { id: "3", time: "21:00", language: "German" },
-];
-
 const BusinessPortal = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { showSuccess, showError, toasts, removeToast } = useToast();
 
-    // API hooks
-    const { balance, refetch: refetchBalance } = useCreditBalance();
-    const { bundles: creditPackages, isLoading: bundlesLoading, error: bundlesError } = useCreditBundles();
+    // Use fixed eventId for Sound & Light show (same as user portal)
+    const eventId = "685d771de88d1161a488bf0f";
 
     // UI state
     const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] =
@@ -167,6 +185,24 @@ const BusinessPortal = () => {
     // Booking state
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>();
+    const [visitorType, setVisitorType] = useState<UserType>("tourist");
+
+    // API hooks
+    const { balance, refetch: refetchBalance } = useCreditBalance();
+    const {
+        bundles: creditPackages,
+        isLoading: bundlesLoading,
+        error: bundlesError,
+    } = useCreditBundles();
+    const {
+        occurrences,
+        isLoading: isLoadingSchedule,
+        error: scheduleError,
+    } = useSchedule(eventId);
+
+    // Credit pricing and quote management
+    const { creditPrices } = useCreditPrices(selectedOccurrenceId || null);
+    const creditQuoteState = useCreditQuote(selectedOccurrenceId || null);
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
     const [translationPreference, setTranslationPreference] = useState<{
         needed: boolean;
@@ -189,8 +225,52 @@ const BusinessPortal = () => {
         category: TicketType
     ): number => {
         // When using credits, return credit cost instead of money price
-        return CREDIT_COSTS[seatClass][category];
+        return findCreditCost(creditPrices ?? null, seatClass, category);
     };
+
+    // Build dynamic creditCosts mapping for SeatMap display
+    type Category = "senior" | "adult" | "student" | "child";
+    type CostMap = {
+        senior: number;
+        adult: number;
+        student: number;
+        child: number;
+    };
+
+    const buildCreditCosts = (): { regular: CostMap; vip: CostMap } => {
+        const defaultCosts: { regular: CostMap; vip: CostMap } = {
+            regular: { senior: 2, adult: 2, student: 1, child: 1 },
+            vip: { senior: 3, adult: 3, student: 2, child: 2 },
+        };
+
+        if (!creditPrices?.prices) return defaultCosts;
+
+        // Clone defaults so we keep all required keys
+        const mapping: { regular: CostMap; vip: CostMap } = {
+            regular: { ...defaultCosts.regular },
+            vip: { ...defaultCosts.vip },
+        };
+
+        (["senior", "adult", "student", "child"] as Category[]).forEach(
+            (cat) => {
+                (["regular", "vip"] as const).forEach((cls) => {
+                    const item = creditPrices.prices.find(
+                        (p) =>
+                            p.visitor === visitorType &&
+                            p.category === cat &&
+                            p.seatClass === cls
+                    );
+                    if (item) {
+                        mapping[cls][cat] = item.credits;
+                    }
+                });
+            }
+        );
+
+        return mapping;
+    };
+
+    const dynamicCreditCosts = buildCreditCosts();
 
     const handleLogout = () => {
         localStorage.removeItem("authToken");
@@ -203,7 +283,7 @@ const BusinessPortal = () => {
             const response = await purchaseCreditBundle(bundleId);
 
             // Find the bundle to get its price and currency
-            const bundle = creditPackages.find(pkg => pkg.id === bundleId);
+            const bundle = creditPackages.find((pkg) => pkg.id === bundleId);
             if (!bundle) {
                 showError("Credit bundle not found");
                 return;
@@ -238,7 +318,7 @@ const BusinessPortal = () => {
     };
 
     const handleSeatSelect = (seat: Seat, ticketType: TicketType) => {
-        const creditCost = CREDIT_COSTS[seat.zone][ticketType];
+        const creditCost = findCreditCost(creditPrices, seat.zone, ticketType);
         const newSelectedSeats = [
             ...selectedSeats,
             {
@@ -248,10 +328,39 @@ const BusinessPortal = () => {
             },
         ];
         setSelectedSeats(newSelectedSeats);
+
+        // Create/update credit quote when seats are selected
+        const allSelections = newSelectedSeats.map((selectedSeat) => ({
+            seat: selectedSeat,
+            ticketType: selectedSeat.ticketType,
+            price: selectedSeat.price,
+        }));
+        creditQuoteState.createQuote(
+            allSelections,
+            visitorType as "local" | "foreign"
+        );
     };
 
     const handleSeatRemove = (seatId: string) => {
-        setSelectedSeats((prev) => prev.filter((seat) => seat.id !== seatId));
+        const newSelectedSeats = selectedSeats.filter(
+            (seat) => seat.id !== seatId
+        );
+        setSelectedSeats(newSelectedSeats);
+
+        // Update credit quote when seats are removed
+        if (newSelectedSeats.length === 0) {
+            creditQuoteState.cancelQuote();
+        } else {
+            const allSelections = newSelectedSeats.map((selectedSeat) => ({
+                seat: selectedSeat,
+                ticketType: selectedSeat.ticketType,
+                price: selectedSeat.price,
+            }));
+            creditQuoteState.createQuote(
+                allSelections,
+                visitorType as "local" | "foreign"
+            );
+        }
     };
 
     const handleTranslationChange = (needed: boolean, language?: string) => {
@@ -264,14 +373,16 @@ const BusinessPortal = () => {
             return;
         }
 
-        const totalCreditsNeeded = selectedSeats.reduce(
-            (acc, seat) => acc + seat.price,
-            0
-        );
+        if (!creditQuoteState.quote) {
+            showError("Please wait for pricing to load");
+            return;
+        }
+
+        const totalCreditsFromQuote = creditQuoteState.quote.total.credits;
         const translationCredits = translationPreference.needed
             ? selectedSeats.length
             : 0;
-        const totalWithTranslation = totalCreditsNeeded + translationCredits;
+        const totalWithTranslation = totalCreditsFromQuote + translationCredits;
 
         if (balance < totalWithTranslation) {
             setShowInsufficientCreditsModal(true);
@@ -279,17 +390,15 @@ const BusinessPortal = () => {
         }
 
         try {
-            // This would normally use a real quote ID from the booking flow
-            const mockQuoteId = "quote-" + Date.now();
-
             await checkoutWithCredits({
-                quoteId: mockQuoteId,
+                quoteId: creditQuoteState.quote.quoteId,
                 paymentMethod: "credits",
             });
 
             showSuccess("Booking successful! Your tickets have been reserved.");
             setSelectedSeats([]);
             setSelectedOccurrenceId(undefined);
+            creditQuoteState.cancelQuote(); // Clear the quote
             await refetchBalance(); // Refresh balance to show deducted credits
         } catch (error: unknown) {
             console.error("Checkout failed:", error);
@@ -307,6 +416,7 @@ const BusinessPortal = () => {
                     "Your seat selection has expired. Please select seats again."
                 );
                 setSelectedSeats([]);
+                creditQuoteState.cancelQuote();
             } else {
                 showError(
                     apiError.error || "Booking failed. Please try again."
@@ -314,6 +424,50 @@ const BusinessPortal = () => {
             }
         }
     };
+
+    // Transform occurrences to ShowTime format
+    const getShowTimesForDate = (date: Date): ShowTime[] => {
+        if (!occurrences) return [];
+
+        const dateString = date.toISOString().split("T")[0];
+
+        return occurrences
+            .filter((occurrence: Occurrence) => {
+                const occurrenceDate = new Date(occurrence.startAt)
+                    .toISOString()
+                    .split("T")[0];
+                return occurrenceDate === dateString;
+            })
+            .map((occurrence: Occurrence) => ({
+                id: occurrence.id,
+                time: new Date(occurrence.startAt).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                }),
+                language: occurrence.language,
+            }));
+    };
+
+    // Get available dates from occurrences
+    const getAvailableDates = (): Date[] => {
+        if (!occurrences) return [];
+
+        const dates = new Set<string>();
+        occurrences.forEach((occurrence: Occurrence) => {
+            const date = new Date(occurrence.startAt)
+                .toISOString()
+                .split("T")[0];
+            dates.add(date);
+        });
+
+        return Array.from(dates)
+            .map((dateString) => new Date(dateString))
+            .sort((a, b) => a.getTime() - b.getTime());
+    };
+
+    const availableDates = getAvailableDates();
+    const showTimesForSelectedDate = getShowTimesForDate(selectedDate);
 
     const handleDownloadInvoice = (invoiceId: string) => {
         // In a real app, this would trigger a PDF download
@@ -743,13 +897,19 @@ const BusinessPortal = () => {
                                     {bundlesLoading ? (
                                         <div className="p-8 text-center">
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto"></div>
-                                            <p className="text-white/60 mt-4">Loading credit bundles...</p>
+                                            <p className="text-white/60 mt-4">
+                                                Loading credit bundles...
+                                            </p>
                                         </div>
                                     ) : bundlesError ? (
                                         <div className="p-8 text-center">
-                                            <p className="text-red-400">Failed to load credit bundles</p>
-                                            <button 
-                                                onClick={() => window.location.reload()} 
+                                            <p className="text-red-400">
+                                                Failed to load credit bundles
+                                            </p>
+                                            <button
+                                                onClick={() =>
+                                                    window.location.reload()
+                                                }
                                                 className="mt-2 px-4 py-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
                                             >
                                                 Retry
@@ -757,7 +917,9 @@ const BusinessPortal = () => {
                                         </div>
                                     ) : creditPackages.length === 0 ? (
                                         <div className="p-8 text-center">
-                                            <p className="text-white/60">No credit bundles available</p>
+                                            <p className="text-white/60">
+                                                No credit bundles available
+                                            </p>
                                         </div>
                                     ) : (
                                         <table className="w-full">
@@ -846,33 +1008,52 @@ const BusinessPortal = () => {
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="text-white/80">
-                                                                {pkg.expiryMonths} months
+                                                                {
+                                                                    pkg.expiryMonths
+                                                                }{" "}
+                                                                months
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <span className="text-2xl font-semibold text-amber-400">
-                                                                {pkg.currency} {pkg.price}
+                                                                {pkg.currency}{" "}
+                                                                {pkg.price}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <div className="flex items-center justify-center gap-2">
                                                                 <span className="text-white/80">
-                                                                    {pkg.currency} {pkg.pricePerCredit}/credit
+                                                                    {
+                                                                        pkg.currency
+                                                                    }{" "}
+                                                                    {
+                                                                        pkg.pricePerCredit
+                                                                    }
+                                                                    /credit
                                                                 </span>
-                                                                {pkg.discount > 0 && (
+                                                                {pkg.discount >
+                                                                    0 && (
                                                                     <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-medium">
-                                                                        {pkg.discount}% OFF
+                                                                        {
+                                                                            pkg.discount
+                                                                        }
+                                                                        % OFF
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             <button
-                                                                onClick={() => handlePurchase(pkg.id, pkg.credits)}
+                                                                onClick={() =>
+                                                                    handlePurchase(
+                                                                        pkg.id,
+                                                                        pkg.credits
+                                                                    )
+                                                                }
                                                                 className="px-4 py-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
-                                                                backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
-                                                                transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
-                                                                group flex items-center gap-2"
+                                backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
+                                transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
+                                group flex items-center gap-2"
                                                             >
                                                                 <Plus className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
                                                                 <span className="text-emerald-400 font-medium">
@@ -901,6 +1082,32 @@ const BusinessPortal = () => {
                                                         Credits: {balance}
                                                     </span>
                                                 </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {(
+                                                    [
+                                                        "local",
+                                                        "foreign",
+                                                    ] as const
+                                                ).map((type) => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() =>
+                                                            setVisitorType(
+                                                                type as UserType
+                                                            )
+                                                        }
+                                                        className={`px-3 py-2 rounded-lg text-sm font-medium backdrop-blur-xl border transition-all duration-300 ${
+                                                            visitorType === type
+                                                                ? "bg-amber-500/20 border-amber-500/40 text-amber-400"
+                                                                : "bg-gray-700/30 border-gray-700/50 text-white/60 hover:border-amber-500/20"
+                                                        }`}
+                                                    >
+                                                        {type === "local"
+                                                            ? "Local"
+                                                            : "Tourist"}
+                                                    </button>
+                                                ))}
                                             </div>
                                             <button
                                                 onClick={() =>
@@ -938,17 +1145,44 @@ const BusinessPortal = () => {
                                             <DatePicker
                                                 selectedDate={selectedDate}
                                                 onDateSelect={setSelectedDate}
+                                                availableDates={availableDates}
                                             />
-                                            <ShowTimeSelector
-                                                showTimes={mockShowTimes}
-                                                selectedOccurrenceId={
-                                                    selectedOccurrenceId
-                                                }
-                                                onOccurrenceSelect={
-                                                    setSelectedOccurrenceId
-                                                }
-                                                className="h-full"
-                                            />
+                                            {isLoadingSchedule ? (
+                                                <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl p-8 text-center border border-gray-700/20">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto"></div>
+                                                    <p className="text-white/60 mt-4">
+                                                        Loading show times...
+                                                    </p>
+                                                </div>
+                                            ) : scheduleError ? (
+                                                <div className="bg-red-500/10 backdrop-blur-xl rounded-xl p-8 text-center border border-red-500/20">
+                                                    <p className="text-red-400">
+                                                        Failed to load show
+                                                        times
+                                                    </p>
+                                                    <button
+                                                        onClick={() =>
+                                                            window.location.reload()
+                                                        }
+                                                        className="mt-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                                                    >
+                                                        Retry
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <ShowTimeSelector
+                                                    showTimes={
+                                                        showTimesForSelectedDate
+                                                    }
+                                                    selectedOccurrenceId={
+                                                        selectedOccurrenceId
+                                                    }
+                                                    onOccurrenceSelect={
+                                                        setSelectedOccurrenceId
+                                                    }
+                                                    className="h-full"
+                                                />
+                                            )}
                                             <TranslationSelector
                                                 onTranslationChange={
                                                     handleTranslationChange
@@ -966,8 +1200,10 @@ const BusinessPortal = () => {
                                             >
                                                 <div className="min-w-[800px] lg:min-w-0">
                                                     <SeatMap
-                                                        userType="tourist"
-                                                        onUserTypeChange={() => {}} // Disabled for business portal
+                                                        userType={visitorType}
+                                                        onUserTypeChange={
+                                                            setVisitorType
+                                                        }
                                                         onSeatSelect={
                                                             handleSeatSelect
                                                         }
@@ -980,16 +1216,40 @@ const BusinessPortal = () => {
                                                         selectedDate={
                                                             selectedDate
                                                         }
-                                                        selectedShowTime={
+                                                        occurrenceId={
                                                             selectedOccurrenceId
                                                         }
                                                         useCredits={true}
                                                         creditCosts={
-                                                            CREDIT_COSTS
+                                                            dynamicCreditCosts
                                                         }
                                                         findPrice={findPrice}
                                                     />
                                                 </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Credit Quote Display */}
+                                        {selectedSeats.length > 0 && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                            >
+                                                <CreditQuoteDisplay
+                                                    quote={
+                                                        creditQuoteState.quote
+                                                    }
+                                                    timeRemaining={
+                                                        creditQuoteState.timeRemaining
+                                                    }
+                                                    isLoading={
+                                                        creditQuoteState.isLoading
+                                                    }
+                                                    error={
+                                                        creditQuoteState.error
+                                                    }
+                                                />
                                             </motion.div>
                                         )}
 

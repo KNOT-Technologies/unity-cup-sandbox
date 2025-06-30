@@ -77,15 +77,33 @@ export interface QuoteRequest {
   category?: "senior" | "adult" | "student" | "child";
 }
 
+// NEW: Credit-based quote request
+export interface CreditQuoteRequest {
+  seats: QuoteSeat[];
+  paymentMethod: "credits";
+  visitor: "local" | "foreign";
+}
+
 export interface QuoteLine {
   label: string;
   currency: string;
   amount: number;
 }
 
+// NEW: Credit quote line (credits instead of currency)
+export interface CreditQuoteLine {
+  label: string;
+  credits: number;
+}
+
 export interface QuoteTotal {
   currency: string;
   amount: number;
+}
+
+// NEW: Credit quote total
+export interface CreditQuoteTotal {
+  credits: number;
 }
 
 export interface Quote {
@@ -96,11 +114,51 @@ export interface Quote {
   total: QuoteTotal;
 }
 
+// NEW: Credit-based quote
+export interface CreditQuote {
+  quoteId: string;
+  occurrenceId: string;
+  expiresAt: string;
+  lines: CreditQuoteLine[];
+  visitor: "local" | "foreign";
+  total: CreditQuoteTotal;
+  paymentMethod: "credits";
+}
+
+// NEW: Credit pricing matrix (similar to price matrix but for credits)
+export interface CreditPriceItem {
+  visitor: "local" | "foreign";
+  category: "senior" | "adult" | "student" | "child";
+  seatClass: "vip" | "regular";
+  credits: number;
+  _id: string;
+}
+
+export interface CreditPriceMatrix {
+  _id: string;
+  eventId: string;
+  prices: CreditPriceItem[];
+}
+
+export interface CreditPricesResponse {
+  success: boolean;
+  message: string;
+  creditPrices: CreditPriceMatrix;
+}
+
 export interface QuoteResponse {
   success: boolean;
   quote?: Quote;
   error?: string;
   seat?: string; // For seat conflict errors
+}
+
+// NEW: Credit quote response
+export interface CreditQuoteResponse {
+  success: boolean;
+  quote?: CreditQuote;
+  error?: string;
+  seat?: string;
 }
 
 export interface RefreshResponse {
@@ -295,6 +353,14 @@ export async function getPrices(occurrenceId: string): Promise<PricingData> {
   };
 }
 
+// NEW: Get credit pricing for an occurrence
+export async function getCreditPrices(occurrenceId: string): Promise<CreditPriceMatrix> {
+  const response = await authenticatedApiRequest<CreditPricesResponse>(
+    `/api/v3/occurrences/${occurrenceId}/credit-prices`
+  );
+  return response.creditPrices;
+}
+
 // Quote Management API Functions
 export async function createQuote(
   occurrenceId: string,
@@ -377,6 +443,80 @@ export async function deleteQuote(quoteId: string): Promise<void> {
     await apiRequestWithBody<void>(`/api/v3/quotes/${quoteId}`, {
       method: "DELETE",
     });
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw {
+        status: error.status,
+        error: error.message,
+      };
+    }
+    throw error;
+  }
+}
+
+// NEW: Credit Quote Management API Functions
+export async function createCreditQuote(
+  occurrenceId: string,
+  request: CreditQuoteRequest
+): Promise<CreditQuote> {
+  try {
+    const response = await authenticatedApiRequestWithBody<CreditQuote>(
+      `/api/v3/occurrences/${occurrenceId}/credit-quote`,
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      }
+    );
+    return response;
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw {
+        status: error.status,
+        error: error.message,
+        seat: error.message.includes("SEAT_ALREADY_TAKEN")
+          ? error.message.split('seat": "')[1]?.split('"')[0]
+          : undefined,
+      };
+    }
+    throw error;
+  }
+}
+
+export async function updateCreditQuote(
+  quoteId: string,
+  request: CreditQuoteRequest
+): Promise<CreditQuote> {
+  try {
+    const response = await authenticatedApiRequestWithBody<CreditQuote>(
+      `/api/v3/credit-quotes/${quoteId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(request),
+      }
+    );
+    return response;
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw {
+        status: error.status,
+        error: error.message,
+        seat: error.message.includes("SEAT_ALREADY_TAKEN")
+          ? error.message.split('seat": "')[1]?.split('"')[0]
+          : undefined,
+      };
+    }
+    throw error;
+  }
+}
+
+export async function deleteCreditQuote(quoteId: string): Promise<void> {
+  try {
+    await authenticatedApiRequestWithBody<void>(
+      `/api/v3/credit-quotes/${quoteId}`,
+      {
+        method: "DELETE",
+      }
+    );
   } catch (error) {
     if (error instanceof APIError) {
       throw {

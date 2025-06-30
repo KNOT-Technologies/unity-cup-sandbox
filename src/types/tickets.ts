@@ -104,8 +104,32 @@ export interface QuoteData {
   };
 }
 
+// NEW: Credit Quote Types
+export interface CreditQuoteData {
+  quoteId: string;
+  occurrenceId: string;
+  expiresAt: string;
+  lines: Array<{
+    label: string;
+    credits: number;
+  }>;
+  visitor: "local" | "foreign";
+  total: {
+    credits: number;
+  };
+  paymentMethod: "credits";
+}
+
 export interface QuoteState {
   quote: QuoteData | null;
+  isLoading: boolean;
+  error: string | null;
+  timeRemaining: number; // seconds
+}
+
+// NEW: Credit Quote State
+export interface CreditQuoteState {
+  quote: CreditQuoteData | null;
   isLoading: boolean;
   error: string | null;
   timeRemaining: number; // seconds

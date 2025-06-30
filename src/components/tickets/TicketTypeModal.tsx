@@ -134,7 +134,6 @@ const TicketTypeModal = ({
                                 </p>
                             </div>
                         </div>
-
                         {hasSelectedSeats && (
                             <div className="mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
                                 <div className="flex items-center gap-2">
@@ -149,62 +148,52 @@ const TicketTypeModal = ({
                                 </div>
                             </div>
                         )}
-
                         <div className="h-px w-full bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent mb-4"></div>
-
-                        {/* User Type Selection - Only show if not using credits */}
-                        {!useCredits && (
-                            <div className="mb-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Users className="w-4 h-4 text-amber-400" />
-                                    <span className="text-sm font-medium text-white/90">
-                                        Select User Type
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            onUserTypeChange("tourist")
-                                        }
-                                        disabled={
-                                            hasSelectedSeats &&
-                                            userType !== "tourist"
-                                        }
-                                        className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
-                                            userType === "tourist"
-                                                ? "bg-amber-500/20 border-amber-500 text-amber-400"
-                                                : hasSelectedSeats
-                                                ? "border-gray-700 text-gray-600 opacity-50 cursor-not-allowed"
-                                                : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
-                                        }`}
-                                    >
-                                        Tourist
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            onUserTypeChange("local")
-                                        }
-                                        disabled={
-                                            hasSelectedSeats &&
-                                            userType !== "local"
-                                        }
-                                        className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
-                                            userType === "local"
-                                                ? "bg-amber-500/20 border-amber-500 text-amber-400"
-                                                : hasSelectedSeats
-                                                ? "border-gray-700 text-gray-600 opacity-50 cursor-not-allowed"
-                                                : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
-                                        }`}
-                                    >
-                                        Local
-                                    </button>
-                                </div>
+                        {/* User Type Selection */}
+                        <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Users className="w-4 h-4 text-amber-400" />
+                                <span className="text-sm font-medium text-white/90">
+                                    Select User Type
+                                </span>
                             </div>
-                        )}
 
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => onUserTypeChange("tourist")}
+                                    disabled={
+                                        hasSelectedSeats &&
+                                        userType !== "tourist"
+                                    }
+                                    className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
+                                        userType === "tourist"
+                                            ? "bg-amber-500/20 border-amber-500 text-amber-400"
+                                            : hasSelectedSeats
+                                            ? "border-gray-700 text-gray-600 opacity-50 cursor-not-allowed"
+                                            : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
+                                    }`}
+                                >
+                                    Tourist
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onUserTypeChange("local")}
+                                    disabled={
+                                        hasSelectedSeats && userType !== "local"
+                                    }
+                                    className={`py-2 px-3 rounded-lg border text-sm transition-all duration-300 ${
+                                        userType === "local"
+                                            ? "bg-amber-500/20 border-amber-500 text-amber-400"
+                                            : hasSelectedSeats
+                                            ? "border-gray-700 text-gray-600 opacity-50 cursor-not-allowed"
+                                            : "border-gray-700 text-gray-400 hover:border-amber-500/50 hover:bg-amber-400/10"
+                                    }`}
+                                >
+                                    Local
+                                </button>
+                            </div>
+                        </div>
                         <div className="space-y-2">
                             {(
                                 ["senior", "adult", "student", "child"] as const
