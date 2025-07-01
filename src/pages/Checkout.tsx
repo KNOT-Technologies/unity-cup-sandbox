@@ -858,7 +858,7 @@ const Checkout = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 p-6"
+                        className="order-first lg:order-none bg-gray-800/20 backdrop-blur-xl rounded-2xl border border-gray-700/20 p-6"
                     >
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-lg font-medium text-white">
