@@ -294,15 +294,15 @@ const Checkout = () => {
                         hasErrors = true;
                     }
                 } else if (ticketType.includes("student")) {
-                    if (age < 12 || age >= 26) {
+                    if (age < 6 || age >= 17) {
                         holderErrors.dateOfBirth =
-                            "Student tickets require age between 16-29";
+                            "Student tickets require age between 6-16";
                         hasErrors = true;
                     }
                 } else if (ticketType.includes("child")) {
-                    if (age >= 12) {
+                    if (age >= 6) {
                         holderErrors.dateOfBirth =
-                            "Child tickets require age under 12";
+                            "Child tickets require age under 6";
                         hasErrors = true;
                     }
                 }
@@ -898,7 +898,9 @@ const Checkout = () => {
                                             </span>
                                             <span className="text-white">
                                                 {getCurrencySymbol()}{" "}
-                                                {selection.price}
+                                                {Number(
+                                                    selection.price
+                                                ).toLocaleString()}
                                             </span>
                                         </div>
                                     ))}
@@ -917,7 +919,9 @@ const Checkout = () => {
                                                 </span>
                                                 <span className="text-red-400">
                                                     {getCurrencySymbol()}{" "}
-                                                    {line.amount}
+                                                    {Number(
+                                                        line.amount
+                                                    ).toLocaleString()}
                                                 </span>
                                             </div>
                                         ))}
@@ -932,7 +936,10 @@ const Checkout = () => {
                                             {line.label}
                                         </span>
                                         <span className="text-white">
-                                            {getCurrencySymbol()} {line.amount}
+                                            {getCurrencySymbol()}{" "}
+                                            {Number(
+                                                line.amount
+                                            ).toLocaleString()}
                                         </span>
                                     </div>
                                 ))
@@ -960,9 +967,11 @@ const Checkout = () => {
                                             </span>
                                             <span className="text-white">
                                                 {getCurrencySymbol()}{" "}
-                                                {isTouristPricing()
-                                                    ? addon.price?.USD || 3
-                                                    : addon.price?.EGP || 50}
+                                                {Number(
+                                                    isTouristPricing()
+                                                        ? addon.price?.USD || 3
+                                                        : addon.price?.EGP || 50
+                                                ).toLocaleString()}
                                             </span>
                                         </div>
                                     ))}
@@ -975,7 +984,10 @@ const Checkout = () => {
                                         Total
                                     </span>
                                     <span className="text-lg font-medium text-amber-400">
-                                        {getCurrencySymbol()} {calculateTotal()}
+                                        {getCurrencySymbol()}{" "}
+                                        {Number(
+                                            calculateTotal()
+                                        ).toLocaleString()}
                                     </span>
                                 </div>
                             </div>

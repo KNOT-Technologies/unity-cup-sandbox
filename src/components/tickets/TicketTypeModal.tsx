@@ -224,9 +224,9 @@ const TicketTypeModal = ({
                                                 {type === "senior"
                                                     ? "(>80)"
                                                     : type === "student"
-                                                    ? "(<26)"
+                                                    ? "(<16)"
                                                     : type === "child"
-                                                    ? "(<12)"
+                                                    ? "(<6)"
                                                     : ""}
                                             </span>
                                         </div>
@@ -236,13 +236,15 @@ const TicketTypeModal = ({
                                         >
                                             {useCredits && pricing
                                                 ? `${pricing[type]} credits`
-                                                : `${currency} ${findPrice(
-                                                      userType,
-                                                      seat.zone as
-                                                          | "vip"
-                                                          | "regular",
-                                                      type
-                                                  )}`}
+                                                : `${currency} ${Number(
+                                                      findPrice(
+                                                          userType,
+                                                          seat.zone as
+                                                              | "vip"
+                                                              | "regular",
+                                                          type
+                                                      )
+                                                  ).toLocaleString()}`}
                                         </span>
                                     </div>
                                 </button>

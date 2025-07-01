@@ -10,7 +10,7 @@ import {
     Plus,
     Percent,
     Coins,
-    Download,
+    // Download,
     CalendarDays,
     Ticket,
     Upload,
@@ -584,10 +584,10 @@ const BusinessPortal = () => {
     const availableDates = getAvailableDates();
     const showTimesForSelectedDate = getShowTimesForDate(selectedDate);
 
-    const handleDownloadInvoice = (invoiceId: string) => {
-        // In a real app, this would trigger a PDF download
-        console.log("Downloading invoice:", invoiceId);
-    };
+    // const handleDownloadInvoice = (invoiceId: string) => {
+    //     // In a real app, this would trigger a PDF download
+    //     console.log("Downloading invoice:", invoiceId);
+    // };
 
     const handleUploadGuestDetails = () => {
         setShowUploadModal(true);
@@ -1137,7 +1137,7 @@ const BusinessPortal = () => {
                                                                 credits
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-3 text-center">
+                                                        {/* <td className="px-4 py-3 text-center">
                                                             <button
                                                                 onClick={() =>
                                                                     handleDownloadInvoice(
@@ -1154,7 +1154,7 @@ const BusinessPortal = () => {
                                                                     PDF
                                                                 </span>
                                                             </button>
-                                                        </td>
+                                                        </td> */}
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -1274,7 +1274,7 @@ const BusinessPortal = () => {
                                                                     {purchase.amount.toLocaleString()}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 py-3 text-center">
+                                                            {/* <td className="px-4 py-3 text-center">
                                                                 <button
                                                                     onClick={() =>
                                                                         handleDownloadInvoice(
@@ -1291,7 +1291,7 @@ const BusinessPortal = () => {
                                                                         PDF
                                                                     </span>
                                                                 </button>
-                                                            </td>
+                                                            </td> */}
                                                         </tr>
                                                     )
                                                 )}
@@ -1339,149 +1339,163 @@ const BusinessPortal = () => {
                                             </p>
                                         </div>
                                     ) : (
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="border-b border-white/10">
-                                                    <th className="px-4 py-3">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <div className="relative">
-                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                                <div
-                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                        // Wrap table in a scrollable container for mobile
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full min-w-max">
+                                                <thead>
+                                                    <tr className="border-b border-white/10">
+                                                        <th className="px-4 py-3">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <div className="relative">
+                                                                    <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                    <div
+                                                                        className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
                                 backdrop-blur-xl border border-amber-500/20"
-                                                                >
-                                                                    <Coins className="w-4 h-4 text-amber-400" />
+                                                                    >
+                                                                        <Coins className="w-4 h-4 text-amber-400" />
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <span className="text-white/80 font-semibold text-sm">
-                                                                Credits
-                                                            </span>
-                                                        </div>
-                                                    </th>
-                                                    <th className="px-4 py-3">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <div className="relative">
-                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                                <div
-                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
-                                backdrop-blur-xl border border-amber-500/20"
-                                                                >
-                                                                    <Clock className="w-4 h-4 text-amber-400" />
-                                                                </div>
-                                                            </div>
-                                                            <span className="text-white/80 font-semibold text-sm">
-                                                                Expiry
-                                                            </span>
-                                                        </div>
-                                                    </th>
-                                                    <th className="px-4 py-3">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <div className="relative">
-                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                                <div
-                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
-                                backdrop-blur-xl border border-amber-500/20"
-                                                                >
-                                                                    <CreditCard className="w-4 h-4 text-amber-400" />
-                                                                </div>
-                                                            </div>
-                                                            <span className="text-white/80 font-semibold text-sm">
-                                                                Total Price
-                                                            </span>
-                                                        </div>
-                                                    </th>
-                                                    <th className="px-4 py-3">
-                                                        <div className="flex items-center justify-center gap-1.5">
-                                                            <div className="relative">
-                                                                <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
-                                                                <div
-                                                                    className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
-                                backdrop-blur-xl border border-amber-500/20"
-                                                                >
-                                                                    <Percent className="w-4 h-4 text-amber-400" />
-                                                                </div>
-                                                            </div>
-                                                            <span className="text-white/80 font-semibold text-sm">
-                                                                Price Per Credit
-                                                            </span>
-                                                        </div>
-                                                    </th>
-                                                    <th className="px-4 py-3"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {creditPackages.map((pkg) => (
-                                                    <tr
-                                                        key={pkg.id}
-                                                        className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
-                                                    >
-                                                        <td className="px-4 py-3 text-center">
-                                                            <span className="text-2xl font-semibold text-white">
-                                                                {pkg.credits}
-                                                            </span>
-                                                            <span className="text-white/60 ml-1">
-                                                                credits
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <span className="text-white/80">
-                                                                {
-                                                                    pkg.expiryMonths
-                                                                }{" "}
-                                                                months
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <span className="text-2xl font-semibold text-amber-400">
-                                                                {pkg.currency}{" "}
-                                                                {pkg.price}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <div className="flex items-center justify-center gap-2">
-                                                                <span className="text-white/80">
-                                                                    {
-                                                                        pkg.currency
-                                                                    }{" "}
-                                                                    {
-                                                                        pkg.pricePerCredit
-                                                                    }
-                                                                    /credit
+                                                                <span className="text-white/80 font-semibold text-sm">
+                                                                    Credits
                                                                 </span>
-                                                                {pkg.discount >
-                                                                    0 && (
-                                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-medium">
-                                                                        {
-                                                                            pkg.discount
-                                                                        }
-                                                                        % OFF
-                                                                    </span>
-                                                                )}
                                                             </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <button
-                                                                onClick={() =>
-                                                                    handlePurchase(
-                                                                        pkg.id,
-                                                                        pkg.credits
-                                                                    )
-                                                                }
-                                                                className="px-4 py-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
+                                                        </th>
+                                                        <th className="px-4 py-3">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <div className="relative">
+                                                                    <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                    <div
+                                                                        className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                backdrop-blur-xl border border-amber-500/20"
+                                                                    >
+                                                                        <Clock className="w-4 h-4 text-amber-400" />
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-white/80 font-semibold text-sm">
+                                                                    Expiry
+                                                                </span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-4 py-3">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <div className="relative">
+                                                                    <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                    <div
+                                                                        className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                backdrop-blur-xl border border-amber-500/20"
+                                                                    >
+                                                                        <CreditCard className="w-4 h-4 text-amber-400" />
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-white/80 font-semibold text-sm">
+                                                                    Total Price
+                                                                </span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-4 py-3">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <div className="relative">
+                                                                    <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-lg blur-xl opacity-30"></div>
+                                                                    <div
+                                                                        className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-1 relative
+                                backdrop-blur-xl border border-amber-500/20"
+                                                                    >
+                                                                        <Percent className="w-4 h-4 text-amber-400" />
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-white/80 font-semibold text-sm">
+                                                                    Price Per
+                                                                    Credit
+                                                                </span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-4 py-3"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {creditPackages.map(
+                                                        (pkg) => (
+                                                            <tr
+                                                                key={pkg.id}
+                                                                className="border-b border-white/5 hover:bg-white/5 transition-colors duration-200"
+                                                            >
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <span className="text-2xl font-semibold text-white">
+                                                                        {
+                                                                            pkg.credits
+                                                                        }
+                                                                    </span>
+                                                                    <span className="text-white/60 ml-1">
+                                                                        credits
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <span className="text-white/80">
+                                                                        {
+                                                                            pkg.expiryMonths
+                                                                        }{" "}
+                                                                        months
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <span className="text-2xl font-semibold text-amber-400">
+                                                                        {
+                                                                            pkg.currency
+                                                                        }{" "}
+                                                                        {
+                                                                            pkg.price
+                                                                        }
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <div className="flex items-center justify-center gap-2">
+                                                                        <span className="text-white/80">
+                                                                            {
+                                                                                pkg.currency
+                                                                            }{" "}
+                                                                            {
+                                                                                pkg.pricePerCredit
+                                                                            }
+                                                                            /credit
+                                                                        </span>
+                                                                        {pkg.discount >
+                                                                            0 && (
+                                                                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-medium">
+                                                                                {
+                                                                                    pkg.discount
+                                                                                }
+
+                                                                                %
+                                                                                OFF
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <button
+                                                                        onClick={() =>
+                                                                            handlePurchase(
+                                                                                pkg.id,
+                                                                                pkg.credits
+                                                                            )
+                                                                        }
+                                                                        className="px-4 py-2 rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 
                                 backdrop-blur-xl border border-emerald-500/20 hover:border-emerald-500/40 
                                 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/20
                                 group flex items-center gap-2"
-                                                            >
-                                                                <Plus className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-                                                                <span className="text-emerald-400 font-medium">
-                                                                    Buy
-                                                                </span>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                                    >
+                                                                        <Plus className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                                                                        <span className="text-emerald-400 font-medium">
+                                                                            Buy
+                                                                        </span>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     )}
                                 </motion.div>
                             )}

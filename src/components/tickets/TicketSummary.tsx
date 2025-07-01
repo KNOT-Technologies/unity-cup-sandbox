@@ -153,12 +153,12 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                             {/* Guest Information */}
                                             {seat.guestInfo && (
                                                 <div className="mt-3 p-2 bg-gray-700/20 rounded-lg border border-gray-600/30">
-                                                    <div className="grid grid-cols-2 gap-2 text-xs">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                                         <div>
                                                             <span className="text-white/40">
                                                                 Name:
                                                             </span>
-                                                            <span className="text-white/90 ml-1 font-medium">
+                                                            <span className="text-white/90 ml-1 font-medium break-words">
                                                                 {
                                                                     seat
                                                                         .guestInfo
@@ -166,11 +166,11 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                                                 }
                                                             </span>
                                                         </div>
-                                                        <div>
+                                                        <div className="sm:col-span-1 col-span-1">
                                                             <span className="text-white/40">
                                                                 Email:
                                                             </span>
-                                                            <span className="text-white/90 ml-1 font-medium">
+                                                            <span className="text-white/90 ml-1 font-medium break-all text-xs">
                                                                 {
                                                                     seat
                                                                         .guestInfo
@@ -249,9 +249,9 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                         <div className="flex items-center gap-3 ml-4">
                                             {!useCredits && (
                                                 <span className="text-amber-400 font-medium">
-                                                    {`${getCurrencySymbol()}${
+                                                    {`${getCurrencySymbol()}${Number(
                                                         seat.price
-                                                    }`}
+                                                    ).toLocaleString()}`}
                                                 </span>
                                             )}
                                             <button
@@ -344,10 +344,10 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                                 <span className="text-amber-400 font-medium">
                                                     {useCredits
                                                         ? `${selectedSeats.length} credits`
-                                                        : `${getCurrencySymbol()}${
+                                                        : `${getCurrencySymbol()}${Number(
                                                               translationFee *
-                                                              selectedSeats.length
-                                                          }`}
+                                                                  selectedSeats.length
+                                                          ).toLocaleString()}`}
                                                 </span>
                                             </div>
                                         </motion.div>
@@ -366,24 +366,28 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                 <div className="flex justify-between text-white/60">
                                     <span>Tickets Subtotal</span>
                                     <span>
-                                        {`${getCurrencySymbol()}${total}`}
+                                        {`${getCurrencySymbol()}${Number(
+                                            total
+                                        ).toLocaleString()}`}
                                     </span>
                                 </div>
                                 {translationPreference?.needed && (
                                     <div className="flex justify-between text-white/60">
                                         <span>Translation Service</span>
                                         <span>
-                                            {`${getCurrencySymbol()}${
+                                            {`${getCurrencySymbol()}${Number(
                                                 translationFee *
-                                                selectedSeats.length
-                                            }`}
+                                                    selectedSeats.length
+                                            ).toLocaleString()}`}
                                         </span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-lg font-medium pt-2">
                                     <span className="text-white">Total</span>
                                     <span className="text-amber-400">
-                                        {`${getCurrencySymbol()}${totalWithAddons}`}
+                                        {`${getCurrencySymbol()}${Number(
+                                            totalWithAddons
+                                        ).toLocaleString()}`}
                                     </span>
                                 </div>
                             </div>

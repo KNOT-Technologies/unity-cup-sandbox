@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-
 const PurchaseSuccess = () => {
     const navigate = useNavigate();
     const { paymentId } = useParams<{ paymentId: string }>();
@@ -94,7 +93,7 @@ const PurchaseSuccess = () => {
                                 </span>
                                 <span className="text-2xl font-medium text-green-400">
                                     {currencySymbol}
-                                    {totalAmount}
+                                    {Number(totalAmount).toLocaleString()}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
@@ -231,7 +230,25 @@ const PurchaseSuccess = () => {
                     </button>
 
                     <button
-                        onClick={() => navigate("/tickets")}
+                        onClick={() => {
+                            // Clear any stale data so the user starts from a clean state
+                            [
+                                "seatSelections",
+                                "quoteId",
+                                "quote",
+                                "creditQuoteId",
+                                "creditQuote",
+                                "translationPreference",
+                                "selectedAddons",
+                                "currentQuote",
+                                "fromCheckout",
+                                "selectedOccurrenceId",
+                                "selectedDate",
+                            ].forEach((key) => sessionStorage.removeItem(key));
+
+                            // Navigate and do a hard refresh to reset timers & state completely
+                            navigate("/tickets");
+                        }}
                         className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
                     >
                         Book More Tickets

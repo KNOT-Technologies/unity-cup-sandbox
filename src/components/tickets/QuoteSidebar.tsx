@@ -1,6 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, X, AlertCircle, Ticket, Headphones } from "lucide-react";
+import {
+    Clock,
+    X,
+    AlertCircle,
+    Ticket,
+    Headphones,
+    Minimize2,
+    Maximize2,
+} from "lucide-react";
 import type { QuoteState, SeatSelection, QuoteData } from "../../types/tickets";
+import { useState } from "react";
 
 interface QuoteSidebarProps {
     quoteState: QuoteState;
@@ -103,7 +112,8 @@ const TranslationSection = ({
                             </div>
                         </div>
                         <span className="text-amber-400 font-medium">
-                            {currencySymbol} {price * count}
+                            {currencySymbol}{" "}
+                            {Number(price * count).toLocaleString()}
                         </span>
                     </div>
                 </div>
@@ -122,6 +132,7 @@ const QuoteSidebar = ({
     onProceedToCheckout,
 }: QuoteSidebarProps) => {
     const { quote, timeRemaining, isLoading, error } = quoteState;
+    const [isMinimized, setIsMinimized] = useState(false);
 
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -143,6 +154,45 @@ const QuoteSidebar = ({
         return null;
     }
 
+    // Minimized floating indicator for mobile
+    if (isMinimized) {
+        const { grandTotal } = calculateTotal(
+            selections,
+            quote?.total.currency || "EGP"
+        );
+        const currencySymbol = quote?.total.currency === "USD" ? "$" : "EGP";
+
+        return (
+            <motion.div
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                className="fixed bottom-6 right-6 z-50 lg:hidden"
+            >
+                <button
+                    onClick={() => setIsMinimized(false)}
+                    className="bg-amber-500 hover:bg-amber-600 text-gray-900 rounded-xl p-3 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col items-center gap-1 min-w-[80px]"
+                >
+                    <div className="flex items-center gap-1">
+                        <Ticket className="w-4 h-4" />
+                        <span className="font-bold text-sm">
+                            {selections.length}
+                        </span>
+                    </div>
+                    <div className="text-xs font-medium">
+                        {currencySymbol} {Number(grandTotal).toLocaleString()}
+                    </div>
+                    {quote && timeRemaining > 0 && (
+                        <div className="text-xs font-mono">
+                            {formatTime(timeRemaining)}
+                        </div>
+                    )}
+                    <Maximize2 className="w-3 h-3" />
+                </button>
+            </motion.div>
+        );
+    }
+
     return (
         <AnimatePresence>
             <motion.div
@@ -154,39 +204,55 @@ const QuoteSidebar = ({
             >
                 <div className="h-full flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-700/50">
-                        <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
-                                <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative backdrop-blur-xl border border-amber-500/20">
-                                    <Ticket className="w-5 h-5 text-amber-400" />
+                    <div className="border-b border-gray-700/50">
+                        {/* Minimize button row - only visible on mobile */}
+                        <div className="px-4 pb-3 lg:hidden">
+                            <button
+                                onClick={() => setIsMinimized(true)}
+                                className="w-full py-2 px-3 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors text-gray-300 hover:text-white flex items-center justify-center gap-2 border border-gray-600/30"
+                                aria-label="Minimize sidebar"
+                            >
+                                <Minimize2 className="w-4 h-4" />
+                                <span className="text-sm">
+                                    Minimize to continue selecting
+                                </span>
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/30 to-amber-500/0 rounded-full blur-xl opacity-50"></div>
+                                    <div className="bg-gradient-to-br from-amber-500/20 to-amber-500/5 rounded-lg p-2 relative backdrop-blur-xl border border-amber-500/20">
+                                        <Ticket className="w-5 h-5 text-amber-400" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-medium text-white">
+                                        Seat Hold
+                                    </h3>
+                                    {quote && (
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-4 h-4 text-gray-400" />
+                                            <span
+                                                className={`text-sm font-mono ${getTimeColor(
+                                                    timeRemaining
+                                                )}`}
+                                            >
+                                                {formatTime(timeRemaining)}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <div>
-                                <h3 className="text-base font-medium text-white">
-                                    Seat Hold
-                                </h3>
-                                {quote && (
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-gray-400" />
-                                        <span
-                                            className={`text-sm font-mono ${getTimeColor(
-                                                timeRemaining
-                                            )}`}
-                                        >
-                                            {formatTime(timeRemaining)}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Cancel button */}
+                            <button
+                                onClick={onCancel}
+                                className="p-1 rounded-lg hover:bg-gray-700/50 transition-colors text-gray-400 hover:text-white"
+                                aria-label="Cancel seat hold"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
-                        <button
-                            onClick={onCancel}
-                            className="p-1 rounded-lg hover:bg-gray-700/50 transition-colors text-gray-400 hover:text-white"
-                            aria-label="Cancel seat hold"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
                     </div>
 
                     {/* Content */}
@@ -382,12 +448,12 @@ const QuoteSidebar = ({
                                         {quote.total.currency === "USD"
                                             ? "$"
                                             : "EGP"}{" "}
-                                        {
+                                        {Number(
                                             calculateTotal(
                                                 selections,
                                                 quote.total.currency
                                             ).grandTotal
-                                        }
+                                        ).toLocaleString()}
                                     </span>
                                 </div>
                             </motion.div>
@@ -442,12 +508,12 @@ const QuoteSidebar = ({
                                         focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
                                 >
                                     Proceed to Checkout • {currency}{" "}
-                                    {
+                                    {Number(
                                         calculateTotal(
                                             selections,
                                             quote.total.currency
                                         ).grandTotal
-                                    }
+                                    ).toLocaleString()}
                                 </motion.button>
                             )}
                         </div>

@@ -53,7 +53,7 @@ interface PixelConfig {
         Vertical_Padding?: string;
         Vertical_Spacing_between_components?: string;
         Container_Padding?: string;
-      };
+    };
 }
 
 interface PixelSDK {
@@ -313,7 +313,10 @@ const PaymentPage = () => {
                                         Total Amount
                                     </span>
                                     <span className="text-lg font-medium text-amber-400">
-                                        {currency} {paymentData.total.amount}
+                                        {currency}{" "}
+                                        {Number(
+                                            paymentData.total.amount
+                                        ).toLocaleString()}
                                     </span>
                                 </div>
                             </div>
