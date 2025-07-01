@@ -15,8 +15,9 @@ import {
     Ticket,
     Upload,
     AlertTriangle,
+    Menu,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../components/common/Sidebar";
 import DatePicker from "../components/tickets/DatePicker";
 import ShowTimeSelector from "../components/tickets/ShowTimeSelector";
@@ -186,6 +187,9 @@ const BusinessPortal = () => {
     const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>();
     const [visitorType, setVisitorType] = useState<UserType>("tourist");
 
+    // Loading state for checkout
+    const [isCheckingOut, setIsCheckingOut] = useState(false);
+
     // API hooks
     const { balance, refetch: refetchBalance } = useCreditBalance();
     const {
@@ -314,11 +318,11 @@ const BusinessPortal = () => {
 
     const handleSeatSelect = (seat: Seat, ticketType: TicketType) => {
         const creditCost = findCreditCost(creditPrices, seat.zone, ticketType);
-        
+
         // Check if we have guest data available for this seat (only if no existing guest data)
         const guestIndex = selectedSeats.length % mockGuests.length;
         const guestInfo = mockGuests[guestIndex];
-        
+
         const newSelectedSeats = [
             ...selectedSeats,
             {
@@ -336,13 +340,50 @@ const BusinessPortal = () => {
             ticketType: selectedSeat.ticketType,
             price: selectedSeat.price,
         }));
-        
+
         // Use the guest's visitor type if available, otherwise use the current visitorType state
-        const quoteVisitorType = guestInfo?.visitorType === 'foreign' ? 'foreign' : 'local';
-        
+        const quoteVisitorType =
+            guestInfo?.visitorType === "foreign" ? "foreign" : "local";
+
+        // Convert guest data to API format if available
+        const apiGuestData = newSelectedSeats
+            .filter((seat) => seat.guestInfo)
+            .map((selectedSeat) => {
+                const guest = selectedSeat.guestInfo!;
+                const [firstName, ...lastNameParts] = guest.name.split(" ");
+                const lastName = lastNameParts.join(" ") || firstName;
+
+                const guestData: {
+                    firstName: string;
+                    lastName: string;
+                    email?: string;
+                    phoneNumber?: string;
+                    dateOfBirth?: string;
+                    gender?: "male" | "female";
+                    nationality?: string;
+                    translationNeeded?: boolean;
+                    visitorType?: "local" | "foreign";
+                } = {
+                    firstName,
+                    lastName,
+                };
+
+                if (guest.email) guestData.email = guest.email;
+                if (guest.dateOfBirth)
+                    guestData.dateOfBirth = guest.dateOfBirth;
+                if (guest.gender) guestData.gender = guest.gender;
+                if (guest.nationality)
+                    guestData.nationality = guest.nationality;
+                guestData.translationNeeded = guest.translationNeeded;
+                guestData.visitorType = guest.visitorType;
+
+                return guestData;
+            });
+
         creditQuoteState.createQuote(
             allSelections,
-            quoteVisitorType
+            quoteVisitorType,
+            apiGuestData.length > 0 ? apiGuestData : undefined
         );
     };
 
@@ -361,25 +402,69 @@ const BusinessPortal = () => {
                 ticketType: selectedSeat.ticketType,
                 price: selectedSeat.price,
             }));
-            
+
             // Use the visitor type from the first remaining seat, or default to 'local'
-            const primaryVisitorType = newSelectedSeats[0]?.guestInfo?.visitorType === 'foreign' ? 'foreign' : 'local';
-            
+            const primaryVisitorType =
+                newSelectedSeats[0]?.guestInfo?.visitorType === "foreign"
+                    ? "foreign"
+                    : "local";
+
+            // Convert guest data to API format if available
+            const apiGuestData = newSelectedSeats
+                .filter((seat) => seat.guestInfo)
+                .map((selectedSeat) => {
+                    const guest = selectedSeat.guestInfo!;
+                    const [firstName, ...lastNameParts] = guest.name.split(" ");
+                    const lastName = lastNameParts.join(" ") || firstName;
+
+                    const guestData: {
+                        firstName: string;
+                        lastName: string;
+                        email?: string;
+                        phoneNumber?: string;
+                        dateOfBirth?: string;
+                        gender?: "male" | "female";
+                        nationality?: string;
+                        translationNeeded?: boolean;
+                        visitorType?: "local" | "foreign";
+                    } = {
+                        firstName,
+                        lastName,
+                    };
+
+                    if (guest.email) guestData.email = guest.email;
+                    if (guest.dateOfBirth)
+                        guestData.dateOfBirth = guest.dateOfBirth;
+                    if (guest.gender) guestData.gender = guest.gender;
+                    if (guest.nationality)
+                        guestData.nationality = guest.nationality;
+                    guestData.translationNeeded = guest.translationNeeded;
+                    guestData.visitorType = guest.visitorType;
+
+                    return guestData;
+                });
+
             creditQuoteState.createQuote(
                 allSelections,
-                primaryVisitorType
+                primaryVisitorType,
+                apiGuestData.length > 0 ? apiGuestData : undefined
             );
         }
     };
 
     const handleProceedToCheckout = async () => {
+        if (isCheckingOut) return; // prevent duplicate clicks
+
+        setIsCheckingOut(true);
         if (!selectedOccurrenceId || selectedSeats.length === 0) {
             showError("Please select seats to proceed");
+            setIsCheckingOut(false);
             return;
         }
 
         if (!creditQuoteState.quote) {
             showError("Please wait for pricing to load");
+            setIsCheckingOut(false);
             return;
         }
 
@@ -388,6 +473,7 @@ const BusinessPortal = () => {
 
         if (balance < totalWithTranslation) {
             setShowInsufficientCreditsModal(true);
+            setIsCheckingOut(false);
             return;
         }
 
@@ -424,6 +510,8 @@ const BusinessPortal = () => {
                     apiError.error || "Booking failed. Please try again."
                 );
             }
+        } finally {
+            setIsCheckingOut(false);
         }
     };
 
@@ -431,14 +519,33 @@ const BusinessPortal = () => {
     const getShowTimesForDate = (date: Date): ShowTime[] => {
         if (!occurrences) return [];
 
-        const dateString = date.toISOString().split("T")[0];
+        // Use local date methods to avoid timezone conversion issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const dateString = `${year}-${month}-${day}`;
+
+        console.log("🔍 Filtering shows for date:", {
+            selectedDate: date.toDateString(),
+            localDateString: dateString,
+            utcDateString: date.toISOString().split("T")[0],
+        });
 
         return occurrences
             .filter((occurrence: Occurrence) => {
-                const occurrenceDate = new Date(occurrence.startAt)
-                    .toISOString()
-                    .split("T")[0];
-                return occurrenceDate === dateString;
+                const occurrenceDate = new Date(occurrence.startAt);
+                const occYear = occurrenceDate.getFullYear();
+                const occMonth = String(occurrenceDate.getMonth() + 1).padStart(
+                    2,
+                    "0"
+                );
+                const occDay = String(occurrenceDate.getDate()).padStart(
+                    2,
+                    "0"
+                );
+                const occurrenceDateString = `${occYear}-${occMonth}-${occDay}`;
+
+                return occurrenceDateString === dateString;
             })
             .map((occurrence: Occurrence) => ({
                 id: occurrence.id,
@@ -458,14 +565,19 @@ const BusinessPortal = () => {
 
         const dates = new Set<string>();
         occurrences.forEach((occurrence: Occurrence) => {
-            const date = new Date(occurrence.startAt)
-                .toISOString()
-                .split("T")[0];
-            dates.add(date);
+            const occurrenceDate = new Date(occurrence.startAt);
+            const year = occurrenceDate.getFullYear();
+            const month = String(occurrenceDate.getMonth() + 1).padStart(
+                2,
+                "0"
+            );
+            const day = String(occurrenceDate.getDate()).padStart(2, "0");
+            const dateString = `${year}-${month}-${day}`;
+            dates.add(dateString);
         });
 
         return Array.from(dates)
-            .map((dateString) => new Date(dateString))
+            .map((dateString) => new Date(dateString + "T00:00:00"))
             .sort((a, b) => a.getTime() - b.getTime());
     };
 
@@ -481,6 +593,26 @@ const BusinessPortal = () => {
         setShowUploadModal(true);
     };
 
+    const handleDateSelect = (date: Date) => {
+        console.log("🗓️ Date changed:", {
+            oldDate: selectedDate.toISOString(),
+            newDate: date.toISOString(),
+            oldOccurrenceId: selectedOccurrenceId,
+        });
+        setSelectedDate(date);
+        setSelectedOccurrenceId(undefined); // Reset occurrence when date changes
+        setSelectedSeats([]); // Clear selected seats when date changes
+        creditQuoteState.cancelQuote(); // Cancel any existing quote
+        console.log("🗓️ After date change - occurrence reset to:", undefined);
+    };
+
+    // Ensure credit quote state is reset when occurrence changes
+    useEffect(() => {
+        if (!selectedOccurrenceId) {
+            creditQuoteState.cancelQuote();
+        }
+    }, [selectedOccurrenceId, creditQuoteState]);
+
     // Mock guest data for demo purposes
     const mockGuests = [
         {
@@ -489,6 +621,9 @@ const BusinessPortal = () => {
             age: 45,
             visitorType: "foreign" as const,
             translationNeeded: false,
+            dateOfBirth: "1979-03-15",
+            gender: "male" as const,
+            nationality: "American",
         },
         {
             name: "Sarah Johnson",
@@ -497,6 +632,9 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "English",
+            dateOfBirth: "1996-07-22",
+            gender: "female" as const,
+            nationality: "British",
         },
         {
             name: "Fatima Al-Zahra",
@@ -504,6 +642,9 @@ const BusinessPortal = () => {
             age: 52,
             visitorType: "foreign" as const,
             translationNeeded: false,
+            dateOfBirth: "1972-01-08",
+            gender: "female" as const,
+            nationality: "Moroccan",
         },
         {
             name: "Michael Chen",
@@ -512,6 +653,9 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "English",
+            dateOfBirth: "1993-11-12",
+            gender: "male" as const,
+            nationality: "Canadian",
         },
         {
             name: "Aisha Mohammed",
@@ -519,6 +663,9 @@ const BusinessPortal = () => {
             age: 22,
             visitorType: "foreign" as const,
             translationNeeded: false,
+            dateOfBirth: "2002-04-18",
+            gender: "female" as const,
+            nationality: "Emirati",
         },
         {
             name: "David Rodriguez",
@@ -527,6 +674,9 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "Spanish",
+            dateOfBirth: "1986-09-03",
+            gender: "male" as const,
+            nationality: "Spanish",
         },
         {
             name: "Jake Wilson",
@@ -534,6 +684,9 @@ const BusinessPortal = () => {
             age: 19,
             visitorType: "foreign" as const,
             translationNeeded: false,
+            dateOfBirth: "2005-12-25",
+            gender: "male" as const,
+            nationality: "Australian",
         },
         {
             name: "Emma Wilson",
@@ -542,10 +695,28 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "English",
+            dateOfBirth: "1998-05-14",
+            gender: "female" as const,
+            nationality: "Australian",
         },
     ];
 
     const handleGuestFileUpload = async (): Promise<number> => {
+        console.log("📤 CSV Upload started:", {
+            selectedOccurrenceId,
+            selectedDate: selectedDate.toISOString(),
+            showTimesForDate: showTimesForSelectedDate.length,
+        });
+
+        // Validate that a date and occurrence are selected
+        if (!selectedOccurrenceId) {
+            console.log("❌ No occurrence selected during CSV upload");
+            showError(
+                "Please select a date and show time before uploading guest details."
+            );
+            throw new Error("No occurrence selected");
+        }
+
         // In a real app, this would be an API call to process the file
         // For now, we'll simulate processing with a delay
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -553,33 +724,45 @@ const BusinessPortal = () => {
         // Auto-select seats based on uploaded guest data - use all 8 guests
         const numberOfGuests = mockGuests.length; // Always use all 8 guests
         const autoSelectedSeats: SelectedSeat[] = [];
-        
+
         // Separate guests into VIP and regular based on realistic criteria
-        const vipGuests = mockGuests.filter((guest, index) => 
-            index < 2 || (guest.age >= 65) || (guest.translationNeeded && guest.age >= 30)
+        const vipGuests = mockGuests.filter(
+            (guest, index) =>
+                index < 2 ||
+                guest.age >= 65 ||
+                (guest.translationNeeded && guest.age >= 30)
         );
-        const regularGuests = mockGuests.filter((guest, index) => 
-            !(index < 2 || (guest.age >= 65) || (guest.translationNeeded && guest.age >= 30))
+        const regularGuests = mockGuests.filter(
+            (guest, index) =>
+                !(
+                    index < 2 ||
+                    guest.age >= 65 ||
+                    (guest.translationNeeded && guest.age >= 30)
+                )
         );
-        
+
         // Assign VIP seats together in row A
         vipGuests.forEach((guest, index) => {
             const mockSeat: Seat = {
                 id: `A-${index + 1}`, // A1, A2, A3, etc.
-                row: 'A',
+                row: "A",
                 number: index + 1,
-                zone: 'vip',
-                status: 'available'
+                zone: "vip",
+                status: "available",
             };
-            
+
             // Determine ticket type based on age
-            let ticketType: TicketType = 'adult';
-            if (guest.age < 12) ticketType = 'child';
-            else if (guest.age >= 65) ticketType = 'senior';
-            else if (guest.age < 25) ticketType = 'student';
-            
-            const creditCost = findCreditCost(creditPrices, mockSeat.zone, ticketType);
-            
+            let ticketType: TicketType = "adult";
+            if (guest.age < 12) ticketType = "child";
+            else if (guest.age >= 65) ticketType = "senior";
+            else if (guest.age < 25) ticketType = "student";
+
+            const creditCost = findCreditCost(
+                creditPrices,
+                mockSeat.zone,
+                ticketType
+            );
+
             autoSelectedSeats.push({
                 ...mockSeat,
                 ticketType,
@@ -587,28 +770,32 @@ const BusinessPortal = () => {
                 guestInfo: guest,
             });
         });
-        
+
         // Assign regular seats together in rows F and G
         regularGuests.forEach((guest, index) => {
-            const row = index < 4 ? 'F' : 'G'; // First 4 in row F, rest in row G
+            const row = index < 4 ? "F" : "G"; // First 4 in row F, rest in row G
             const seatNumber = index < 4 ? index + 1 : index - 3; // F1-F4, then G1-G4
-            
+
             const mockSeat: Seat = {
                 id: `${row}-${seatNumber}`,
                 row: row,
                 number: seatNumber,
-                zone: 'regular',
-                status: 'available'
+                zone: "regular",
+                status: "available",
             };
-            
+
             // Determine ticket type based on age
-            let ticketType: TicketType = 'adult';
-            if (guest.age < 12) ticketType = 'child';
-            else if (guest.age >= 65) ticketType = 'senior';
-            else if (guest.age < 25) ticketType = 'student';
-            
-            const creditCost = findCreditCost(creditPrices, mockSeat.zone, ticketType);
-            
+            let ticketType: TicketType = "adult";
+            if (guest.age < 12) ticketType = "child";
+            else if (guest.age >= 65) ticketType = "senior";
+            else if (guest.age < 25) ticketType = "student";
+
+            const creditCost = findCreditCost(
+                creditPrices,
+                mockSeat.zone,
+                ticketType
+            );
+
             autoSelectedSeats.push({
                 ...mockSeat,
                 ticketType,
@@ -616,10 +803,10 @@ const BusinessPortal = () => {
                 guestInfo: guest,
             });
         });
-        
-        console.log('Auto-selecting seats:', autoSelectedSeats);
+
+        console.log("Auto-selecting seats:", autoSelectedSeats);
         setSelectedSeats(autoSelectedSeats);
-        
+
         // Create credit quote for the auto-selected seats
         if (autoSelectedSeats.length > 0 && selectedOccurrenceId) {
             const allSelections = autoSelectedSeats.map((selectedSeat) => ({
@@ -633,22 +820,62 @@ const BusinessPortal = () => {
                 ticketType: selectedSeat.ticketType,
                 price: selectedSeat.price,
             }));
-            
+
             // Use the visitor type from the first guest, or default to 'local'
-            const primaryVisitorType = autoSelectedSeats[0]?.guestInfo?.visitorType === 'foreign' ? 'foreign' : 'local';
-            
-            console.log('Creating credit quote with:', {
+            const primaryVisitorType =
+                autoSelectedSeats[0]?.guestInfo?.visitorType === "foreign"
+                    ? "foreign"
+                    : "local";
+
+            // Convert mock guest data to API format
+            const apiGuestData = autoSelectedSeats.map((selectedSeat) => {
+                const guest = selectedSeat.guestInfo!;
+                const [firstName, ...lastNameParts] = guest.name.split(" ");
+                const lastName = lastNameParts.join(" ") || firstName; // Fallback if only one name
+
+                const guestData: {
+                    firstName: string;
+                    lastName: string;
+                    email?: string;
+                    phoneNumber?: string;
+                    dateOfBirth?: string;
+                    gender?: "male" | "female";
+                    nationality?: string;
+                    translationNeeded?: boolean;
+                    visitorType?: "local" | "foreign";
+                } = {
+                    firstName,
+                    lastName,
+                };
+
+                // Add optional fields only if they exist
+                if (guest.email) guestData.email = guest.email;
+                if (guest.dateOfBirth)
+                    guestData.dateOfBirth = guest.dateOfBirth;
+                if (guest.gender) guestData.gender = guest.gender;
+                if (guest.nationality)
+                    guestData.nationality = guest.nationality;
+                guestData.translationNeeded = guest.translationNeeded;
+                guestData.visitorType = guest.visitorType;
+
+                return guestData;
+            });
+
+            console.log("Creating credit quote with:", {
                 selections: allSelections,
                 visitorType: primaryVisitorType,
-                occurrenceId: selectedOccurrenceId
+                occurrenceId: selectedOccurrenceId,
+                currentDate: selectedDate.toISOString(),
+                guestData: apiGuestData,
             });
-            
+
             creditQuoteState.createQuote(
                 allSelections,
-                primaryVisitorType
+                primaryVisitorType,
+                apiGuestData
             );
         }
-        
+
         // Return the number of processed guests
         return numberOfGuests;
     };
@@ -708,12 +935,36 @@ const BusinessPortal = () => {
         }
     };
 
+    // Mobile sidebar state
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     return (
         <div className="min-h-screen bg-black">
-            <Sidebar onLogout={handleLogout} />
+            {/* Mobile overlay */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
+            <Sidebar
+                onLogout={handleLogout}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+            />
 
             {/* Header with Welcome Message */}
-            <div className="fixed top-0 left-64 right-0 h-24 bg-black z-0 flex items-center justify-end px-12">
+            <div className="fixed top-0 md:left-64 left-0 right-0 h-24 bg-black z-20 flex items-center px-4 md:px-12 justify-between md:justify-end">
+                {/* Hamburger */}
+                <button
+                    className="md:hidden text-white"
+                    onClick={() => setIsSidebarOpen(true)}
+                    aria-label="Open menu"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
                 <div className="flex items-center gap-6">
                     <p className="text-white text-xl font-semibold tracking-wide">
                         {user.name}
@@ -730,7 +981,7 @@ const BusinessPortal = () => {
             </div>
 
             {/* Main Content Area with Grey Panel */}
-            <div className="ml-64 pt-24 relative z-10">
+            <div className="md:ml-64 ml-0 pt-24 relative z-10">
                 <div className="min-h-[calc(100vh-6rem)] bg-[#737373]/10 backdrop-blur-md rounded-tl-[2rem] border-t border-l border-white/5 shadow-2xl">
                     <main className="p-12">
                         <motion.div
@@ -1249,32 +1500,6 @@ const BusinessPortal = () => {
                                                     </span>
                                                 </div>
                                             </div>
-                                            {/* <div className="flex gap-2">
-                                                {(
-                                                    [
-                                                        "local",
-                                                        "foreign",
-                                                    ] as const
-                                                ).map((type) => (
-                                                    <button
-                                                        key={type}
-                                                        onClick={() =>
-                                                            setVisitorType(
-                                                                type as UserType
-                                                            )
-                                                        }
-                                                        className={`px-3 py-2 rounded-lg text-sm font-medium backdrop-blur-xl border transition-all duration-300 ${
-                                                            visitorType === type
-                                                                ? "bg-amber-500/20 border-amber-500/40 text-amber-400"
-                                                                : "bg-gray-700/30 border-gray-700/50 text-white/60 hover:border-amber-500/20"
-                                                        }`}
-                                                    >
-                                                        {type === "local"
-                                                            ? "Local"
-                                                            : "Tourist"}
-                                                    </button>
-                                                ))}
-                                            </div> */}
                                             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                                                 <button
                                                     onClick={() =>
@@ -1312,7 +1537,7 @@ const BusinessPortal = () => {
                                         <div className="space-y-4">
                                             <DatePicker
                                                 selectedDate={selectedDate}
-                                                onDateSelect={setSelectedDate}
+                                                onDateSelect={handleDateSelect}
                                                 availableDates={availableDates}
                                             />
                                             {isLoadingSchedule ? (
@@ -1345,9 +1570,24 @@ const BusinessPortal = () => {
                                                     selectedOccurrenceId={
                                                         selectedOccurrenceId
                                                     }
-                                                    onOccurrenceSelect={
-                                                        setSelectedOccurrenceId
-                                                    }
+                                                    onOccurrenceSelect={(
+                                                        newOccurrenceId
+                                                    ) => {
+                                                        console.log(
+                                                            "⏰ Show time selected:",
+                                                            {
+                                                                oldOccurrenceId:
+                                                                    selectedOccurrenceId,
+                                                                newOccurrenceId:
+                                                                    newOccurrenceId,
+                                                                currentDate:
+                                                                    selectedDate.toISOString(),
+                                                            }
+                                                        );
+                                                        setSelectedOccurrenceId(
+                                                            newOccurrenceId
+                                                        );
+                                                    }}
                                                     className="h-full"
                                                 />
                                             )}
@@ -1417,13 +1657,22 @@ const BusinessPortal = () => {
                                             transition={{ duration: 0.3 }}
                                         >
                                             <TicketSummary
-                                                key={`ticket-summary-${selectedSeats.length}-${selectedSeats.some(seat => seat.guestInfo) ? 'with-guests' : 'no-guests'}`}
+                                                key={`ticket-summary-${
+                                                    selectedSeats.length
+                                                }-${
+                                                    selectedSeats.some(
+                                                        (seat) => seat.guestInfo
+                                                    )
+                                                        ? "with-guests"
+                                                        : "no-guests"
+                                                }`}
                                                 selectedSeats={selectedSeats}
                                                 onRemoveSeat={handleSeatRemove}
                                                 onProceedToCheckout={
                                                     handleProceedToCheckout
                                                 }
                                                 useCredits={true}
+                                                isProcessing={isCheckingOut}
                                             />
                                         </motion.div>
                                     </div>
@@ -1440,6 +1689,7 @@ const BusinessPortal = () => {
                     <GuestUploadModal
                         onClose={() => setShowUploadModal(false)}
                         onUpload={handleGuestFileUpload}
+                        occurrenceId={selectedOccurrenceId}
                     />
                 )}
             </AnimatePresence>
@@ -1452,7 +1702,7 @@ const BusinessPortal = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3 }}
-                        className="fixed top-24 left-64 right-0 z-50 flex justify-end px-12"
+                        className="fixed top-24 md:left-64 left-0 right-0 z-50 flex justify-end px-4 md:px-12"
                     >
                         <div className="relative">
                             <div className="absolute -inset-2 bg-gradient-to-r from-emerald-500/30 to-emerald-500/0 rounded-lg blur-xl opacity-50"></div>

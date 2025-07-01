@@ -1,21 +1,34 @@
 import { motion } from "framer-motion";
-import { Upload, X, FileSpreadsheet, Check, Loader2, Shield, Zap } from "lucide-react";
+import {
+    Upload,
+    X,
+    FileSpreadsheet,
+    Check,
+    Loader2,
+    Shield,
+    Zap,
+} from "lucide-react";
 import Portal from "./Portal";
 import { useState } from "react";
 
 interface GuestUploadModalProps {
     onClose: () => void;
     onUpload: (file: File) => Promise<number>;
+    occurrenceId?: string;
 }
 
-type ProcessStep = 'uploading' | 'validating' | 'optimizing' | 'complete';
+type ProcessStep = "uploading" | "validating" | "optimizing" | "complete";
 
-const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
+const GuestUploadModal = ({
+    onClose,
+    onUpload,
+    occurrenceId,
+}: GuestUploadModalProps) => {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const [guestsUploaded, setGuestsUploaded] = useState(0);
-    const [currentStep, setCurrentStep] = useState<ProcessStep>('uploading');
+    const [currentStep, setCurrentStep] = useState<ProcessStep>("uploading");
     const [stepProgress, setStepProgress] = useState(0);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,9 +47,9 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
     const simulateStep = async (step: ProcessStep, duration: number) => {
         setCurrentStep(step);
         setStepProgress(0);
-        
+
         const interval = setInterval(() => {
-            setStepProgress(prev => {
+            setStepProgress((prev) => {
                 if (prev >= 100) {
                     clearInterval(interval);
                     return 100;
@@ -45,7 +58,7 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
             });
         }, duration / 50);
 
-        await new Promise(resolve => setTimeout(resolve, duration));
+        await new Promise((resolve) => setTimeout(resolve, duration));
         clearInterval(interval);
         setStepProgress(100);
     };
@@ -56,21 +69,21 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
         setIsUploading(true);
         try {
             // Step 1: Uploading guest details
-            await simulateStep('uploading', 2000);
-            
+            await simulateStep("uploading", 2000);
+
             // Step 2: Validating ticket restrictions
-            await simulateStep('validating', 1500);
-            
+            await simulateStep("validating", 1500);
+
             // Step 3: Optimizing seat allocations
-            await simulateStep('optimizing', 1800);
-            
+            await simulateStep("optimizing", 1800);
+
             // Step 4: Complete
-            setCurrentStep('complete');
-            
+            setCurrentStep("complete");
+
             const count = await onUpload(file);
             setGuestsUploaded(count);
             setUploadSuccess(true);
-            
+
             setTimeout(() => {
                 onClose();
             }, 2000);
@@ -83,40 +96,40 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
 
     const getStepIcon = (step: ProcessStep) => {
         switch (step) {
-            case 'uploading':
+            case "uploading":
                 return <Upload className="w-5 h-5" />;
-            case 'validating':
+            case "validating":
                 return <Shield className="w-5 h-5" />;
-            case 'optimizing':
+            case "optimizing":
                 return <Zap className="w-5 h-5" />;
-            case 'complete':
+            case "complete":
                 return <Check className="w-5 h-5" />;
         }
     };
 
     const getStepTitle = (step: ProcessStep) => {
         switch (step) {
-            case 'uploading':
-                return 'Uploading Guest Details';
-            case 'validating':
-                return 'Validating Ticket Restrictions';
-            case 'optimizing':
-                return 'Optimizing Seat Allocations';
-            case 'complete':
-                return 'Processing Complete';
+            case "uploading":
+                return "Uploading Guest Details";
+            case "validating":
+                return "Validating Ticket Restrictions";
+            case "optimizing":
+                return "Optimizing Seat Allocations";
+            case "complete":
+                return "Processing Complete";
         }
     };
 
     const getStepDescription = (step: ProcessStep) => {
         switch (step) {
-            case 'uploading':
-                return 'Reading and processing guest information from file...';
-            case 'validating':
-                return 'Checking age restrictions and ticket type requirements...';
-            case 'optimizing':
-                return 'Finding optimal seating arrangements for your group...';
-            case 'complete':
-                return 'All guests have been successfully processed!';
+            case "uploading":
+                return "Reading and processing guest information from file...";
+            case "validating":
+                return "Checking age restrictions and ticket type requirements...";
+            case "optimizing":
+                return "Finding optimal seating arrangements for your group...";
+            case "complete":
+                return "All guests have been successfully processed!";
         }
     };
 
@@ -207,12 +220,26 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
                                             </p>
                                         </label>
 
+                                        {!occurrenceId && (
+                                            <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                                <p className="text-amber-400 text-sm text-center">
+                                                    Please select a date and
+                                                    show time before uploading
+                                                    guest details.
+                                                </p>
+                                            </div>
+                                        )}
+
                                         <button
                                             onClick={handleUpload}
-                                            disabled={!file || isUploading}
+                                            disabled={
+                                                !file ||
+                                                isUploading ||
+                                                !occurrenceId
+                                            }
                                             className={`w-full mt-6 px-4 py-3 rounded-lg flex items-center justify-center gap-2
                         transition-all duration-300 ${
-                            file && !isUploading
+                            file && !isUploading && occurrenceId
                                 ? "bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:shadow-lg hover:shadow-purple-500/20"
                                 : "bg-gray-700/50 text-white/50 cursor-not-allowed"
                         }`}
@@ -225,43 +252,76 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
                                     <div className="space-y-6">
                                         {/* Progress Steps */}
                                         <div className="space-y-4">
-                                            {(['uploading', 'validating', 'optimizing'] as ProcessStep[]).map((step) => {
-                                                const stepIndex = ['uploading', 'validating', 'optimizing'].indexOf(step);
-                                                const currentStepIndex = ['uploading', 'validating', 'optimizing'].indexOf(currentStep);
-                                                const isCompleted = stepIndex < currentStepIndex;
-                                                const isCurrent = stepIndex === currentStepIndex;
-                                                
+                                            {(
+                                                [
+                                                    "uploading",
+                                                    "validating",
+                                                    "optimizing",
+                                                ] as ProcessStep[]
+                                            ).map((step) => {
+                                                const stepIndex = [
+                                                    "uploading",
+                                                    "validating",
+                                                    "optimizing",
+                                                ].indexOf(step);
+                                                const currentStepIndex = [
+                                                    "uploading",
+                                                    "validating",
+                                                    "optimizing",
+                                                ].indexOf(currentStep);
+                                                const isCompleted =
+                                                    stepIndex <
+                                                    currentStepIndex;
+                                                const isCurrent =
+                                                    stepIndex ===
+                                                    currentStepIndex;
+
                                                 return (
-                                                    <div key={step} className="flex items-center gap-4">
+                                                    <div
+                                                        key={step}
+                                                        className="flex items-center gap-4"
+                                                    >
                                                         <div className="relative">
-                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                                                                isCurrent
-                                                                    ? 'bg-purple-500/20 border border-purple-500/40'
-                                                                    : isCompleted
-                                                                    ? 'bg-green-500/20 border border-green-500/40'
-                                                                    : 'bg-gray-700/30 border border-gray-700/50'
-                                                            }`}>
-                                                                {isCurrent && stepProgress < 100 ? (
+                                                            <div
+                                                                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                                                                    isCurrent
+                                                                        ? "bg-purple-500/20 border border-purple-500/40"
+                                                                        : isCompleted
+                                                                        ? "bg-green-500/20 border border-green-500/40"
+                                                                        : "bg-gray-700/30 border border-gray-700/50"
+                                                                }`}
+                                                            >
+                                                                {isCurrent &&
+                                                                stepProgress <
+                                                                    100 ? (
                                                                     <Loader2 className="w-5 h-5 text-purple-400 animate-spin" />
                                                                 ) : isCompleted ? (
                                                                     <Check className="w-5 h-5 text-green-400" />
                                                                 ) : (
-                                                                    getStepIcon(step)
+                                                                    getStepIcon(
+                                                                        step
+                                                                    )
                                                                 )}
                                                             </div>
                                                         </div>
                                                         <div className="flex-1">
-                                                            <h4 className={`text-sm font-medium transition-colors duration-300 ${
-                                                                isCurrent
-                                                                    ? 'text-purple-400'
-                                                                    : isCompleted
-                                                                    ? 'text-green-400'
-                                                                    : 'text-white/60'
-                                                            }`}>
-                                                                {getStepTitle(step)}
+                                                            <h4
+                                                                className={`text-sm font-medium transition-colors duration-300 ${
+                                                                    isCurrent
+                                                                        ? "text-purple-400"
+                                                                        : isCompleted
+                                                                        ? "text-green-400"
+                                                                        : "text-white/60"
+                                                                }`}
+                                                            >
+                                                                {getStepTitle(
+                                                                    step
+                                                                )}
                                                             </h4>
                                                             <p className="text-xs text-white/40 mt-0.5">
-                                                                {getStepDescription(step)}
+                                                                {getStepDescription(
+                                                                    step
+                                                                )}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -279,8 +339,12 @@ const GuestUploadModal = ({ onClose, onUpload }: GuestUploadModalProps) => {
                                                 <motion.div
                                                     className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full"
                                                     initial={{ width: 0 }}
-                                                    animate={{ width: `${stepProgress}%` }}
-                                                    transition={{ duration: 0.3 }}
+                                                    animate={{
+                                                        width: `${stepProgress}%`,
+                                                    }}
+                                                    transition={{
+                                                        duration: 0.3,
+                                                    }}
                                                 />
                                             </div>
                                         </div>

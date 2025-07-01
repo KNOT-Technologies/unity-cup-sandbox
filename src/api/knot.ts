@@ -83,6 +83,18 @@ export interface CreditQuoteRequest {
   seats: QuoteSeat[];
   paymentMethod: "credits";
   visitor: "local" | "foreign";
+  // NEW: Optional guest data for CSV imports
+  guestData?: Array<{
+    firstName: string;           // Required
+    lastName: string;            // Required
+    email?: string;              // Optional
+    phoneNumber?: string;        // Optional
+    dateOfBirth?: string;        // Optional (ISO date string: "YYYY-MM-DD")
+    gender?: 'male' | 'female';  // Optional
+    nationality?: string;        // Optional
+    translationNeeded?: boolean; // Optional
+    visitorType?: 'local' | 'foreign'; // Optional (redundant but per-guest override)
+  }>;
 }
 
 export interface QuoteLine {

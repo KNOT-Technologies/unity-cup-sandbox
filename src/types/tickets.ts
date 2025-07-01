@@ -30,6 +30,9 @@ export interface SelectedSeat extends Seat {
     visitorType: "local" | "foreign";
     translationNeeded: boolean;
     translationLanguage?: string;
+    dateOfBirth?: string;
+    gender?: "male" | "female";
+    nationality?: string;
   };
 }
 

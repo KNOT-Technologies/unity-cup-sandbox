@@ -6,6 +6,7 @@ import {
     LogOut,
     LayoutDashboard,
     CreditCard,
+    X,
 } from "lucide-react";
 import knotLogo from "../../assets/KNOT LW.png";
 
@@ -40,9 +41,17 @@ const sidebarItems: SidebarItem[] = [
 
 interface SidebarProps {
     onLogout: () => void;
+    /**
+     * Whether the sidebar is open on mobile screens. Ignored on md and above where the sidebar is always visible.
+     */
+    isOpen?: boolean;
+    /**
+     * Optional callback when the close (X) button is pressed on mobile.
+     */
+    onClose?: () => void;
 }
 
-const Sidebar = ({ onLogout }: SidebarProps) => {
+const Sidebar = ({ onLogout, isOpen = false, onClose }: SidebarProps) => {
     const location = useLocation();
 
     const isActive = (path: string) => {
@@ -50,12 +59,24 @@ const Sidebar = ({ onLogout }: SidebarProps) => {
     };
 
     return (
-        <div className="w-64 min-h-screen bg-black fixed left-0 top-0">
-            {/* Logo */}
-            <div className="h-24 flex items-center justify-center">
+        <div
+            className={`w-64 min-h-screen bg-black fixed left-0 top-0 z-40 transform transition-transform duration-300
+            ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        >
+            {/* Logo & Close Button (mobile) */}
+            <div className="h-24 flex items-center justify-center relative">
                 <Link to="/business" className="block">
                     <img src={knotLogo} alt="KNOT" className="h-14 w-auto" />
                 </Link>
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 md:hidden text-gray-400 hover:text-white transition-colors"
+                        aria-label="Close menu"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                )}
             </div>
 
             {/* Navigation Items */}

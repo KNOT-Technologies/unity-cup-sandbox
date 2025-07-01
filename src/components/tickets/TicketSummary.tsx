@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Ticket, Plus } from "lucide-react";
+import { Ticket, Plus, Loader2 } from "lucide-react";
 import type { SelectedSeat } from "../../types/tickets";
 
 interface TicketSummaryProps {
@@ -17,6 +17,8 @@ interface TicketSummaryProps {
     };
     useCredits?: boolean;
     isTouristPricing?: boolean;
+    /** Shows loading state on checkout button */
+    isProcessing?: boolean;
 }
 
 const TicketSummary: React.FC<TicketSummaryProps> = ({
@@ -27,6 +29,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
     translationPreference,
     useCredits = false,
     isTouristPricing = false,
+    isProcessing = false,
 }) => {
     const total = selectedSeats.reduce((acc, seat) => acc + seat.price, 0);
 
@@ -146,54 +149,96 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
                                                     : "Adult"}{" "}
                                                 Ticket
                                             </div>
-                                            
+
                                             {/* Guest Information */}
                                             {seat.guestInfo && (
                                                 <div className="mt-3 p-2 bg-gray-700/20 rounded-lg border border-gray-600/30">
                                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                                         <div>
-                                                            <span className="text-white/40">Name:</span>
+                                                            <span className="text-white/40">
+                                                                Name:
+                                                            </span>
                                                             <span className="text-white/90 ml-1 font-medium">
-                                                                {seat.guestInfo.name}
+                                                                {
+                                                                    seat
+                                                                        .guestInfo
+                                                                        .name
+                                                                }
                                                             </span>
                                                         </div>
                                                         <div>
-                                                            <span className="text-white/40">Email:</span>
+                                                            <span className="text-white/40">
+                                                                Email:
+                                                            </span>
                                                             <span className="text-white/90 ml-1 font-medium">
-                                                                {seat.guestInfo.email}
+                                                                {
+                                                                    seat
+                                                                        .guestInfo
+                                                                        .email
+                                                                }
                                                             </span>
                                                         </div>
                                                         <div>
-                                                            <span className="text-white/40">Age:</span>
+                                                            <span className="text-white/40">
+                                                                Age:
+                                                            </span>
                                                             <span className="text-white/90 ml-1 font-medium">
-                                                                {seat.guestInfo.age}
+                                                                {
+                                                                    seat
+                                                                        .guestInfo
+                                                                        .age
+                                                                }
                                                             </span>
                                                         </div>
                                                         <div>
-                                                            <span className="text-white/40">Type:</span>
-                                                            <span className={`ml-1 font-medium px-1.5 py-0.5 rounded text-xs ${
-                                                                seat.guestInfo.visitorType === 'local'
-                                                                    ? 'bg-green-500/20 text-green-400'
-                                                                    : 'bg-blue-500/20 text-blue-400'
-                                                            }`}>
-                                                                {seat.guestInfo.visitorType === 'local' ? 'Local' : 'Foreign'}
+                                                            <span className="text-white/40">
+                                                                Type:
+                                                            </span>
+                                                            <span
+                                                                className={`ml-1 font-medium px-1.5 py-0.5 rounded text-xs ${
+                                                                    seat
+                                                                        .guestInfo
+                                                                        .visitorType ===
+                                                                    "local"
+                                                                        ? "bg-green-500/20 text-green-400"
+                                                                        : "bg-blue-500/20 text-blue-400"
+                                                                }`}
+                                                            >
+                                                                {seat.guestInfo
+                                                                    .visitorType ===
+                                                                "local"
+                                                                    ? "Local"
+                                                                    : "Foreign"}
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     {/* Translation Information */}
                                                     <div className="mt-2 pt-2 border-t border-gray-600/20">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-white/40 text-xs">Translation:</span>
-                                                            {seat.guestInfo.translationNeeded ? (
+                                                            <span className="text-white/40 text-xs">
+                                                                Translation:
+                                                            </span>
+                                                            {seat.guestInfo
+                                                                .translationNeeded ? (
                                                                 <div className="flex items-center gap-1">
-                                                                    <span className="text-green-400 text-xs font-medium">Yes</span>
+                                                                    <span className="text-green-400 text-xs font-medium">
+                                                                        Yes
+                                                                    </span>
                                                                     <span className="text-white/60 text-xs">
-                                                                        ({seat.guestInfo.translationLanguage})
+                                                                        (
+                                                                        {
+                                                                            seat
+                                                                                .guestInfo
+                                                                                .translationLanguage
+                                                                        }
+                                                                        )
                                                                     </span>
                                                                 </div>
                                                             ) : (
-                                                                <span className="text-red-400 text-xs font-medium">No</span>
+                                                                <span className="text-red-400 text-xs font-medium">
+                                                                    No
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -347,18 +392,31 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
 
                     <button
                         onClick={onProceedToCheckout}
-                        disabled={selectedSeats.length === 0}
-                        className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300
+                        disabled={selectedSeats.length === 0 || isProcessing}
+                        className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2
               ${
-                  selectedSeats.length > 0
+                  selectedSeats.length > 0 && !isProcessing
                       ? "bg-gradient-to-br from-amber-500 to-amber-400 text-gray-900 hover:shadow-lg hover:shadow-amber-500/20"
                       : "bg-gray-800/50 text-white/30 cursor-not-allowed"
               }
             `}
                     >
-                        {useCredits
-                            ? "Book with Credits"
-                            : "Proceed to Checkout"}
+                        {isProcessing ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span className="ml-1">
+                                    {useCredits
+                                        ? "Booking..."
+                                        : "Processing..."}
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                {useCredits
+                                    ? "Book with Credits"
+                                    : "Proceed to Checkout"}
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
