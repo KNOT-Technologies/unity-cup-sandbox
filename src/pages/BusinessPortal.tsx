@@ -484,8 +484,8 @@ const BusinessPortal = () => {
     // Mock guest data for demo purposes
     const mockGuests = [
         {
-            name: "Ahmed Hassan",
-            email: "ahmed.hassan@email.com",
+            name: "Adam Smith",
+            email: "adam.smith@email.com",
             age: 45,
             visitorType: "foreign" as const,
             translationNeeded: false,
@@ -529,8 +529,8 @@ const BusinessPortal = () => {
             translationLanguage: "Spanish",
         },
         {
-            name: "Nour El-Din",
-            email: "nour.eldin@email.com",
+            name: "Jake Wilson",
+            email: "jake.wilson@email.com",
             age: 19,
             visitorType: "foreign" as const,
             translationNeeded: false,

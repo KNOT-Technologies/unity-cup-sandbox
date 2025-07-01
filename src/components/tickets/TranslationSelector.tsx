@@ -224,13 +224,7 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                             )}
                         {isAvailable && translationAddon && (
                             <p className="text-xs text-amber-400 mt-1">
-                                Available (
-                                {translationAddon.options[0]
-                                    ? formatPriceDisplay(
-                                          translationAddon.options[0]
-                                      )
-                                    : "£50 / $3"}{" "}
-                                per headphone)
+                                Available
                             </p>
                         )}
                     </div>
@@ -316,11 +310,7 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                                                       value={option.label}
                                                       className="font-medium bg-gray-800"
                                                   >
-                                                      {option.label} (
-                                                      {formatPriceDisplay(
-                                                          option
-                                                      )}
-                                                      )
+                                                      {option.label}
                                                   </option>
                                               )
                                           )
