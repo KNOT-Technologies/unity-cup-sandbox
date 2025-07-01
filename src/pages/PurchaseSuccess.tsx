@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
+
 const PurchaseSuccess = () => {
     const navigate = useNavigate();
     const { paymentId } = useParams<{ paymentId: string }>();
