@@ -500,9 +500,6 @@ const Tickets = () => {
                                 onTranslationChange={handleTranslationChange}
                                 occurrenceId={selectedOccurrenceId}
                                 className="h-full"
-                                currency={
-                                    userType === "tourist" ? "USD" : "EGP"
-                                }
                             />
                         </div>
 

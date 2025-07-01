@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Headphones, AlertCircle, Info } from "lucide-react";
 import { getAddons } from "../../api/knot";
-import type { Addon, AddonOption } from "../../types/tickets";
+import type { Addon } from "../../types/tickets";
 
 const TOP_20_LANGUAGES = [
     "French",
@@ -33,14 +33,12 @@ interface TranslationSelectorProps {
     ) => void;
     occurrenceId?: string;
     className?: string;
-    currency?: "EGP" | "USD";
 }
 
 const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     onTranslationChange,
     occurrenceId,
     className = "",
-    currency = "EGP",
 }) => {
     const [needsTranslation, setNeedsTranslation] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState<string>("English");
@@ -149,20 +147,6 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     const hasQuota = translationAddon && (translationAddon.quota || 0) > 0;
     const isAvailable = !loading && !error && hasQuota;
     const noOccurrenceSelected = !occurrenceId;
-
-    // Get currency symbol
-    const getCurrencySymbol = (curr: "EGP" | "USD" = currency) => {
-        return curr === "USD" ? "$" : "£";
-    };
-
-    // Format price for display with both currencies
-    const formatPriceDisplay = (option: AddonOption) => {
-        if (!option?.prices) {
-            return `${getCurrencySymbol()}${option?.extraCost || 0}`;
-        }
-
-        return `${getCurrencySymbol("USD")}${option.prices.USD} for tourists`;
-    };
 
     return (
         <div
