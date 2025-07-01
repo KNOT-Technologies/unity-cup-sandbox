@@ -85,15 +85,15 @@ export interface CreditQuoteRequest {
   visitor: "local" | "foreign";
   // NEW: Optional guest data for CSV imports
   guestData?: Array<{
-    firstName: string;           // Required
-    lastName: string;            // Required
-    email?: string;              // Optional
-    phoneNumber?: string;        // Optional
-    dateOfBirth?: string;        // Optional (ISO date string: "YYYY-MM-DD")
-    gender?: 'male' | 'female';  // Optional
-    nationality?: string;        // Optional
+    firstName: string; // Required
+    lastName: string; // Required
+    email?: string; // Optional
+    phoneNumber?: string; // Optional
+    dateOfBirth?: string; // Optional (ISO date string: "YYYY-MM-DD")
+    gender?: "male" | "female"; // Optional
+    nationality?: string; // Optional
     translationNeeded?: boolean; // Optional
-    visitorType?: 'local' | 'foreign'; // Optional (redundant but per-guest override)
+    visitorType?: "local" | "foreign"; // Optional (redundant but per-guest override)
   }>;
 }
 
@@ -370,7 +370,9 @@ export async function getPrices(occurrenceId: string): Promise<PricingData> {
 }
 
 // NEW: Get credit pricing for an occurrence
-export async function getCreditPrices(occurrenceId: string): Promise<CreditPriceMatrix> {
+export async function getCreditPrices(
+  occurrenceId: string
+): Promise<CreditPriceMatrix> {
   const response = await authenticatedApiRequest<CreditPricesResponse>(
     `/api/v3/occurrences/${occurrenceId}/credit-prices`
   );
@@ -790,7 +792,7 @@ export async function getCreditBundles(): Promise<CreditBundle[]> {
 
     // Calculate discount based on price per credit (lower price per credit = higher discount)
     // This is a simple heuristic - you might want to adjust this logic
-    const basePricePerCredit = 4.5; // Assuming 4.5 is the base price
+    const basePricePerCredit = 4.6; // Assuming 4.5 is the base price
     const discount = Math.max(
       0,
       Math.round(
