@@ -40,6 +40,7 @@ function App() {
                                 element={<PurchaseSuccess />}
                             />
                         </Route>
+                        
 
                         {/* Business routes without Navbar */}
                         <Route path="business">
