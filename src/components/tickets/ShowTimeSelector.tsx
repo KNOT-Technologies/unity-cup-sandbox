@@ -9,6 +9,22 @@ interface ShowTimeSelectorProps {
     className?: string;
 }
 
+// Helper to convert ISO language codes (e.g., "en", "ar") to human-readable names
+// Extend this map as new languages are introduced by the API.
+const languageNames: Record<string, string> = {
+    en: "English",
+    ar: "Arabic",
+    fr: "French",
+    es: "Spanish",
+    de: "German",
+};
+
+const getLanguageName = (code: string): string => {
+    // Normalize to lowercase and strip region subtags (e.g., "en-US" -> "en") for look-up
+    const normalized = code.toLowerCase().split("-")[0];
+    return languageNames[normalized] ?? code;
+};
+
 const ShowTimeSelector = ({
     showTimes,
     selectedOccurrenceId,
@@ -16,11 +32,7 @@ const ShowTimeSelector = ({
     className = "",
 }: ShowTimeSelectorProps) => {
     // Mock show times if none provided
-    const times =
-        showTimes.length > 0
-            ? showTimes
-            : [
-              ];
+    const times = showTimes.length > 0 ? showTimes : [];
 
     return (
         <div
@@ -78,7 +90,7 @@ const ShowTimeSelector = ({
                                             : "text-white/60"
                                     }`}
                                 >
-                                    {show.language}
+                                    {getLanguageName(show.language)}
                                 </span>
                             </div>
 

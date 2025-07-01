@@ -145,9 +145,19 @@ export function useQuote(occurrenceId: string | null) {
           timeRemaining: 0,
           error: "Quote expired",
         }));
+        // Clear all quote-related data from sessionStorage so the user starts fresh
         sessionStorage.removeItem("quoteId");
         sessionStorage.removeItem("quote");
-        clearInterval(refreshIntervalRef.current);
+        sessionStorage.removeItem("seatSelections");
+        sessionStorage.removeItem("translationPreference");
+        sessionStorage.removeItem("selectedAddons");
+        sessionStorage.removeItem("currentQuote");
+        if (timeoutRef.current) {
+          clearInterval(timeoutRef.current);
+        }
+        if (refreshIntervalRef.current) {
+          clearInterval(refreshIntervalRef.current);
+        }
         return;
       }
 
@@ -479,9 +489,16 @@ export function useCreditQuote(occurrenceId: string | null) {
           timeRemaining: 0,
           error: "Quote expired",
         }));
+        // Clear all credit-quote related data to avoid stale state
         sessionStorage.removeItem("creditQuoteId");
         sessionStorage.removeItem("creditQuote");
-        clearInterval(timeoutRef.current);
+        sessionStorage.removeItem("seatSelections");
+        sessionStorage.removeItem("translationPreference");
+        sessionStorage.removeItem("selectedAddons");
+        sessionStorage.removeItem("currentQuote");
+        if (timeoutRef.current) {
+          clearInterval(timeoutRef.current);
+        }
         return;
       }
 

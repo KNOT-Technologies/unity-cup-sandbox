@@ -754,8 +754,8 @@ const BusinessPortal = () => {
             // Determine ticket type based on age
             let ticketType: TicketType = "adult";
             if (guest.age < 12) ticketType = "child";
-            else if (guest.age >= 65) ticketType = "senior";
-            else if (guest.age < 25) ticketType = "student";
+            else if (guest.age >= 80) ticketType = "senior";
+            else if (guest.age < 26) ticketType = "student";
 
             const creditCost = findCreditCost(
                 creditPrices,
@@ -787,8 +787,8 @@ const BusinessPortal = () => {
             // Determine ticket type based on age
             let ticketType: TicketType = "adult";
             if (guest.age < 12) ticketType = "child";
-            else if (guest.age >= 65) ticketType = "senior";
-            else if (guest.age < 25) ticketType = "student";
+            else if (guest.age >= 80) ticketType = "senior";
+            else if (guest.age < 26) ticketType = "student";
 
             const creditCost = findCreditCost(
                 creditPrices,

@@ -24,6 +24,7 @@ interface TranslationPreference {
     needed: boolean;
     language?: string;
     addonId?: string;
+    optionCode?: string;
     prices?: {
         EGP: number;
         USD: number;
@@ -65,6 +66,17 @@ const Tickets = () => {
     useEffect(() => {
         if (quoteState.error) {
             showWarning(quoteState.error);
+
+            // If the quote has expired, clear all client-side state related to it
+            if (quoteState.error.toLowerCase().includes("expired")) {
+                setSeatSelections([]);
+
+                // Remove any persisted data so that a fresh quote can be created
+                sessionStorage.removeItem("seatSelections");
+                sessionStorage.removeItem("translationPreference");
+                sessionStorage.removeItem("selectedAddons");
+                sessionStorage.removeItem("currentQuote");
+            }
         }
     }, [quoteState.error]);
 
@@ -296,7 +308,8 @@ const Tickets = () => {
     const handleTranslationChange = (
         needed: boolean,
         language?: string,
-        addonId?: string
+        addonId?: string,
+        optionCode?: string
     ) => {
         // Default prices if not provided from API
         const defaultPrices = {
@@ -308,6 +321,7 @@ const Tickets = () => {
             needed,
             language,
             addonId,
+            optionCode,
             prices: defaultPrices, // In a real app, these would come from the API
         };
 
@@ -358,9 +372,11 @@ const Tickets = () => {
                     seat: seatLabel,
                     addonId: translationPreference.addonId,
                     optionCode:
+                        translationPreference.optionCode ||
                         translationPreference.language
                             ?.toLowerCase()
-                            .substring(0, 2) || "en",
+                            .substring(0, 2) ||
+                        "en",
                     addonName: "Translation Headphone",
                     optionLabel: translationPreference.language,
                     price: translationPreference.prices,
@@ -500,9 +516,6 @@ const Tickets = () => {
                                 onTranslationChange={handleTranslationChange}
                                 occurrenceId={selectedOccurrenceId}
                                 className="h-full"
-                                currency={
-                                    userType === "tourist" ? "USD" : "EGP"
-                                }
                             />
                         </div>
 

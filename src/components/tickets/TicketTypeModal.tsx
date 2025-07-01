@@ -224,9 +224,9 @@ const TicketTypeModal = ({
                                                 {type === "senior"
                                                     ? "(>80)"
                                                     : type === "student"
-                                                    ? "(<16)"
+                                                    ? "(<26)"
                                                     : type === "child"
-                                                    ? "(<6)"
+                                                    ? "(<12)"
                                                     : ""}
                                             </span>
                                         </div>

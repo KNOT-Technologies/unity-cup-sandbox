@@ -55,7 +55,7 @@ const TicketSummary: React.FC<TicketSummaryProps> = ({
     // Get appropriate currency symbol
     const getCurrencySymbol = () => {
         if (useCredits) return "";
-        return isTouristPricing ? "$" : "£";
+        return isTouristPricing ? "$" : "EGP";
     };
 
     return (

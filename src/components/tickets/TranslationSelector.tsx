@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Headphones, AlertCircle, Info } from "lucide-react";
 import { getAddons } from "../../api/knot";
-import type { Addon, AddonOption } from "../../types/tickets";
+import type { Addon } from "../../types/tickets";
 
 const TOP_20_LANGUAGES = [
     "French",
@@ -29,18 +29,17 @@ interface TranslationSelectorProps {
     onTranslationChange: (
         needsTranslation: boolean,
         language?: string,
-        addonId?: string
+        addonId?: string,
+        optionCode?: string
     ) => void;
     occurrenceId?: string;
     className?: string;
-    currency?: "EGP" | "USD";
 }
 
 const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     onTranslationChange,
     occurrenceId,
     className = "",
-    currency = "EGP",
 }) => {
     const [needsTranslation, setNeedsTranslation] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState<string>("English");
@@ -81,22 +80,26 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     const handleTranslationToggle = (value: boolean) => {
         setNeedsTranslation(value);
 
-        // Get price information from the selected addon option
+        // Determine selected addon option to capture prices & code
         let prices = null;
+        let optionCode: string | undefined = undefined;
+
         if (value && translationAddon && translationAddon.options.length > 0) {
             const option =
                 translationAddon.options.find(
                     (opt) => opt.label === selectedLanguage
                 ) || translationAddon.options[0];
             prices = option.prices || { USD: 3, EGP: 50 };
+            optionCode = option.code;
         }
 
-        // Save translation preference with price information
+        // Save translation preference with price information and option code
         sessionStorage.setItem(
             "translationPreference",
             JSON.stringify({
                 needed: value,
                 language: value ? selectedLanguage : undefined,
+                optionCode: optionCode,
                 prices: prices,
             })
         );
@@ -104,15 +107,18 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
         onTranslationChange(
             value,
             value ? selectedLanguage : undefined,
-            value ? translationAddon?._id : undefined
+            value ? translationAddon?._id : undefined,
+            optionCode
         );
     };
 
     const handleLanguageChange = (language: string) => {
         setSelectedLanguage(language);
 
-        // Get price information for the selected language
+        // Get price information & optionCode for the selected language
         let prices = null;
+        let optionCode: string | undefined = undefined;
+
         if (
             needsTranslation &&
             translationAddon &&
@@ -123,14 +129,16 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
                     (opt) => opt.label === language
                 ) || translationAddon.options[0];
             prices = option.prices || { USD: 3, EGP: 50 };
+            optionCode = option.code;
         }
 
-        // Save translation preference with updated language and price
+        // Save translation preference with updated language, price and code
         sessionStorage.setItem(
             "translationPreference",
             JSON.stringify({
                 needed: needsTranslation,
                 language: language,
+                optionCode: optionCode,
                 prices: prices,
             })
         );
@@ -138,7 +146,8 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
         onTranslationChange(
             needsTranslation,
             language,
-            needsTranslation ? translationAddon?._id : undefined
+            needsTranslation ? translationAddon?._id : undefined,
+            optionCode
         );
     };
 
@@ -149,20 +158,6 @@ const TranslationSelector: React.FC<TranslationSelectorProps> = ({
     const hasQuota = translationAddon && (translationAddon.quota || 0) > 0;
     const isAvailable = !loading && !error && hasQuota;
     const noOccurrenceSelected = !occurrenceId;
-
-    // Get currency symbol
-    const getCurrencySymbol = (curr: "EGP" | "USD" = currency) => {
-        return curr === "USD" ? "$" : "£";
-    };
-
-    // Format price for display with both currencies
-    const formatPriceDisplay = (option: AddonOption) => {
-        if (!option?.prices) {
-            return `${getCurrencySymbol()}${option?.extraCost || 0}`;
-        }
-
-        return `${getCurrencySymbol("USD")}${option.prices.USD} for tourists`;
-    };
 
     return (
         <div

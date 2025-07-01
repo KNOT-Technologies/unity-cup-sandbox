@@ -222,8 +222,8 @@ const Checkout = () => {
 
     // Get the appropriate currency symbol
     const getCurrencySymbol = () => {
-        if (!quote) return "£";
-        return quote.total.currency === "USD" ? "$" : "£";
+        if (!quote) return "EGP";
+        return quote.total.currency === "USD" ? "$" : "EGP";
     };
 
     // Helper function to calculate age from date of birth
@@ -294,15 +294,15 @@ const Checkout = () => {
                         hasErrors = true;
                     }
                 } else if (ticketType.includes("student")) {
-                    if (age < 16 || age >= 30) {
+                    if (age < 12 || age >= 26) {
                         holderErrors.dateOfBirth =
                             "Student tickets require age between 16-29";
                         hasErrors = true;
                     }
                 } else if (ticketType.includes("child")) {
-                    if (age >= 16) {
+                    if (age >= 12) {
                         holderErrors.dateOfBirth =
-                            "Child tickets require age under 16";
+                            "Child tickets require age under 12";
                         hasErrors = true;
                     }
                 }
