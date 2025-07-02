@@ -1456,7 +1456,7 @@ const BusinessPortal = () => {
                                                                                 pkg.currency
                                                                             }{" "}
                                                                             {
-                                                                                pkg.pricePerCredit.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                                                                                pkg.pricePerCredit.toLocaleString('en-US', { maximumFractionDigits: 1 })
                                                                             }
                                                                             /credit
                                                                         </span>
