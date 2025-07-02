@@ -17,10 +17,14 @@ import {
   type CreditQuoteRequest,
   type QuoteSeat,
   type PricingData,
-
 } from "../api/knot";
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { QuoteState, CreditQuoteState, UserType, SeatSelection } from "../types/tickets";
+import type {
+  QuoteState,
+  CreditQuoteState,
+  UserType,
+  SeatSelection,
+} from "../types/tickets";
 
 // SWR configuration with 30s cache and revalidate on window focus
 const swrConfig = {
@@ -469,7 +473,10 @@ export function useCreditQuote(occurrenceId: string | null) {
           sessionStorage.removeItem("creditQuote");
         }
       } catch (error) {
-        console.warn("Failed to restore credit quote from sessionStorage:", error);
+        console.warn(
+          "Failed to restore credit quote from sessionStorage:",
+          error
+        );
         sessionStorage.removeItem("creditQuoteId");
         sessionStorage.removeItem("creditQuote");
       }
@@ -513,17 +520,22 @@ export function useCreditQuote(occurrenceId: string | null) {
   }, []);
 
   const createQuoteDebounced = useCallback(
-    async (selections: SeatSelection[], visitor: "local" | "foreign", guestData?: Array<{
-      firstName: string;
-      lastName: string;
-      email?: string;
-      phoneNumber?: string;
-      dateOfBirth?: string;
-      gender?: 'male' | 'female';
-      nationality?: string;
-      translationNeeded?: boolean;
-      visitorType?: 'local' | 'foreign';
-    }>) => {
+    async (
+      selections: SeatSelection[],
+      visitor: "local" | "foreign",
+      guestData?: Array<{
+        firstName: string;
+        lastName: string;
+        email?: string;
+        phoneNumber?: string;
+        dateOfBirth?: string;
+        gender?: "male" | "female";
+        nationality?: string;
+        translationNeeded?: boolean;
+        translationCode?: string;
+        visitorType?: "local" | "foreign";
+      }>
+    ) => {
       if (!occurrenceId || selections.length === 0) {
         return;
       }

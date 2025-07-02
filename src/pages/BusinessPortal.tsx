@@ -642,6 +642,7 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "French",
+            translationCode: "fr",
             dateOfBirth: "1972-01-08",
             gender: "female" as const,
             nationality: "Moroccan",
@@ -653,6 +654,7 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "German",
+            translationCode: "de",
             dateOfBirth: "1993-11-12",
             gender: "male" as const,
             nationality: "Germany",
@@ -674,6 +676,7 @@ const BusinessPortal = () => {
             visitorType: "foreign" as const,
             translationNeeded: true,
             translationLanguage: "Spanish",
+            translationCode: "es",
             dateOfBirth: "1986-09-03",
             gender: "male" as const,
             nationality: "Spanish",
@@ -693,8 +696,7 @@ const BusinessPortal = () => {
             email: "emma.wilson@outlook.com",
             age: 26,
             visitorType: "foreign" as const,
-            translationNeeded: true,
-            translationLanguage: "English",
+            translationNeeded: false,
             dateOfBirth: "1998-05-14",
             gender: "female" as const,
             nationality: "Australian",
@@ -840,6 +842,7 @@ const BusinessPortal = () => {
                     gender?: "male" | "female";
                     nationality?: string;
                     translationNeeded?: boolean;
+                    translationCode?: string;
                     visitorType?: "local" | "foreign";
                 } = {
                     firstName,
@@ -854,6 +857,7 @@ const BusinessPortal = () => {
                 if (guest.nationality)
                     guestData.nationality = guest.nationality;
                 guestData.translationNeeded = guest.translationNeeded;
+                guestData.translationCode = guest.translationCode;
                 guestData.visitorType = guest.visitorType;
 
                 return guestData;

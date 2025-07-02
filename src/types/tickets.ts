@@ -33,6 +33,7 @@ export interface SelectedSeat extends Seat {
     dateOfBirth?: string;
     gender?: "male" | "female";
     nationality?: string;
+    translationCode?: string;
   };
 }
 
