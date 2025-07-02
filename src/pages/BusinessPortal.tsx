@@ -616,8 +616,8 @@ const BusinessPortal = () => {
     // Mock guest data for demo purposes
     const mockGuests = [
         {
-            name: "Adam Smith",
-            email: "adam.smith@email.com",
+            name: "Adam Smith", //vip
+            email: "adam.smith@gmail.com",
             age: 45,
             visitorType: "foreign" as const,
             translationNeeded: false,
@@ -626,40 +626,40 @@ const BusinessPortal = () => {
             nationality: "American",
         },
         {
-            name: "Sarah Johnson",
-            email: "sarah.johnson@email.com",
+            name: "Sarah Johnson", //vip
+            email: "sarah.johnson@outlook.com",
             age: 28,
             visitorType: "foreign" as const,
-            translationNeeded: true,
-            translationLanguage: "English",
+            translationNeeded: false,
             dateOfBirth: "1996-07-22",
             gender: "female" as const,
             nationality: "British",
         },
         {
             name: "Fatima Al-Zahra",
-            email: "fatima.alzahra@email.com",
+            email: "fatima.alzahra@gmail.com",
             age: 52,
             visitorType: "foreign" as const,
-            translationNeeded: false,
+            translationNeeded: true,
+            translationLanguage: "French",
             dateOfBirth: "1972-01-08",
             gender: "female" as const,
             nationality: "Moroccan",
         },
         {
-            name: "Michael Chen",
-            email: "michael.chen@email.com",
+            name: "Karl Müller", //vip
+            email: "karl.muller@gmail.com",
             age: 31,
             visitorType: "foreign" as const,
             translationNeeded: true,
-            translationLanguage: "English",
+            translationLanguage: "German",
             dateOfBirth: "1993-11-12",
             gender: "male" as const,
-            nationality: "Canadian",
+            nationality: "Germany",
         },
         {
             name: "Aisha Mohammed",
-            email: "aisha.mohammed@email.com",
+            email: "aisha.mohammed@outlook.com",
             age: 22,
             visitorType: "foreign" as const,
             translationNeeded: false,
@@ -668,8 +668,8 @@ const BusinessPortal = () => {
             nationality: "Emirati",
         },
         {
-            name: "David Rodriguez",
-            email: "david.rodriguez@email.com",
+            name: "David Rodriguez", //vip
+            email: "david.rodriguez@gmail.com",
             age: 38,
             visitorType: "foreign" as const,
             translationNeeded: true,
@@ -680,7 +680,7 @@ const BusinessPortal = () => {
         },
         {
             name: "Jake Wilson",
-            email: "jake.wilson@email.com",
+            email: "jake.wilson@gmail.com",
             age: 19,
             visitorType: "foreign" as const,
             translationNeeded: false,
@@ -690,7 +690,7 @@ const BusinessPortal = () => {
         },
         {
             name: "Emma Wilson",
-            email: "emma.wilson@email.com",
+            email: "emma.wilson@outlook.com",
             age: 26,
             visitorType: "foreign" as const,
             translationNeeded: true,
@@ -725,21 +725,19 @@ const BusinessPortal = () => {
         const numberOfGuests = mockGuests.length; // Always use all 8 guests
         const autoSelectedSeats: SelectedSeat[] = [];
 
-        // Separate guests into VIP and regular based on realistic criteria
-        const vipGuests = mockGuests.filter(
-            (guest, index) =>
-                index < 2 ||
-                guest.age >= 65 ||
-                (guest.translationNeeded && guest.age >= 30)
-        );
-        const regularGuests = mockGuests.filter(
-            (guest, index) =>
-                !(
-                    index < 2 ||
-                    guest.age >= 65 ||
-                    (guest.translationNeeded && guest.age >= 30)
-                )
-        );
+        // Hardcode VIP and regular guest assignments
+        const vipGuests = [
+            mockGuests[0], // Adam Smith
+            mockGuests[1], // Sarah Johnson
+            mockGuests[3], // Karl Müller
+            mockGuests[5], // David Rodriguez
+        ];
+        const regularGuests = [
+            mockGuests[2], // Fatima Al-Zahra
+            mockGuests[4], // Aisha Mohammed
+            mockGuests[6], // Jake Wilson
+            mockGuests[7], // Emma Wilson
+        ];
 
         // Assign VIP seats together in row A
         vipGuests.forEach((guest, index) => {
