@@ -131,7 +131,7 @@ const Home = () => {
                                     Book Your Experience
                                 </Link>
                                 <Link
-                                    to="/business-portal"
+                                    to="/business/login"
                                     className="group relative overflow-hidden bg-white/[0.03] backdrop-blur-xl text-white hover:bg-white/[0.08]
                     px-10 py-5 rounded-2xl text-lg font-medium tracking-wider 
                     transition-all duration-500 min-w-[200px]
