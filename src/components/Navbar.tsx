@@ -39,7 +39,7 @@ const Navbar = () => {
             >
               <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-400 
                 bg-clip-text text-transparent group-hover:opacity-80 transition-opacity duration-300">
-                Sound & Light
+                Unity Cup
               </span>
               <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-yellow-400 to-amber-400 
                 group-hover:w-full transition-all duration-500"></div>

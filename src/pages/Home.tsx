@@ -1,43 +1,43 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-    Moon,
-    Languages,
+    Trophy,
     Users,
-    Tv,
+    Calendar,
     ChevronDown,
     Star,
     Clock,
     MapPin,
-    Headphones,
     Info,
+    Flag,
+    Award,
 } from "lucide-react";
 
 const Home = () => {
     const features = [
         {
-            icon: <Moon className="w-8 h-8" />,
-            title: "Exclusive Access Under the Stars",
+            icon: <Trophy className="w-8 h-8" />,
+            title: "International Football Excellence",
             description:
-                "Experience the pyramids in a unique evening setting with perfect viewing conditions.",
-        },
-        {
-            icon: <Languages className="w-8 h-8" />,
-            title: "Live Multilingual Narration",
-            description:
-                "Professional narration available in multiple languages for an immersive experience.",
+                "Experience top-tier football with teams from around the world competing for the Unity Cup.",
         },
         {
             icon: <Users className="w-8 h-8" />,
-            title: "Effortless Group Booking",
+            title: "Group Booking & Corporate Packages",
             description:
-                "Special rates and dedicated support for tour operators and large groups.",
+                "Special rates and dedicated support for tour operators, corporate groups, and large parties.",
         },
         {
-            icon: <Tv className="w-8 h-8" />,
-            title: "Rich Visuals & Soundscapes",
+            icon: <Calendar className="w-8 h-8" />,
+            title: "Multiple Match Days",
             description:
-                "State-of-the-art projection mapping and surround sound technology.",
+                "Choose from various match days and times throughout the tournament schedule.",
+        },
+        {
+            icon: <Award className="w-8 h-8" />,
+            title: "Premium Stadium Experience",
+            description:
+                "State-of-the-art facilities with excellent views and world-class amenities.",
         },
     ];
 
@@ -45,12 +45,12 @@ const Home = () => {
         {
             icon: <Star className="w-6 h-6" />,
             title: "5-Star Experience",
-            description: "Rated excellent by over 10,000 visitors",
+            description: "Rated excellent by over 50,000 fans",
         },
         {
             icon: <Clock className="w-6 h-6" />,
-            title: "1-Hour Show",
-            description: "Perfect length for an evening activity",
+            title: "90-Minute Matches",
+            description: "Full-length international football matches",
         },
     ];
 
@@ -75,17 +75,16 @@ const Home = () => {
                                 className="text-6xl md:text-7xl lg:text-8xl font-medium text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/70
                 leading-[1.2] md:leading-[1.2] lg:leading-[1.2] tracking-wide pb-4"
                             >
-                                Experience the Magic of Ancient Egypt
+                                Unity Cup Football Tournament
                             </h1>
 
                             <p
                                 className="text-xl md:text-2xl text-white/80 leading-relaxed tracking-wide
                 max-w-3xl mx-auto font-light"
                             >
-                                Journey through time with our spectacular Sound
-                                and Light Show at the Pyramids of Giza. Let the
-                                ancient stones tell their story under the
-                                starlit sky of Cairo.
+                                Experience the thrill of international football as top teams
+                                compete for glory in the Unity Cup. Secure your seats for
+                                unforgettable matches at world-class stadiums.
                             </p>
 
                             <div className="flex flex-wrap justify-center gap-6">
@@ -128,7 +127,7 @@ const Home = () => {
                                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent 
                     translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"
                                     ></div>
-                                    Book Your Experience
+                                    Book Your Tickets
                                 </Link>
                                 <Link
                                     to="/business/login"
@@ -169,7 +168,7 @@ const Home = () => {
                     <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/30 backdrop-blur-xl"></div>
                     <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-4xl md:text-5xl font-medium text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 mb-24">
-                            What Makes the Experience Unforgettable
+                            What Makes the Unity Cup Special
                         </h2>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -229,20 +228,11 @@ const Home = () => {
                                 <div className="space-y-4">
                                     <div>
                                         <h4 className="text-white/80 font-medium mb-2">
-                                            Translation Services
-                                        </h4>
-                                        <p className="text-white/50 font-light">
-                                            Headphones available in 20+
-                                            languages. Book in advance.
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <h4 className="text-white/80 font-medium mb-2">
                                             Payment Methods
                                         </h4>
                                         <p className="text-white/50 font-light">
                                             All major cards, digital wallets,
-                                            and cash (EGP).
+                                            and cash accepted.
                                         </p>
                                     </div>
                                     <div>
@@ -250,8 +240,17 @@ const Home = () => {
                                             Accessibility
                                         </h4>
                                         <p className="text-white/50 font-light">
-                                            Wheelchair accessible. Elderly
-                                            assistance available.
+                                            Wheelchair accessible seating.
+                                            Elderly assistance available.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-white/80 font-medium mb-2">
+                                            Security
+                                        </h4>
+                                        <p className="text-white/50 font-light">
+                                            Bag checks required. No large bags
+                                            or prohibited items.
                                         </p>
                                     </div>
                                 </div>
@@ -264,7 +263,7 @@ const Home = () => {
                 transition-all duration-500 hover:shadow-2xl hover:shadow-amber-500/5"
                             >
                                 <div className="flex items-center gap-4 mb-6">
-                                    <Headphones className="w-8 h-8 text-amber-500/80 group-hover:text-amber-400 transition-colors duration-500" />
+                                    <Flag className="w-8 h-8 text-amber-500/80 group-hover:text-amber-400 transition-colors duration-500" />
                                     <h3 className="text-2xl font-medium text-white/90">
                                         What to Bring
                                     </h3>
@@ -282,7 +281,7 @@ const Home = () => {
                                             </p>
                                             <p className="text-white/50 font-light flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50"></span>
-                                                Booking confirmation
+                                                Match ticket (digital or print)
                                             </p>
                                         </div>
                                     </div>
@@ -293,16 +292,15 @@ const Home = () => {
                                         <div className="space-y-2">
                                             <p className="text-white/50 font-light flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50"></span>
-                                                Light jacket (evenings can be
-                                                cool)
+                                                Team colors and flags
                                             </p>
                                             <p className="text-white/50 font-light flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50"></span>
-                                                Camera (photography allowed)
+                                                Camera (no flash photography)
                                             </p>
                                             <p className="text-white/50 font-light flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50"></span>
-                                                Cash for souvenirs
+                                                Cash for food and merchandise
                                             </p>
                                         </div>
                                     </div>
@@ -325,11 +323,11 @@ const Home = () => {
                                 <div className="space-y-4">
                                     <div>
                                         <h4 className="text-white/80 font-medium mb-2">
-                                            Location
+                                            Stadium Location
                                         </h4>
                                         <p className="text-white/50 font-light">
-                                            Giza Pyramid Complex, Al Haram, Giza
-                                            Governorate
+                                            Various stadiums across the host
+                                            cities. Check your match details.
                                         </p>
                                     </div>
                                     <div>
@@ -337,8 +335,8 @@ const Home = () => {
                                             Transportation
                                         </h4>
                                         <p className="text-white/50 font-light">
-                                            Taxi, Uber, or organized tour
-                                            transport recommended
+                                            Public transport, taxi, or organized
+                                            shuttle services available
                                         </p>
                                     </div>
                                     <div>
@@ -346,8 +344,8 @@ const Home = () => {
                                             Parking
                                         </h4>
                                         <p className="text-white/50 font-light">
-                                            Free parking available on-site for
-                                            visitors
+                                            Limited parking available. Public
+                                            transport recommended.
                                         </p>
                                     </div>
                                 </div>
