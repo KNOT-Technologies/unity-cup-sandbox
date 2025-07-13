@@ -45,8 +45,9 @@ const Tickets = () => {
             needed: false,
         });
 
-    // Use a fixed eventId for the Sound & Light show
-    const eventId = "685d771de88d1161a488bf0f";
+    // Use a fixed eventId for the Unity Cup matches
+    //TODO: turn into array of eventIds
+    const eventId = "68739fa044dbbfd4cc3a025a";
     const {
         occurrences,
         isLoading: isLoadingSchedule,
