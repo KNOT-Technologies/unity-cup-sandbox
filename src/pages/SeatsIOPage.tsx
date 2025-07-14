@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import SeatsIoChart from "../components/seatsio/SeatsIoChart";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
@@ -16,22 +16,12 @@ interface SeatsIOSeat {
     seatType: "seat" | "table" | "booth" | "generalAdmission";
 }
 
-interface SeatsIOCheckoutData {
-    selectedSeats: SeatsIOSeat[];
-    holdToken: string;
-    quoteId?: string;
-    totalPrice: number;
-    currency: string;
-}
-
 const SeatsIOPage: React.FC = () => {
     const { eventKey } = useParams<{ eventKey: string }>();
     const navigate = useNavigate();
-    const { showError, showSuccess, toasts, removeToast } = useToast();
+    const { showError, toasts, removeToast } = useToast();
 
     const [isCheckingOut, setIsCheckingOut] = useState(false);
-    const [checkoutData, setCheckoutData] =
-        useState<SeatsIOCheckoutData | null>(null);
 
     // Validate eventKey
     useEffect(() => {
@@ -56,7 +46,8 @@ const SeatsIOPage: React.FC = () => {
     // Handle checkout process
     const handleCheckout = async (
         selectedSeats: SeatsIOSeat[],
-        holdToken: string
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _holdToken?: string // Optional since we don't use it in demo mode
     ) => {
         if (!eventKey) {
             showError("Event key is missing");
@@ -68,11 +59,6 @@ const SeatsIOPage: React.FC = () => {
             return;
         }
 
-        if (!holdToken) {
-            showError("Hold token is missing. Please try refreshing the page.");
-            return;
-        }
-
         setIsCheckingOut(true);
 
         try {
@@ -81,43 +67,42 @@ const SeatsIOPage: React.FC = () => {
                 0
             );
 
-            const checkoutPayload = {
-                selectedSeats,
-                holdToken,
+            // Format selected date for display
+            const today = new Date();
+            const selectedDate = new Date(today);
+            selectedDate.setDate(today.getDate() + 7); // Demo event is next week
+
+            const demoCheckoutData = {
+                selectedSeats: selectedSeats.map((seat) => ({
+                    id: seat.id,
+                    label: seat.label,
+                    category: seat.category,
+                    price: seat.price,
+                    ticketType: "adult", // Default ticket type for demo
+                })),
                 totalPrice,
                 currency: "USD",
+                eventDetails: {
+                    name: "Unity Cup 2025 - Nigeria vs Jamaica",
+                    date: selectedDate.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                    }),
+                    time: "19:30 GMT",
+                    venue: "Fullham Stadium",
+                },
             };
 
-            setCheckoutData(checkoutPayload);
-
-            // For now, we'll simulate the checkout process
-            // In the real implementation, you would:
-            // 1. Create a quote with the selected seats
-            // 2. Process the checkout through your backend
-            // 3. Redirect to payment or success page
-
-            // Simulate API call delay
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            // Mock checkout request - replace with actual API call
-            // const checkoutResponse = await processCheckout({
-            //   quoteId: 'mock-quote-id',
-            //   paymentMethod: 'card',
-            //   ticketHolders: selectedSeats.map(seat => ({
-            //     fullName: 'John Doe',
-            //     dateOfBirth: '1990-01-01',
-            //     nationality: 'US',
-            //     email: 'john.doe@example.com',
-            //   })),
-            //   redirectionUrl: `${window.location.origin}/success`,
-            // });
-
-            showSuccess(
-                `Successfully processed checkout for ${selectedSeats.length} seat(s)`
+            // Store checkout data for the demo checkout page
+            sessionStorage.setItem(
+                "demoCheckoutData",
+                JSON.stringify(demoCheckoutData)
             );
 
-            // Navigate to success page or payment page
-            // navigate('/success');
+            // Navigate to demo checkout
+            navigate("/demo-checkout");
         } catch (error) {
             console.error("Checkout failed:", error);
             const errorMessage =
@@ -178,16 +163,6 @@ const SeatsIOPage: React.FC = () => {
                                 </p>
                             </div>
                         </div>
-
-                        {checkoutData && (
-                            <div className="flex items-center gap-2 text-green-400">
-                                <CheckCircle className="w-5 h-5" />
-                                <span className="text-sm">
-                                    {checkoutData.selectedSeats.length} seat(s)
-                                    selected
-                                </span>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
@@ -280,18 +255,6 @@ const SeatsIOPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Debug Info (only in development) */}
-                {process.env.NODE_ENV === "development" && checkoutData && (
-                    <div className="mt-8 bg-gray-800 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-white mb-2">
-                            Debug Info:
-                        </h4>
-                        <pre className="text-xs text-gray-400 overflow-x-auto">
-                            {JSON.stringify(checkoutData, null, 2)}
-                        </pre>
-                    </div>
-                )}
             </div>
 
             {/* Toast Notifications */}

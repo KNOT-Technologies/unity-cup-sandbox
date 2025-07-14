@@ -958,16 +958,9 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
         }
 
         if (testMode) {
-            console.log("🧪 Test mode: simulating checkout");
-            const totalPrice = selectedSeats.reduce(
-                (sum, seat) => sum + seat.price,
-                0
-            );
-            showError(
-                `Test Mode: Would checkout ${
-                    selectedSeats.length
-                } seat(s) for $${totalPrice.toFixed(2)}`
-            );
+            console.log("🧪 Test mode: proceeding with demo checkout");
+            // In test mode, we still want to proceed with the checkout for demo purposes
+            onCheckout?.(selectedSeats, holdToken || "demo-hold-token");
             return;
         }
 

@@ -866,3 +866,129 @@ export async function checkoutWithCredits(
     }
   );
 }
+
+// =============================================================================
+// DEMO API FUNCTIONS (for Unity Cup demo purposes)
+// =============================================================================
+
+export interface DemoSeat {
+  id: string;
+  label: string;
+  category: string;
+  price: number;
+  ticketType: string;
+}
+
+export interface DemoTicketHolder {
+  fullName: string;
+  email?: string; // Optional - only required for first ticket holder
+  phone: string;
+  dateOfBirth: string;
+}
+
+export interface DemoCheckoutRequest {
+  selectedSeats: DemoSeat[];
+  ticketHolders: DemoTicketHolder[]; // Array of ticket holders
+  totalAmount: number;
+  currency: string;
+  eventDetails: {
+    name: string;
+    date: string;
+    time: string;
+    venue: string;
+  };
+}
+
+export interface DemoCheckoutResponse {
+  success: boolean;
+  orderId: string;
+  message: string;
+  emailSent: boolean;
+  tickets: Array<{
+    id: string;
+    seatLabel: string;
+    qrCode: string;
+    ticketType: string;
+  }>;
+}
+
+// Note: Email functionality is now handled within the checkout endpoint
+// These interfaces are kept for reference but are no longer used
+
+/**
+ * Process a Unity Cup checkout
+ * This function handles the complete checkout process including:
+ * - Payment simulation
+ * - Order creation
+ * - Ticket generation with QR codes
+ * - Email delivery to customer
+ */
+export async function processDemoCheckout(
+  request: DemoCheckoutRequest
+): Promise<DemoCheckoutResponse> {
+  const endpoint = `/api/unity/checkout`;
+  
+  try {
+    const response = await apiRequestWithBody<DemoCheckoutResponse>(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    return response;
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    throw new APIError(500, "Failed to process Unity Cup checkout");
+  }
+}
+
+/**
+ * Verify demo ticket QR code (for Unity Cup demo)
+ * This function validates QR codes at venue entrance
+ */
+export async function verifyDemoTicket(qrCode: string): Promise<{
+  success: boolean;
+  valid: boolean;
+  ticketInfo?: {
+    orderId: string;
+    seatLabel: string;
+    eventName: string;
+    eventDate: string;
+    used: boolean;
+  };
+  message: string;
+}> {
+  const endpoint = `/api/demo/verify-ticket`;
+  
+  try {
+    const response = await apiRequestWithBody<{
+      success: boolean;
+      valid: boolean;
+      ticketInfo?: {
+        orderId: string;
+        seatLabel: string;
+        eventName: string;
+        eventDate: string;
+        used: boolean;
+      };
+      message: string;
+    }>(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ qrCode }),
+    });
+
+    return response;
+  } catch (error) {
+    if (error instanceof APIError) {
+      throw error;
+    }
+    throw new APIError(500, "Failed to verify ticket");
+  }
+}

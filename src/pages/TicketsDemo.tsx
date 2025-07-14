@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, MapPin, Users, Trophy } from "lucide-react";
+import { Clock, MapPin, Users, Trophy } from "lucide-react";
 import DatePicker from "../components/tickets/DatePicker";
 
 const TicketsDemo = () => {
@@ -135,7 +135,7 @@ const TicketsDemo = () => {
                             <MapPin className="w-5 h-5 text-amber-400" />
                             <div>
                                 <p className="text-sm text-gray-400">Venue</p>
-                                <p className="font-semibold">Unity Stadium</p>
+                                <p className="font-semibold">Fullham Stadium</p>
                             </div>
                         </div>
 

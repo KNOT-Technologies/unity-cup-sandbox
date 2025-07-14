@@ -12,6 +12,8 @@ import PaymentPage from "./pages/PaymentPage.tsx";
 import PurchaseSuccess from "./pages/PurchaseSuccess.tsx";
 import CreditPurchaseSuccess from "./pages/CreditPurchaseSuccess.tsx";
 import SeatsIOPage from "./pages/SeatsIOPage.tsx";
+import DemoCheckout from "./pages/DemoCheckout.tsx";
+import DemoSuccess from "./pages/DemoSuccess.tsx";
 import BusinessPortal from "./pages/BusinessPortal.tsx";
 import BusinessLogin from "./pages/BusinessLogin.tsx";
 import ProtectedRoute from "./components/common/ProtectedRoute.tsx";
@@ -43,6 +45,14 @@ function App() {
                             <Route
                                 path="event/:eventKey/seatsIO"
                                 element={<SeatsIOPage />}
+                            />
+                            <Route
+                                path="demo-checkout"
+                                element={<DemoCheckout />}
+                            />
+                            <Route
+                                path="demo-success"
+                                element={<DemoSuccess />}
                             />
                         </Route>
 
