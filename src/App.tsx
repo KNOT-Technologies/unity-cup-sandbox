@@ -6,11 +6,12 @@ import {
 } from "react-router-dom";
 import Navbar from "./components/Navbar.tsx";
 import Home from "./pages/Home.tsx";
-import Tickets from "./pages/Tickets.tsx";
+import TicketsDemo from "./pages/TicketsDemo.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PaymentPage from "./pages/PaymentPage.tsx";
 import PurchaseSuccess from "./pages/PurchaseSuccess.tsx";
 import CreditPurchaseSuccess from "./pages/CreditPurchaseSuccess.tsx";
+import SeatsIOPage from "./pages/SeatsIOPage.tsx";
 import BusinessPortal from "./pages/BusinessPortal.tsx";
 import BusinessLogin from "./pages/BusinessLogin.tsx";
 import ProtectedRoute from "./components/common/ProtectedRoute.tsx";
@@ -32,15 +33,18 @@ function App() {
                             }
                         >
                             <Route index element={<Home />} />
-                            <Route path="tickets" element={<Tickets />} />
+                            <Route path="tickets" element={<TicketsDemo />} />
                             <Route path="checkout" element={<Checkout />} />
                             <Route path="payment" element={<PaymentPage />} />
                             <Route
                                 path="success/:paymentId?"
                                 element={<PurchaseSuccess />}
                             />
+                            <Route
+                                path="event/:eventKey/seatsIO"
+                                element={<SeatsIOPage />}
+                            />
                         </Route>
-                        
 
                         {/* Business routes without Navbar */}
                         <Route path="business">

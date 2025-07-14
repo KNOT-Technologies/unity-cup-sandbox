@@ -2,6 +2,14 @@ const API_BASE_URL =
   import.meta.env.VITE_KNOT_API_BASE || "http://localhost:5000";
 
 // API Response Types based on the actual backend response
+
+// Hold Token API Response
+export interface HoldTokenResponse {
+  success: boolean;
+  holdToken: string;
+  message?: string;
+}
+
 export interface Occurrence {
   id: string;
   startAt: string;
@@ -340,6 +348,12 @@ export async function listOccurrences(eventId: string): Promise<Occurrence[]> {
     `/api/v3/events/${eventId}/occurrences`
   );
   return response.occurrences;
+}
+
+// Hold Token API
+export async function getHoldToken(): Promise<string> {
+  const response = await apiRequest<HoldTokenResponse>("/api/v1/hold-token");
+  return response.holdToken;
 }
 
 export async function getSeatMap(occurrenceId: string): Promise<SeatMapData> {

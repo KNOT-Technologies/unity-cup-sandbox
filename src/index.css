@@ -1,10 +1,59 @@
+/* Noka Font Family Declarations */
+@font-face {
+  font-family: 'Noka';
+  src: url('./assets/fonts/Noka-Hairline.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noka';
+  src: url('./assets/fonts/Noka-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noka';
+  src: url('./assets/fonts/Noka-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noka';
+  src: url('./assets/fonts/Noka-Semibold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noka';
+  src: url('./assets/fonts/Noka-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noka';
+  src: url('./assets/fonts/Noka-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Noka', 'Inter', system-ui, sans-serif;
     @apply antialiased;
   }
 
@@ -14,11 +63,11 @@
 
   /* Base typography styles */
   h1 {
-    @apply text-4xl md:text-5xl lg:text-6xl font-medium tracking-wide leading-tight;
+    @apply text-4xl md:text-5xl lg:text-6xl font-semibold tracking-wide leading-tight;
   }
 
   h2 {
-    @apply text-3xl md:text-4xl font-medium tracking-wide leading-tight;
+    @apply text-3xl md:text-4xl font-semibold tracking-wide leading-tight;
   }
 
   h3 {
@@ -43,4 +92,21 @@
   a {
     @apply font-sans transition-colors duration-300;
   }
+}
+
+/* Hide SeatsIO default tooltips to use custom ones */
+.seatsio-tooltip,
+.seatsio-popover,
+[class*="tooltip"],
+[class*="popover"] {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Allow our custom tooltips to show */
+.custom-tooltip {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
