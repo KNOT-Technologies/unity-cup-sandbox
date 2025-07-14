@@ -3,6 +3,7 @@ import Portal from "../common/Portal";
 import type { Seat, UserType, TicketType } from "../../types/tickets";
 import { Ticket, Users, AlertCircle } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { US, GB, NG } from 'country-flag-icons/react/3x2'
 
 interface TicketTypeModalProps {
     seat: Seat;
