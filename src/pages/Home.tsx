@@ -17,7 +17,7 @@ const Home = () => {
     const features = [
         {
             icon: <Trophy className="w-8 h-8" />,
-            title: "International Football Excellence",
+            title: "International Football Excellence!",
             description:
                 "Experience top-tier football with teams from around the world competing for the Unity Cup.",
         },
