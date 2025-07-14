@@ -7,6 +7,9 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
     return location.pathname === path;
   };
 
@@ -39,7 +42,7 @@ const Navbar = () => {
                   <Link
                     to={getPath(item)}
                     className={`px-6 py-2 text-sm font-medium tracking-wider transition-all duration-300 
-                      ${item === 'Home' ? 'text-[#4A90E2]' : 'text-white hover:text-gray-300'}`}
+                      ${isActive(getPath(item)) ? 'text-[#4A90E2]' : 'text-white hover:text-gray-300'}`}
                   >
                     {item}
                   </Link>
@@ -94,7 +97,7 @@ const Navbar = () => {
               to={getPath(item)}
               className={`block px-4 py-2 text-base font-medium tracking-wide
                 transition-all duration-300 
-                ${item === 'Home' ? 'text-[#4A90E2]' : 'text-white hover:text-gray-300'}`}
+                ${isActive(getPath(item)) ? 'text-[#4A90E2]' : 'text-white hover:text-gray-300'}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               {item}
