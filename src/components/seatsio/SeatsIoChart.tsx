@@ -7,9 +7,6 @@ import {
     Loader2,
     ShoppingCart,
     ZoomOut,
-    ZoomIn,
-    Maximize,
-    RotateCcw,
 } from "lucide-react";
 import { SeatsioSeatingChart } from "@seatsio/seatsio-react";
 import { getHoldToken } from "../../api/knot";
@@ -212,7 +209,7 @@ const SeatsIOBasket: React.FC<{
     );
 };
 
-// Custom Tooltip Component
+// Custom Tooltip Component - Completely isolated from iframe
 const CustomSeatTooltip: React.FC<{
     tooltip: {
         visible: boolean;
@@ -220,8 +217,6 @@ const CustomSeatTooltip: React.FC<{
         position: { x: number; y: number };
     };
 }> = ({ tooltip }) => {
-    if (!tooltip.visible || !tooltip.seat) return null;
-
     const formatPrice = (price: number) => {
         // Return object with separate dollar sign and amount for flexible styling
         return {
@@ -287,9 +282,6 @@ const CustomSeatTooltip: React.FC<{
         };
     };
 
-    const seatInfo = parseSeatInfo(tooltip.seat.label);
-    const priceInfo = formatPrice(tooltip.seat.price);
-
     // Get status styling
     const getStatusInfo = (status: string) => {
         switch (status) {
@@ -324,105 +316,172 @@ const CustomSeatTooltip: React.FC<{
         }
     };
 
-    const statusInfo = getStatusInfo(tooltip.seat.status);
-
     return (
         <div
-            className="fixed z-50 pointer-events-none custom-tooltip"
+            className="w-45 flex-shrink-0 custom-tooltip"
             style={{
-                left: tooltip.position.x,
-                top: tooltip.position.y - 100,
-                transform: "translateX(-50%)",
+                // Ensure this is completely isolated from iframe
+                zIndex: 9999,
+                position: "relative",
+                pointerEvents: "none", // Prevent interference with iframe events
             }}
         >
-            <div className="bg-gray-900/95 rounded-lg p-4 border border-gray-700 shadow-xl backdrop-blur-sm min-w-[200px]">
-                {/* Header with seat type */}
-                <div className="flex items-center justify-between mb-3">
-                    <div className="text-white font-semibold text-sm">
-                        {tooltip.seat.seatType === "seat"
-                            ? "🪑 Seat"
-                            : tooltip.seat.seatType === "table"
-                            ? "🪑 Table"
-                            : tooltip.seat.seatType === "booth"
-                            ? "🛋️ Booth"
-                            : "🎫 General"}
-                    </div>
-                    <div
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color} flex items-center gap-1`}
-                    >
-                        <span>{statusInfo.icon}</span>
-                        {statusInfo.text}
-                    </div>
+            <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-xl h-fit sticky top-4">
+                {/* Sidebar Header */}
+                <div className="bg-gray-800 px-4 py-3 rounded-t-lg border-b border-gray-700">
+                    <h3 className="text-white font-semibold text-sm">
+                        Seat Information
+                    </h3>
+                    <p className="text-gray-400 text-xs mt-1">
+                        Hover over a seat to see details
+                    </p>
                 </div>
 
-                {/* Location Information */}
-                <div className="space-y-2 mb-3">
-                    {seatInfo.section && (
-                        <div className="flex items-center gap-2">
-                            <div className="text-gray-400 text-xs w-12 flex-shrink-0">
-                                Section
+                {/* Seat Details */}
+                <div className="p-4">
+                    {tooltip.visible && tooltip.seat ? (
+                        <>
+                            {/* Parse seat info */}
+                            {(() => {
+                                const seatInfo = parseSeatInfo(
+                                    tooltip.seat.label
+                                );
+                                const priceInfo = formatPrice(
+                                    tooltip.seat.price
+                                );
+                                const statusInfo = getStatusInfo(
+                                    tooltip.seat.status
+                                );
+
+                                return (
+                                    <>
+                                        {/* Header with seat type - Fixed height section */}
+                                        <div className="flex items-center justify-between mb-3 h-8">
+                                            <div className="text-white font-semibold text-sm">
+                                                {tooltip.seat.seatType ===
+                                                "seat"
+                                                    ? "🪑 Seat"
+                                                    : tooltip.seat.seatType ===
+                                                      "table"
+                                                    ? "🪑 Table"
+                                                    : tooltip.seat.seatType ===
+                                                      "booth"
+                                                    ? "🛋️ Booth"
+                                                    : "🎫 General"}
+                                            </div>
+                                            <div
+                                                className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color} flex items-center gap-1`}
+                                            >
+                                                <span>{statusInfo.icon}</span>
+                                                {statusInfo.text}
+                                            </div>
+                                        </div>
+
+                                        {/* Location Information - Fixed height section */}
+                                        <div className="space-y-2 mb-3 min-h-[72px]">
+                                            {seatInfo.section && (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="text-gray-400 text-xs w-12 flex-shrink-0">
+                                                        Section
+                                                    </div>
+                                                    <div className="text-white font-medium text-sm">
+                                                        {seatInfo.section}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {seatInfo.row && (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="text-gray-400 text-xs w-12 flex-shrink-0">
+                                                        Row
+                                                    </div>
+                                                    <div className="text-white font-medium text-sm">
+                                                        {seatInfo.row}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <div className="text-gray-400 text-xs w-12 flex-shrink-0">
+                                                    Seat
+                                                </div>
+                                                <div className="text-white font-medium text-sm">
+                                                    {seatInfo.seat}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Category and Price - Fixed height section */}
+                                        <div className="border-t border-gray-700 pt-3 space-y-2 min-h-[48px]">
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-gray-400 text-xs">
+                                                    Category
+                                                </div>
+                                                <div className="text-white text-sm font-medium">
+                                                    {tooltip.seat.category}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-gray-400 text-xs">
+                                                    Price
+                                                </div>
+                                                <div className="text-amber-400 text-sm">
+                                                    <span className="font-normal">
+                                                        {priceInfo.symbol}
+                                                    </span>
+                                                    <span className="font-bold">
+                                                        {priceInfo.amount}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Action hint - Fixed height section */}
+                                        <div className="border-t border-gray-700 pt-2 mt-3 min-h-[24px]">
+                                            {tooltip.seat.status ===
+                                            "available" ? (
+                                                <div className="text-gray-500 text-xs text-center">
+                                                    Click to select ticket type
+                                                </div>
+                                            ) : (
+                                                <div className="h-4"></div> /* Maintain height spacing */
+                                            )}
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </>
+                    ) : (
+                        <>
+                            {/* Empty state with same structure for consistent height */}
+                            {/* Header section - Fixed height to match */}
+                            <div className="flex items-center justify-center mb-3 h-8">
+                                <div className="text-gray-400 text-lg">🪑</div>
                             </div>
-                            <div className="text-white font-medium text-sm">
-                                {seatInfo.section}
+
+                            {/* Content section - Fixed height to match location info */}
+                            <div className="space-y-2 mb-3 min-h-[72px] flex items-center justify-center">
+                                <div className="text-center">
+                                    <p className="text-gray-400 text-sm">
+                                        Hover over any seat to see details
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+
+                            {/* Bottom sections - Fixed height to match category/price + action */}
+                            <div className="border-t border-gray-700 pt-3 min-h-[48px] flex items-center justify-center">
+                                <div className="text-gray-500 text-xs text-center">
+                                    Seat information will appear here
+                                </div>
+                            </div>
+
+                            {/* Action section - Fixed height to match */}
+                            <div className="border-t border-gray-700 pt-2 mt-3 min-h-[24px]">
+                                <div className="h-4"></div>{" "}
+                                {/* Maintain height spacing */}
+                            </div>
+                        </>
                     )}
-                    {seatInfo.row && (
-                        <div className="flex items-center gap-2">
-                            <div className="text-gray-400 text-xs w-12 flex-shrink-0">
-                                Row
-                            </div>
-                            <div className="text-white font-medium text-sm">
-                                {seatInfo.row}
-                            </div>
-                        </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                        <div className="text-gray-400 text-xs w-12 flex-shrink-0">
-                            Seat
-                        </div>
-                        <div className="text-white font-medium text-sm">
-                            {seatInfo.seat}
-                        </div>
-                    </div>
                 </div>
-
-                {/* Category and Price */}
-                <div className="border-t border-gray-700 pt-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                        <div className="text-gray-400 text-xs">Category</div>
-                        <div className="text-white text-sm font-medium">
-                            {tooltip.seat.category}
-                        </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <div className="text-gray-400 text-xs">Price</div>
-                        <div className="text-amber-400 text-sm">
-                            <span className="font-normal">
-                                {priceInfo.symbol}
-                            </span>
-                            <span className="font-bold">
-                                {priceInfo.amount}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Action hint */}
-                {tooltip.seat.status === "available" && (
-                    <div className="border-t border-gray-700 pt-2 mt-3">
-                        <div className="text-gray-500 text-xs text-center">
-                            Click to select ticket type
-                        </div>
-                    </div>
-                )}
             </div>
-
-            {/* Tooltip arrow */}
-            <div
-                className="absolute left-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-700"
-                style={{ transform: "translateX(-50%)" }}
-            ></div>
         </div>
     );
 };
@@ -555,7 +614,20 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
 
     // Convert SelectableObject to SeatsIOSeat
     const convertToSeatsIOSeat = useCallback((obj: any): SeatsIOSeat => {
-        const category = obj.category?.label || obj.category || "Regular";
+        // Handle category - could be string or object with label
+        let category: string;
+        if (typeof obj.category === "string") {
+            category = obj.category;
+        } else if (
+            obj.category &&
+            typeof obj.category === "object" &&
+            obj.category.label
+        ) {
+            category = obj.category.label;
+        } else {
+            category = "Regular";
+        }
+
         const basePrice = getCategoryBasePrice(category);
 
         console.log("🎯 Converting seat:", {
@@ -565,13 +637,29 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
             seatsIoPrice: obj.pricing?.price,
         });
 
+        // Map status to our enum
+        let status: "available" | "unavailable" | "selected" = "available";
+        if (obj.status === "unavailable" || obj.status === "selected") {
+            status = obj.status;
+        }
+
+        // Map seat type to our enum
+        let seatType: "seat" | "table" | "booth" | "generalAdmission" = "seat";
+        if (
+            obj.objectType === "table" ||
+            obj.objectType === "booth" ||
+            obj.objectType === "generalAdmission"
+        ) {
+            seatType = obj.objectType;
+        }
+
         return {
             id: obj.id || obj.label,
             label: obj.labels?.displayedLabel || obj.label || obj.id,
             category: category,
             price: basePrice, // Use our base price instead of seats.io price
-            status: obj.status || "available",
-            seatType: obj.objectType || "seat",
+            status: status,
+            seatType: seatType,
             ticketType: "adult", // Default to adult ticket type
         };
     }, []);
@@ -614,8 +702,20 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 return;
             }
 
-            const category =
-                object.category?.label || object.category || "Regular";
+            // Handle category - could be string or object with label
+            let category: string;
+            if (typeof object.category === "string") {
+                category = object.category;
+            } else if (
+                object.category &&
+                typeof object.category === "object" &&
+                object.category.label
+            ) {
+                category = object.category.label;
+            } else {
+                category = "Regular";
+            }
+
             const basePrice = getCategoryBasePrice(category);
 
             // Show modal for ticket type selection
@@ -674,6 +774,8 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
             const tooltipSelectors = [
                 ".seatsio-tooltip",
                 ".seatsio-popover",
+                ".seatsio-object-tooltip",
+                ".seatsio-seat-tooltip",
                 '[class*="tooltip"]',
                 '[class*="popover"]',
                 '[class*="Tooltip"]',
@@ -681,27 +783,79 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 'div[id*="tooltip"]',
                 'div[id*="popover"]',
                 ".react-tooltip",
+                "[data-tooltip]",
+                "[title]:not(.custom-tooltip *)", // Remove title attributes that create browser tooltips
             ];
 
             tooltipSelectors.forEach((selector) => {
                 const elements = document.querySelectorAll(selector);
                 elements.forEach((el) => {
-                    if (!el.classList.contains("custom-tooltip")) {
-                        (el as HTMLElement).style.display = "none";
-                        (el as HTMLElement).style.opacity = "0";
-                        (el as HTMLElement).style.visibility = "hidden";
-                        (el as HTMLElement).style.pointerEvents = "none";
+                    if (
+                        !el.classList.contains("custom-tooltip") &&
+                        !el.closest(".custom-tooltip")
+                    ) {
+                        (el as HTMLElement).style.display = "none !important";
+                        (el as HTMLElement).style.opacity = "0 !important";
+                        (el as HTMLElement).style.visibility =
+                            "hidden !important";
+                        (el as HTMLElement).style.pointerEvents =
+                            "none !important";
+                        (el as HTMLElement).style.zIndex = "-1 !important";
+                        // Remove title attribute to prevent browser tooltips
+                        if (el.hasAttribute("title")) {
+                            el.removeAttribute("title");
+                        }
                     }
                 });
             });
+
+            // Inject CSS to completely disable SeatsIO tooltips
+            const existingStyle = document.getElementById(
+                "disable-seatsio-tooltips"
+            );
+            if (!existingStyle) {
+                const style = document.createElement("style");
+                style.id = "disable-seatsio-tooltips";
+                style.textContent = `
+                    /* Completely disable all SeatsIO tooltips */
+                    .seatsio-tooltip,
+                    .seatsio-popover,
+                    .seatsio-object-tooltip,
+                    .seatsio-seat-tooltip,
+                    [class*="tooltip"]:not(.custom-tooltip):not(.custom-tooltip *),
+                    [class*="popover"]:not(.custom-tooltip):not(.custom-tooltip *),
+                    [class*="Tooltip"]:not(.custom-tooltip):not(.custom-tooltip *),
+                    [class*="Popover"]:not(.custom-tooltip):not(.custom-tooltip *) {
+                        display: none !important;
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                        z-index: -1 !important;
+                        transform: scale(0) !important;
+                    }
+                    
+                    /* Prevent any hover effects that might trigger tooltips */
+                    .seatsio-chart * {
+                        pointer-events: auto !important;
+                    }
+                    
+                    /* Ensure our custom tooltip is always on top */
+                    .custom-tooltip {
+                        z-index: 99999 !important;
+                        position: relative !important;
+                        pointer-events: none !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
         };
 
         // Remove tooltips immediately and set up periodic cleanup
         removeTooltips();
-        const interval = setInterval(removeTooltips, 100);
+        const interval = setInterval(removeTooltips, 50); // More frequent cleanup
 
-        // Cleanup interval after 5 seconds (tooltips should be stable by then)
-        setTimeout(() => clearInterval(interval), 5000);
+        // Cleanup interval after 10 seconds (should be stable by then)
+        setTimeout(() => clearInterval(interval), 10000);
 
         setIsLoading(false);
     }, []);
@@ -737,59 +891,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
             }
         }
     }, []);
-
-    const handleZoomIn = useCallback(() => {
-        if (chartRef.current) {
-            try {
-                // Zoom in by increasing the zoom level
-                if (chartRef.current.zoom) {
-                    const currentZoom = chartRef.current.zoomLevel || 1;
-                    chartRef.current.zoom(currentZoom * 1.5);
-                    console.log("🔍 Zoomed in");
-                } else {
-                    console.warn("⚠️ zoom method not available");
-                }
-            } catch (error) {
-                console.warn("⚠️ Error zooming in:", error);
-            }
-        }
-    }, []);
-
-    const handleResetView = useCallback(() => {
-        if (chartRef.current) {
-            try {
-                // Reset to original view
-                if (chartRef.current.zoomToFit) {
-                    chartRef.current.zoomToFit();
-                }
-                if (chartRef.current.clearSelection) {
-                    chartRef.current.clearSelection();
-                }
-                console.log("🔄 View reset");
-            } catch (error) {
-                console.warn("⚠️ Error resetting view:", error);
-            }
-        }
-    }, []);
-
-    const handleFitToSelection = useCallback(() => {
-        if (chartRef.current && selectedSeats.length > 0) {
-            try {
-                // Zoom to selected seats
-                if (chartRef.current.zoomToObjects) {
-                    const seatIds = selectedSeats.map((seat) => seat.id);
-                    chartRef.current.zoomToObjects(seatIds);
-                    console.log("🎯 Zoomed to selection");
-                } else {
-                    console.warn("⚠️ zoomToObjects method not available");
-                }
-            } catch (error) {
-                console.warn("⚠️ Error zooming to selection:", error);
-            }
-        } else {
-            console.warn("⚠️ No seats selected to zoom to");
-        }
-    }, [selectedSeats]);
 
     // Remove seat from basket
     const handleRemoveSeat = useCallback((seatId: string) => {
@@ -879,33 +980,89 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
         onCheckout?.(selectedSeats, holdToken);
     }, [selectedSeats, holdToken, onCheckout, showError, testMode]);
 
-    // Add custom hover handlers after other handlers
+    // Add stable tooltip state management to prevent flickering
+    const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const currentHoveredSeatRef = useRef<string | null>(null);
+    const isTooltipStableRef = useRef<boolean>(false);
+
     const handleObjectMouseOver = useCallback(
         (object: any) => {
-            const seat = convertToSeatsIOSeat(object);
-            // Get mouse position from the chart container
-            const container = containerRef.current;
-            if (container) {
-                const rect = container.getBoundingClientRect();
-                setCustomTooltip({
-                    visible: true,
-                    seat: seat,
-                    position: {
-                        x: rect.left + rect.width / 2,
-                        y: rect.top + 50,
-                    },
-                });
+            const seatId = object.id || object.label;
+
+            // If we're already hovering this exact seat, don't do anything
+            if (
+                currentHoveredSeatRef.current === seatId &&
+                isTooltipStableRef.current
+            ) {
+                return;
             }
+
+            // Clear any pending hide timeout
+            if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+                hideTimeoutRef.current = null;
+            }
+
+            // Clear any pending hover timeout
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+
+            // Update current hovered seat immediately to prevent duplicate events
+            currentHoveredSeatRef.current = seatId;
+
+            // Debounce the tooltip update with longer delay for stability
+            hoverTimeoutRef.current = setTimeout(() => {
+                try {
+                    const seat = convertToSeatsIOSeat(object);
+                    setCustomTooltip({
+                        visible: true,
+                        seat: seat,
+                        position: { x: 0, y: 0 },
+                    });
+                    isTooltipStableRef.current = true;
+                } catch (error) {
+                    console.warn("Error updating tooltip:", error);
+                }
+            }, 150); // Increased debounce to 150ms for stability
         },
         [convertToSeatsIOSeat]
     );
 
     const handleObjectMouseOut = useCallback(() => {
-        setCustomTooltip({
-            visible: false,
-            seat: null,
-            position: { x: 0, y: 0 },
-        });
+        // Clear any pending hover timeout
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+
+        // Set up a delay before hiding to prevent flicker when moving between seats
+        if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+        }
+
+        hideTimeoutRef.current = setTimeout(() => {
+            currentHoveredSeatRef.current = null;
+            isTooltipStableRef.current = false;
+            setCustomTooltip({
+                visible: false,
+                seat: null,
+                position: { x: 0, y: 0 },
+            });
+        }, 200); // Longer delay before hiding to prevent flicker
+    }, []);
+
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+            if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+            }
+        };
     }, []);
 
     // Environment error display
@@ -966,9 +1123,28 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     }
 
     return (
-        <div className={`flex flex-col lg:flex-row gap-6 ${className}`}>
+        <div
+            className={`flex flex-col lg:flex-row gap-6 ${className}`}
+            style={{ isolation: "isolate" }}
+        >
+            <div
+                style={{
+                    isolation: "isolate",
+                    zIndex: 1000,
+                    position: "absolute",
+                    left: 10,
+                    width: "190px",
+                }}
+            >
+                <CustomSeatTooltip tooltip={customTooltip} />
+            </div>
+            {/* Left Tooltip Sidebar - Completely isolated from iframe */}
+
             {/* Chart Container */}
-            <div className="flex-1 bg-gray-900 rounded-lg overflow-hidden relative">
+            <div
+                className="order-2 lg:order-1 flex-1 bg-gray-900 rounded-lg overflow-hidden relative"
+                style={{ isolation: "isolate" }}
+            >
                 {/* Zoom Controls */}
                 <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
                     <button
@@ -979,30 +1155,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                     >
                         <ZoomOut className="w-4 h-4" />
                     </button>
-                    <button
-                        onClick={handleZoomIn}
-                        disabled={isLoading}
-                        className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Zoom In"
-                    >
-                        <ZoomIn className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={handleFitToSelection}
-                        disabled={isLoading || selectedSeats.length === 0}
-                        className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Zoom to Selection"
-                    >
-                        <Maximize className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={handleResetView}
-                        disabled={isLoading}
-                        className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Reset View"
-                    >
-                        <RotateCcw className="w-4 h-4" />
-                    </button>
                 </div>
 
                 <div
@@ -1012,6 +1164,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                         clipPath: "inset(18px 60px 18px 60px)",
                         backgroundImage:
                             "url(https://upload.wikimedia.org/wikipedia/commons/5/50/Black_colour.jpg) repeat",
+                        isolation: "isolate",
                     }}
                 >
                     <SeatsioSeatingChart
@@ -1055,7 +1208,10 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
             </div>
 
             {/* Sidebar with Basket */}
-            <div className="w-full lg:w-80 flex-shrink-0">
+            <div
+                className="order-3 lg:order-3 w-full lg:w-80 flex-shrink-0"
+                style={{ isolation: "isolate", zIndex: 1000 }}
+            >
                 <SeatsIOBasket
                     basket={basket}
                     onRemoveSeat={handleRemoveSeat}
@@ -1072,9 +1228,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 onClose={handleModalClose}
                 onSelectTicketType={handleModalTicketTypeSelect}
             />
-
-            {/* Custom Tooltip Component */}
-            <CustomSeatTooltip tooltip={customTooltip} />
         </div>
     );
 };

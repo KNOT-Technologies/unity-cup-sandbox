@@ -108,7 +108,7 @@ const SeatTicketTypeModal: React.FC<SeatTicketTypeModalProps> = ({
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-lg font-bold text-amber-400">
+                                    <div className="text-lg text-amber-400">
                                         ${finalPrice.toFixed(0)}
                                     </div>
                                     {type.multiplier < 1 && (
