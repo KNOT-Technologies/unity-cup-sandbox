@@ -14,6 +14,7 @@ import { useToast } from "../../hooks/useToast";
 import { calculatePrice } from "../../types/ticketTypes";
 import SeatTicketTypeModal from "./SeatTicketTypeModal";
 import useSeatsIOStyling from "../../hooks/useSeatsIOStyling";
+import { parseSeatInfo } from "../../utils/seatParser";
 
 // Types - SeatsIO Chart with zoom methods
 interface SeatsIOChartWithZoom {
@@ -58,6 +59,11 @@ interface SeatsIoChartProps {
     onSelect?: (seat: SeatsIOSeat) => void;
     onDeselect?: (seat: SeatsIOSeat) => void;
     onCheckout?: (selectedSeats: SeatsIOSeat[], holdToken: string) => void;
+    onTooltipChange?: (tooltip: {
+        visible: boolean;
+        seat: SeatsIOSeat | null;
+        position: { x: number; y: number };
+    }) => void;
     className?: string;
     // Add test mode props
     testMode?: boolean;
@@ -83,7 +89,7 @@ const getSeatsIOEnvironment = () => {
     };
 };
 
-// Basket component
+// Basket component with improved styling
 const SeatsIOBasket: React.FC<{
     basket: SeatsIOBasket;
     onRemoveSeat: (seatId: string) => void;
@@ -92,11 +98,10 @@ const SeatsIOBasket: React.FC<{
     disabled?: boolean;
 }> = ({ basket, onRemoveSeat, onClearAll, onCheckout, disabled = false }) => {
     const formatPrice = (price: number) => {
-        // Return object with separate dollar sign and amount for flexible styling
         return {
-            symbol: "$",
+            symbol: "£",
             amount: price.toFixed(2),
-            full: `$${price.toFixed(2)}`,
+            full: `£${price.toFixed(2)}`,
         };
     };
 
@@ -104,113 +109,164 @@ const SeatsIOBasket: React.FC<{
 
     if (basket.items.length === 0) {
         return (
-            <div className="bg-gray-800 rounded-lg p-6 text-center">
-                <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">No seats selected</p>
-                <p className="text-sm text-gray-500 mt-2">
-                    Select seats from the chart to add them to your basket
-                </p>
+            <div className="relative overflow-hidden">
+                {/* Background blur effect with enhanced gradient */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
+
+                {/* Enhanced ambient glow effects */}
+                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+
+                {/* Content */}
+                <div className="relative p-1 rounded-3xl text-center">
+                    <ShoppingCart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg font-medium">
+                        No seats selected
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Select seats from the chart to add them to your basket
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h3 className="text-lg font-semibold text-white">
-                        Selected Seats
-                    </h3>
-                    <div className="text-xs text-gray-400 mt-1">
-                        Choose ticket type for each seat
-                    </div>
-                </div>
-                <button
-                    onClick={onClearAll}
-                    disabled={disabled}
-                    className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <Trash2 className="w-4 h-4" />
-                </button>
-            </div>
+        <div className="relative overflow-hidden">
+            {/* Background blur effect with enhanced gradient */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
 
-            <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                {basket.items.map((item) => {
-                    const itemPrice = formatPrice(item.price);
-                    return (
-                        <div
-                            key={item.seatId}
-                            className="bg-gray-700 rounded-lg p-3"
-                        >
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex-1">
-                                    <div className="text-white font-medium">
-                                        {item.seatLabel}
-                                    </div>
-                                    <div className="text-sm text-gray-400">
-                                        {item.category}
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-amber-400 font-semibold">
-                                        <span className="font-normal">
-                                            {itemPrice.symbol}
-                                        </span>
-                                        <span className="font-bold">
-                                            {itemPrice.amount}
-                                        </span>
-                                    </span>
-                                    <button
-                                        onClick={() =>
-                                            onRemoveSeat(item.seatId)
-                                        }
-                                        disabled={disabled}
-                                        className="text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="mt-2 text-xs text-gray-400">
-                                {item.ticketType.charAt(0).toUpperCase() +
-                                    item.ticketType.slice(1)}{" "}
-                                ticket
-                            </div>
+            {/* Enhanced ambient glow effects */}
+            <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+            <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+
+            {/* Content */}
+            <div className="relative p-1.5 rounded-3xl">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-xl font-medium text-white tracking-wide">
+                            Selected Seats
+                        </h3>
+                        <div className="text-sm text-gray-400 mt-1">
+                            Choose ticket type for each seat
                         </div>
-                    );
-                })}
-            </div>
-
-            <div className="border-t border-gray-700 pt-4">
-                <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-semibold text-white">
-                        Total
-                    </span>
-                    <span className="text-xl text-amber-400">
-                        <span className="font-normal">{totalPrice.symbol}</span>
-                        <span className="font-bold">{totalPrice.amount}</span>
-                    </span>
+                    </div>
+                    <button
+                        onClick={onClearAll}
+                        disabled={disabled}
+                        className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-full hover:bg-blue-400/10 transition-all"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
                 </div>
 
-                <button
-                    onClick={onCheckout}
-                    disabled={disabled || basket.items.length === 0}
-                    className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                    <CreditCard className="w-4 h-4" />
-                    <span>
-                        Pay{" "}
-                        <span className="font-normal">{totalPrice.symbol}</span>
-                        <span className="font-bold">{totalPrice.amount}</span>
-                    </span>
-                </button>
+                <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                    {basket.items.map((item) => {
+                        const itemPrice = formatPrice(item.price);
+                        const seatInfo = parseSeatInfo(item.seatLabel);
+
+                        return (
+                            <div
+                                key={item.seatId}
+                                className="bg-black/30 backdrop-blur-sm rounded-xl p-5 border border-white/5"
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex-1">
+                                        <div className="text-white font-medium text-lg">
+                                            {item.category}
+                                        </div>
+                                        <div className="text-sm text-gray-400">
+                                            {item.ticketType
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                                item.ticketType.slice(1)}{" "}
+                                            ticket
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-blue-400 font-medium text-lg">
+                                            <span className="font-normal">
+                                                {itemPrice.symbol}
+                                            </span>
+                                            <span className="font-medium">
+                                                {itemPrice.amount}
+                                            </span>
+                                        </span>
+                                        <button
+                                            onClick={() =>
+                                                onRemoveSeat(item.seatId)
+                                            }
+                                            disabled={disabled}
+                                            className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-full hover:bg-blue-400/10 transition-all"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                {/* Seat information at bottom */}
+                                <div className="pt-3 border-t border-white/10">
+                                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                                        {seatInfo.section && (
+                                            <>
+                                                <span>
+                                                    Section {seatInfo.section}
+                                                </span>
+                                                {seatInfo.row && <span>•</span>}
+                                            </>
+                                        )}
+                                        {seatInfo.row && (
+                                            <>
+                                                <span>Row {seatInfo.row}</span>
+                                                <span>•</span>
+                                            </>
+                                        )}
+                                        <span>Seat {seatInfo.seat}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="border-t border-white/20 pt-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <span className="text-xl font-medium text-white">
+                            Total
+                        </span>
+                        <span className="text-2xl text-blue-400">
+                            <span className="font-normal">
+                                {totalPrice.symbol}
+                            </span>
+                            <span className="font-medium">
+                                {totalPrice.amount}
+                            </span>
+                        </span>
+                    </div>
+
+                    <button
+                        onClick={onCheckout}
+                        disabled={disabled || basket.items.length === 0}
+                        className="w-full bg-white text-black font-medium py-4 px-6 rounded-full transition-all duration-300 disabled:bg-gray-800 disabled:cursor-not-allowed hover:bg-gray-100 flex items-center justify-center gap-3"
+                    >
+                        <CreditCard className="w-5 h-5" />
+                        <span>
+                            Pay{" "}
+                            <span className="font-normal">
+                                {totalPrice.symbol}
+                            </span>
+                            <span className="font-medium">
+                                {totalPrice.amount}
+                            </span>
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     );
 };
 
-// Custom Tooltip Component - Completely isolated from iframe
-const CustomSeatTooltip: React.FC<{
+// Improved Custom Tooltip Component - Export for use in SeatsIOPage
+export const CustomSeatTooltip: React.FC<{
     tooltip: {
         visible: boolean;
         seat: SeatsIOSeat | null;
@@ -218,67 +274,10 @@ const CustomSeatTooltip: React.FC<{
     };
 }> = ({ tooltip }) => {
     const formatPrice = (price: number) => {
-        // Return object with separate dollar sign and amount for flexible styling
         return {
-            symbol: "$",
+            symbol: "£",
             amount: price.toFixed(2),
-            full: `$${price.toFixed(2)}`,
-        };
-    };
-
-    // Parse seat information for better UX
-    const parseSeatInfo = (seatLabel: string) => {
-        // Common patterns: "A-1", "Section A Row 1 Seat 6", "h3-X-6", etc.
-
-        // Try pattern: "h3-X-6" (section-row-seat)
-        const pattern1 = seatLabel.match(
-            /^([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)$/
-        );
-        if (pattern1) {
-            return {
-                section: pattern1[1],
-                row: pattern1[2],
-                seat: pattern1[3],
-            };
-        }
-
-        // Try pattern: "A-1" (row-seat)
-        const pattern2 = seatLabel.match(/^([a-zA-Z]+)-?(\d+)$/);
-        if (pattern2) {
-            return {
-                section: null,
-                row: pattern2[1],
-                seat: pattern2[2],
-            };
-        }
-
-        // Try pattern: "Section A Row 1 Seat 6"
-        const pattern3 = seatLabel.match(
-            /Section\s+([a-zA-Z0-9]+)\s+Row\s+([a-zA-Z0-9]+)\s+Seat\s+([a-zA-Z0-9]+)/i
-        );
-        if (pattern3) {
-            return {
-                section: pattern3[1],
-                row: pattern3[2],
-                seat: pattern3[3],
-            };
-        }
-
-        // Try to extract row and seat from simple formats
-        const pattern4 = seatLabel.match(/^([a-zA-Z]+)(\d+)$/);
-        if (pattern4) {
-            return {
-                section: null,
-                row: pattern4[1],
-                seat: pattern4[2],
-            };
-        }
-
-        // Default: treat the whole label as seat
-        return {
-            section: null,
-            row: null,
-            seat: seatLabel,
+            full: `£${price.toFixed(2)}`,
         };
     };
 
@@ -287,22 +286,22 @@ const CustomSeatTooltip: React.FC<{
         switch (status) {
             case "available":
                 return {
-                    color: "text-green-400",
-                    bg: "bg-green-400/10",
+                    color: "text-blue-400",
+                    bg: "bg-blue-400/10",
                     text: "Available",
                     icon: "✓",
                 };
             case "selected":
                 return {
-                    color: "text-amber-400",
-                    bg: "bg-amber-400/10",
+                    color: "text-blue-400",
+                    bg: "bg-blue-400/10",
                     text: "Selected",
                     icon: "★",
                 };
             case "unavailable":
                 return {
-                    color: "text-red-400",
-                    bg: "bg-red-400/10",
+                    color: "text-gray-400",
+                    bg: "bg-gray-400/10",
                     text: "Unavailable",
                     icon: "✕",
                 };
@@ -318,27 +317,21 @@ const CustomSeatTooltip: React.FC<{
 
     return (
         <div
-            className="w-45 flex-shrink-0 custom-tooltip"
+            className="w-1/2 custom-tooltip mx-auto"
             style={{
-                // Ensure this is completely isolated from iframe
-                zIndex: 9999,
-                position: "relative",
-                pointerEvents: "none", // Prevent interference with iframe events
+                pointerEvents: "none",
             }}
         >
-            <div className="bg-gray-900 rounded-lg border border-gray-700 shadow-xl h-fit sticky top-4">
-                {/* Sidebar Header */}
-                <div className="bg-gray-800 px-4 py-3 rounded-t-lg border-b border-gray-700">
-                    <h3 className="text-white font-semibold text-sm">
-                        Seat Information
-                    </h3>
-                    <p className="text-gray-400 text-xs mt-1">
-                        Hover over a seat to see details
-                    </p>
-                </div>
+            <div className="relative overflow-hidden">
+                {/* Background blur effect with enhanced gradient */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
 
-                {/* Seat Details */}
-                <div className="p-4">
+                {/* Enhanced ambient glow effects */}
+                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+
+                {/* Content */}
+                <div className="relative rounded-3xl p-6">
                     {tooltip.visible && tooltip.seat ? (
                         <>
                             {/* Parse seat info */}
@@ -354,129 +347,112 @@ const CustomSeatTooltip: React.FC<{
                                 );
 
                                 return (
-                                    <>
-                                        {/* Header with seat type - Fixed height section */}
-                                        <div className="flex items-center justify-between mb-3 h-8">
-                                            <div className="text-white font-semibold text-sm">
-                                                {tooltip.seat.seatType ===
-                                                "seat"
-                                                    ? "🪑 Seat"
-                                                    : tooltip.seat.seatType ===
-                                                      "table"
-                                                    ? "🪑 Table"
-                                                    : tooltip.seat.seatType ===
-                                                      "booth"
-                                                    ? "🛋️ Booth"
-                                                    : "🎫 General"}
+                                    <div className="flex items-center gap-8">
+                                        {/* Left: Seat Icon and Basic Info */}
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-blue-400/10 rounded-xl flex items-center justify-center">
+                                                <span className="text-blue-400 text-xl">
+                                                    {tooltip.seat.seatType ===
+                                                    "seat"
+                                                        ? "🪑"
+                                                        : tooltip.seat
+                                                              .seatType ===
+                                                          "table"
+                                                        ? "🪑"
+                                                        : tooltip.seat
+                                                              .seatType ===
+                                                          "booth"
+                                                        ? "🛋️"
+                                                        : "🎫"}
+                                                </span>
                                             </div>
-                                            <div
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color} flex items-center gap-1`}
-                                            >
-                                                <span>{statusInfo.icon}</span>
-                                                {statusInfo.text}
+                                            <div>
+                                                <h3 className="text-white font-medium text-lg tracking-wide mb-1">
+                                                    Seat Information
+                                                </h3>
+                                                <div
+                                                    className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.bg} ${statusInfo.color} flex items-center gap-2 w-fit`}
+                                                >
+                                                    <span>
+                                                        {statusInfo.icon}
+                                                    </span>
+                                                    {statusInfo.text}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Location Information - Fixed height section */}
-                                        <div className="space-y-2 mb-3 min-h-[72px]">
+                                        {/* Center: Location Details */}
+                                        <div className="flex items-center gap-6">
                                             {seatInfo.section && (
-                                                <div className="flex items-center gap-2">
-                                                    <div className="text-gray-400 text-xs w-12 flex-shrink-0">
+                                                <div className="text-center">
+                                                    <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                                                         Section
                                                     </div>
-                                                    <div className="text-white font-medium text-sm">
+                                                    <div className="text-white font-medium">
                                                         {seatInfo.section}
                                                     </div>
                                                 </div>
                                             )}
                                             {seatInfo.row && (
-                                                <div className="flex items-center gap-2">
-                                                    <div className="text-gray-400 text-xs w-12 flex-shrink-0">
+                                                <div className="text-center">
+                                                    <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                                                         Row
                                                     </div>
-                                                    <div className="text-white font-medium text-sm">
+                                                    <div className="text-white font-medium">
                                                         {seatInfo.row}
                                                     </div>
                                                 </div>
                                             )}
-                                            <div className="flex items-center gap-2">
-                                                <div className="text-gray-400 text-xs w-12 flex-shrink-0">
+                                            <div className="text-center">
+                                                <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                                                     Seat
                                                 </div>
-                                                <div className="text-white font-medium text-sm">
+                                                <div className="text-white font-medium">
                                                     {seatInfo.seat}
+                                                </div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">
+                                                    Category
+                                                </div>
+                                                <div className="text-white font-medium">
+                                                    {tooltip.seat.category}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Category and Price - Fixed height section */}
-                                        <div className="border-t border-gray-700 pt-3 space-y-2 min-h-[48px]">
-                                            <div className="flex items-center justify-between">
-                                                <div className="text-gray-400 text-xs">
-                                                    Category
-                                                </div>
-                                                <div className="text-white text-sm font-medium">
-                                                    {tooltip.seat.category}
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="text-gray-400 text-xs">
+                                        {/* Right: Price and Action */}
+                                        <div className="ml-auto flex items-center gap-6">
+                                            <div className="text-center">
+                                                <div className="text-gray-400 text-xs uppercase tracking-wider mb-1">
                                                     Price
                                                 </div>
-                                                <div className="text-amber-400 text-sm">
+                                                <div className="text-blue-400 font-medium text-xl">
                                                     <span className="font-normal">
                                                         {priceInfo.symbol}
                                                     </span>
-                                                    <span className="font-bold">
+                                                    <span className="font-medium">
                                                         {priceInfo.amount}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* Action hint - Fixed height section */}
-                                        <div className="border-t border-gray-700 pt-2 mt-3 min-h-[24px]">
-                                            {tooltip.seat.status ===
-                                            "available" ? (
-                                                <div className="text-gray-500 text-xs text-center">
-                                                    Click to select ticket type
-                                                </div>
-                                            ) : (
-                                                <div className="h-4"></div> /* Maintain height spacing */
-                                            )}
-                                        </div>
-                                    </>
+                                    </div>
                                 );
                             })()}
                         </>
                     ) : (
                         <>
-                            {/* Empty state with same structure for consistent height */}
-                            {/* Header section - Fixed height to match */}
-                            <div className="flex items-center justify-center mb-3 h-8">
-                                <div className="text-gray-400 text-lg">🪑</div>
-                            </div>
-
-                            {/* Content section - Fixed height to match location info */}
-                            <div className="space-y-2 mb-3 min-h-[72px] flex items-center justify-center">
+                            {/* Empty state - Horizontal layout */}
+                            <div className="flex items-center justify-center gap-6 py-4">
                                 <div className="text-center">
-                                    <p className="text-gray-400 text-sm">
+                                    <h3 className="text-white font-medium text-lg tracking-wide mb-1">
+                                        Seat Information
+                                    </h3>
+                                    <p className="text-gray-500 text-sm">
                                         Hover over any seat to see details
                                     </p>
                                 </div>
-                            </div>
-
-                            {/* Bottom sections - Fixed height to match category/price + action */}
-                            <div className="border-t border-gray-700 pt-3 min-h-[48px] flex items-center justify-center">
-                                <div className="text-gray-500 text-xs text-center">
-                                    Seat information will appear here
-                                </div>
-                            </div>
-
-                            {/* Action section - Fixed height to match */}
-                            <div className="border-t border-gray-700 pt-2 mt-3 min-h-[24px]">
-                                <div className="h-4"></div>{" "}
-                                {/* Maintain height spacing */}
                             </div>
                         </>
                     )}
@@ -492,6 +468,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     onSelect,
     onDeselect,
     onCheckout,
+    onTooltipChange,
     className = "",
     testMode = false,
     region = "eu",
@@ -514,17 +491,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
         category: string;
         basePrice: number;
     } | null>(null);
-
-    // Add custom tooltip state after other state declarations
-    const [customTooltip, setCustomTooltip] = useState<{
-        visible: boolean;
-        seat: SeatsIOSeat | null;
-        position: { x: number; y: number };
-    }>({
-        visible: false,
-        seat: null,
-        position: { x: 0, y: 0 },
-    });
 
     const chartRef = useRef<SeatsIOChartWithZoom | null>(null);
     const { showError } = useToast();
@@ -613,6 +579,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     };
 
     // Convert SelectableObject to SeatsIOSeat
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const convertToSeatsIOSeat = useCallback((obj: any): SeatsIOSeat => {
         // Handle category - could be string or object with label
         let category: string;
@@ -690,6 +657,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
 
     // Handle seat selection - show modal for ticket type selection
     const handleObjectSelected = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (object: any) => {
             console.log("🎯 Seat clicked:", object);
 
@@ -742,6 +710,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
 
     // Handle seat deselection
     const handleObjectDeselected = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (object: any) => {
             console.log("❌ Seat deselected:", object);
             const seat = convertToSeatsIOSeat(object);
@@ -755,6 +724,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     );
 
     // Handle chart rendered
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleChartRendered = useCallback((chart: any) => {
         console.log("🎉 SeatsIO chart rendered successfully", {
             chart,
@@ -841,7 +811,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                     
                     /* Ensure our custom tooltip is always on top */
                     .custom-tooltip {
-                        z-index: 99999 !important;
                         position: relative !important;
                         pointer-events: none !important;
                     }
@@ -864,6 +833,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     const handleZoomOut = useCallback(() => {
         if (chartRef.current) {
             try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const chart = chartRef.current as any;
                 console.log(
                     "🔍 Attempting zoom out, available methods:",
@@ -980,6 +950,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     const isTooltipStableRef = useRef<boolean>(false);
 
     const handleObjectMouseOver = useCallback(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (object: any) => {
             const seatId = object.id || object.label;
 
@@ -1009,11 +980,12 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
             hoverTimeoutRef.current = setTimeout(() => {
                 try {
                     const seat = convertToSeatsIOSeat(object);
-                    setCustomTooltip({
+                    const tooltipData = {
                         visible: true,
                         seat: seat,
                         position: { x: 0, y: 0 },
-                    });
+                    };
+                    onTooltipChange?.(tooltipData);
                     isTooltipStableRef.current = true;
                 } catch (error) {
                     console.warn("Error updating tooltip:", error);
@@ -1038,11 +1010,12 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
         hideTimeoutRef.current = setTimeout(() => {
             currentHoveredSeatRef.current = null;
             isTooltipStableRef.current = false;
-            setCustomTooltip({
+            const tooltipData = {
                 visible: false,
                 seat: null,
                 position: { x: 0, y: 0 },
-            });
+            };
+            onTooltipChange?.(tooltipData);
         }, 200); // Longer delay before hiding to prevent flicker
     }, []);
 
@@ -1075,7 +1048,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                             To fix this, add your seats.io public key to your
                             environment variables:
                         </p>
-                        <code className="text-amber-400 text-sm">
+                        <code className="text-blue-400 text-sm">
                             VITE_SEATS_PUBLIC_KEY=your_public_key_here
                         </code>
                     </div>
@@ -1091,7 +1064,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 className={`flex items-center justify-center min-h-[400px] ${className}`}
             >
                 <div className="text-center">
-                    <Loader2 className="w-8 h-8 text-amber-400 animate-spin mx-auto mb-4" />
+                    <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-4" />
                     <p className="text-gray-400">Loading seating chart...</p>
                 </div>
             </div>
@@ -1120,39 +1093,33 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
             className={`flex flex-col lg:flex-row gap-6 ${className}`}
             style={{ isolation: "isolate" }}
         >
-            <div
-                style={{
-                    isolation: "isolate",
-                    zIndex: 1000,
-                    position: "absolute",
-                    left: 10,
-                    width: "190px",
-                }}
-            >
-                <CustomSeatTooltip tooltip={customTooltip} />
-            </div>
-            {/* Left Tooltip Sidebar - Completely isolated from iframe */}
-
             {/* Chart Container */}
             <div
-                className="order-2 lg:order-1 flex-1 bg-gray-900 rounded-lg overflow-hidden relative"
+                className="order-2 lg:order-1 flex-1 relative overflow-hidden"
                 style={{ isolation: "isolate" }}
             >
+                {/* Background blur effect with enhanced gradient */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
+
+                {/* Enhanced ambient glow effects */}
+                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+
                 {/* Zoom Controls */}
-                <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+                <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
                     <button
                         onClick={handleZoomOut}
                         disabled={isLoading}
-                        className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-lg backdrop-blur-sm border border-white/10 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm border border-white/10 hover:border-blue-400/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Zoom to Fit"
                     >
-                        <ZoomOut className="w-4 h-4" />
+                        <ZoomOut className="w-5 h-5" />
                     </button>
                 </div>
 
                 <div
                     ref={containerRef}
-                    className="h-[600px] relative"
+                    className="h-[500px] sm:h-[600px] lg:h-[650px] relative rounded-3xl overflow-hidden min-w-[900px] max-w-[900px]"
                     style={{
                         clipPath: "inset(18px 60px 18px 60px)",
                         backgroundImage:
@@ -1164,14 +1131,14 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                         workspaceKey={environment.publicKey!}
                         event={eventKey}
                         holdToken={holdToken || undefined}
-                        region={region as any}
+                        region={region as "eu" | "na" | "sa" | "oc"}
                         pricing={{
                             prices: [
                                 { category: "Regular", price: 25 },
                                 { category: "VIP", price: 50 },
                             ],
                             priceFormatter: (price) => `$${price.toFixed(2)}`,
-                            showSectionPricingOverlay: true,
+                            showSectionPricingOverlay: false,
                         }}
                         // Disable default popover/tooltip completely
                         objectPopover={{
@@ -1196,14 +1163,15 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                         }}
                         onObjectMouseOver={handleObjectMouseOver}
                         onObjectMouseOut={handleObjectMouseOut}
+                        colorScheme="dark"
                     />
                 </div>
             </div>
 
             {/* Sidebar with Basket */}
             <div
-                className="order-3 lg:order-3 w-full lg:w-80 flex-shrink-0"
-                style={{ isolation: "isolate", zIndex: 1000 }}
+                className="order-3 lg:order-3 w-full lg:w-72 flex-shrink-0"
+                style={{ isolation: "isolate", zIndex: 10 }}
             >
                 <SeatsIOBasket
                     basket={basket}

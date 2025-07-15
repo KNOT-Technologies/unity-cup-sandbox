@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import DatePicker from "../components/tickets/DatePicker";
 import ShowTimeSelector from "../components/tickets/ShowTimeSelector";
 import SeatMap from "../components/tickets/SeatMap";
 import TicketSummary from "../components/tickets/TicketSummary";
@@ -34,10 +33,6 @@ interface TranslationPreference {
 const Tickets = () => {
     const navigate = useNavigate();
     const [userType, setUserType] = useState<UserType>("tourist");
-    const [selectedDate, setSelectedDate] = useState<Date>(() => {
-        const storedDate = sessionStorage.getItem("selectedDate");
-        return storedDate ? new Date(storedDate) : new Date();
-    });
     const [selectedOccurrenceId, setSelectedOccurrenceId] = useState<string>();
     const [seatSelections, setSeatSelections] = useState<SeatSelection[]>([]);
     const [translationPreference, setTranslationPreference] =
@@ -46,7 +41,6 @@ const Tickets = () => {
         });
 
     // Use a fixed eventId for the Unity Cup matches
-    //TODO: turn into array of eventIds
     const eventId = "68739fa044dbbfd4cc3a025a";
     const {
         occurrences,
@@ -84,47 +78,11 @@ const Tickets = () => {
     // Warning modal state
     const [showWarningModal, setShowWarningModal] = useState(false);
 
-    // Extract available dates from occurrences for the DatePicker
-    const availableDates: Date[] = useMemo(() => {
-        if (!Array.isArray(occurrences)) return [];
-
-        const uniqueDates = new Set<string>();
-        const dates: Date[] = [];
-
-        occurrences.forEach((occurrence: Occurrence) => {
-            const occurrenceDate = new Date(occurrence.startAt);
-            const dateString = occurrenceDate.toDateString();
-
-            if (!uniqueDates.has(dateString)) {
-                uniqueDates.add(dateString);
-                dates.push(
-                    new Date(
-                        occurrenceDate.getFullYear(),
-                        occurrenceDate.getMonth(),
-                        occurrenceDate.getDate()
-                    )
-                );
-            }
-        });
-
-        return dates.sort((a, b) => a.getTime() - b.getTime());
-    }, [occurrences]);
-
-    // Transform API occurrences to ShowTime format and filter by selected date
+    // Transform API occurrences to ShowTime format
     const showTimes: ShowTime[] = useMemo(() => {
         if (!Array.isArray(occurrences)) return [];
 
-        // Filter occurrences for the selected date
-        const filteredOccurrences = occurrences.filter(
-            (occurrence: Occurrence) => {
-                const occurrenceDate = new Date(occurrence.startAt);
-                const selectedDateString = selectedDate.toDateString();
-                const occurrenceDateString = occurrenceDate.toDateString();
-                return selectedDateString === occurrenceDateString;
-            }
-        );
-
-        return filteredOccurrences.map((occurrence: Occurrence) => ({
+        return occurrences.map((occurrence: Occurrence) => ({
             id: occurrence.id,
             time: new Date(occurrence.startAt).toLocaleTimeString("en-US", {
                 hour: "2-digit",
@@ -134,32 +92,7 @@ const Tickets = () => {
             }),
             language: occurrence.language,
         }));
-    }, [occurrences, selectedDate]);
-
-    // Reset selected occurrence when date changes
-    const handleDateSelect = (date: Date) => {
-        setSelectedDate(date);
-        setSelectedOccurrenceId(undefined);
-        setSeatSelections([]); // Also clear selected seats when date changes
-        quoteState.cancelQuote(); // Cancel any existing quote
-    };
-
-    // Auto-select first available date when occurrences load
-    useEffect(() => {
-        if (availableDates.length > 0 && !isLoadingSchedule) {
-            const currentSelectedHasShows = availableDates.some(
-                (date) => date.toDateString() === selectedDate.toDateString()
-            );
-
-            // If current selected date has no shows, switch to first available date
-            if (!currentSelectedHasShows) {
-                setSelectedDate(availableDates[0]);
-                setSelectedOccurrenceId(undefined);
-                setSeatSelections([]);
-                quoteState.cancelQuote();
-            }
-        }
-    }, [availableDates, isLoadingSchedule, quoteState]);
+    }, [occurrences]);
 
     // Check if user is returning from checkout with an active quote
     useEffect(() => {
@@ -401,7 +334,6 @@ const Tickets = () => {
     useEffect(() => {
         const storedSelections = sessionStorage.getItem("seatSelections");
         const storedOccurrence = sessionStorage.getItem("selectedOccurrenceId");
-        const storedDate = sessionStorage.getItem("selectedDate");
 
         if (storedSelections) {
             try {
@@ -415,12 +347,6 @@ const Tickets = () => {
         }
         if (storedOccurrence) {
             setSelectedOccurrenceId(storedOccurrence);
-        }
-        if (storedDate) {
-            const d = new Date(storedDate);
-            if (!isNaN(d.getTime())) {
-                setSelectedDate(d);
-            }
         }
     }, []);
 
@@ -436,8 +362,7 @@ const Tickets = () => {
                 selectedOccurrenceId
             );
         }
-        sessionStorage.setItem("selectedDate", selectedDate.toISOString());
-    }, [seatSelections, selectedOccurrenceId, selectedDate]);
+    }, [seatSelections, selectedOccurrenceId]);
 
     // Clear selections when the user switches to a different occurrence (show time)
     const prevOccurrenceRef = useRef<string | undefined>(undefined);
@@ -454,10 +379,97 @@ const Tickets = () => {
     }, [selectedOccurrenceId]);
 
     return (
-        <div className="min-h-screen bg-black text-white pt-24 sm:pt-32 pb-16">
-            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+        <div className="relative min-h-screen bg-black">
+            {/* Background Gradient */}
+            <div className="fixed inset-0 bg-gradient-radial from-black via-black/95 to-black pointer-events-none"></div>
+            <div className="fixed inset-0 bg-[url('/grid.svg')] opacity-20 pointer-events-none"></div>
 
-            {/* Warning Modal for returning from checkout */}
+            {/* Logo */}
+            <div className="fixed top-8 left-8 z-50">
+                <motion.img
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.8 }}
+                    src="/UnityAfrexim.png.avif"
+                    alt="Unity Afrexim Logo"
+                    className="h-16 w-auto"
+                />
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10 max-w-[90%] mx-auto pt-32 pb-16">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                >
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column - Seat Selection */}
+                        <div className="lg:col-span-2 space-y-8">
+                            <div className="bg-black/40 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                                <ShowTimeSelector
+                                    showTimes={showTimes}
+                                    selectedOccurrenceId={selectedOccurrenceId}
+                                    onOccurrenceSelect={setSelectedOccurrenceId}
+                                />
+                            </div>
+
+                            {selectedOccurrenceId && (
+                                <div className="bg-black/40 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                                    <SeatMap
+                                        occurrenceId={selectedOccurrenceId}
+                                        selectedDate={new Date("2026-05-27")}
+                                        userType={userType}
+                                        onUserTypeChange={handleUserTypeChange}
+                                        onSeatSelect={handleSeatSelect}
+                                        onSeatDeselect={handleSeatRemove}
+                                        selectedSeatIds={seatSelections.map(
+                                            (selection) => selection.seat.id
+                                        )}
+                                        findPrice={findPrice}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right Column - Summary and Actions */}
+                        <div className="lg:col-span-1">
+                            <div className="bg-black/40 backdrop-blur-sm rounded-xl p-6 border border-white/10 sticky top-8">
+                                <TicketSummary
+                                    selectedSeats={seatSelections.map(
+                                        (selection) => ({
+                                            ...selection.seat,
+                                            ticketType: selection.ticketType,
+                                            price: selection.price,
+                                        })
+                                    )}
+                                    onRemoveSeat={handleSeatRemove}
+                                    onProceedToCheckout={
+                                        handleProceedToCheckout
+                                    }
+                                    translationPreference={
+                                        translationPreference
+                                    }
+                                    isTouristPricing={userType === "tourist"}
+                                />
+
+                                {seatSelections.length > 0 && (
+                                    <div className="mt-6">
+                                        <TranslationSelector
+                                            onTranslationChange={
+                                                handleTranslationChange
+                                            }
+                                            occurrenceId={selectedOccurrenceId}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Modals and Toasts */}
             <SeatSelectionWarningModal
                 isOpen={showWarningModal}
                 onConfirm={handleWarningConfirm}
@@ -465,121 +477,17 @@ const Tickets = () => {
                 seatCount={seatSelections.length}
                 timeRemaining={quoteState.timeRemaining}
             />
+            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
 
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 sm:gap-8">
-                    <div className="space-y-4 sm:space-y-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                            <DatePicker
-                                selectedDate={selectedDate}
-                                onDateSelect={handleDateSelect}
-                                availableDates={availableDates}
-                            />
-                            <div className="sm:block">
-                                {isLoadingSchedule ? (
-                                    <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl p-5 border border-gray-700/20 h-full flex items-center justify-center">
-                                        <div className="text-white/60">
-                                            Loading show times...
-                                        </div>
-                                    </div>
-                                ) : scheduleError ? (
-                                    <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl p-5 border border-red-500/20 h-full flex items-center justify-center">
-                                        <div className="text-red-400">
-                                            Failed to load show times
-                                        </div>
-                                    </div>
-                                ) : showTimes.length === 0 ? (
-                                    <div className="bg-gray-800/20 backdrop-blur-xl rounded-xl p-5 border border-gray-700/20 h-full flex items-center justify-center">
-                                        <div className="text-white/60">
-                                            {Array.isArray(occurrences) &&
-                                            occurrences.length > 0
-                                                ? "No shows available on selected date"
-                                                : "No shows available"}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <ShowTimeSelector
-                                        selectedOccurrenceId={
-                                            selectedOccurrenceId
-                                        }
-                                        onOccurrenceSelect={
-                                            setSelectedOccurrenceId
-                                        }
-                                        showTimes={showTimes}
-                                        className="h-full"
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="sm:block">
-                            <TranslationSelector
-                                onTranslationChange={handleTranslationChange}
-                                occurrenceId={selectedOccurrenceId}
-                                className="h-full"
-                            />
-                        </div>
-
-                        {selectedOccurrenceId && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <SeatMap
-                                    userType={userType}
-                                    onUserTypeChange={handleUserTypeChange}
-                                    onSeatSelect={handleSeatSelect}
-                                    onSeatDeselect={handleSeatRemove}
-                                    selectedSeatIds={seatSelections.map(
-                                        (selection) => selection.seat.id
-                                    )}
-                                    occurrenceId={selectedOccurrenceId}
-                                    findPrice={findPrice}
-                                    selectedDate={selectedDate}
-                                />
-                            </motion.div>
-                        )}
-                    </div>
-
-                    <div className="relative lg:h-[calc(100vh-8rem)]">
-                        <div className="lg:sticky lg:top-32">
-                            {/* Show QuoteSidebar when seats are selected or quote is active */}
-                            {(seatSelections.length > 0 ||
-                                quoteState.hasActiveQuote) && (
-                                <QuoteSidebar
-                                    quoteState={quoteState}
-                                    selections={seatSelections}
-                                    onCancel={handleCancelSeatHold}
-                                    onRemoveSeat={handleSeatRemove}
-                                    onProceedToCheckout={
-                                        handleProceedToCheckout
-                                    }
-                                />
-                            )}
-
-                            {/* Fallback to TicketSummary for backward compatibility when no quote is active */}
-                            {seatSelections.length === 0 &&
-                                !quoteState.hasActiveQuote && (
-                                    <TicketSummary
-                                        selectedSeats={[]} // Empty array since we're using seatSelections now
-                                        onRemoveSeat={handleSeatRemove}
-                                        className="max-h-[calc(100vh-10rem)] overflow-y-auto"
-                                        onProceedToCheckout={
-                                            handleProceedToCheckout
-                                        }
-                                        translationPreference={
-                                            translationPreference
-                                        }
-                                        isTouristPricing={
-                                            userType === "tourist"
-                                        }
-                                    />
-                                )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {quoteState.hasActiveQuote && (
+                <QuoteSidebar
+                    quoteState={quoteState}
+                    selections={seatSelections}
+                    onCancel={handleCancelSeatHold}
+                    onRemoveSeat={handleSeatRemove}
+                    onProceedToCheckout={handleProceedToCheckout}
+                />
+            )}
         </div>
     );
 };

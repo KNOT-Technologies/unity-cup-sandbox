@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, AlertCircle } from "lucide-react";
-import SeatsIoChart from "../components/seatsio/SeatsIoChart";
+import SeatsIoChart, {
+    CustomSeatTooltip,
+} from "../components/seatsio/SeatsIoChart";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 
@@ -14,6 +16,29 @@ interface SeatsIOSeat {
     price: number;
     status: "available" | "unavailable" | "selected";
     seatType: "seat" | "table" | "booth" | "generalAdmission";
+    ticketType?: string;
+}
+
+interface MatchData {
+    eventId: string;
+    name: string;
+    date: string;
+    time: string;
+    venue: string;
+    stage: "Semi-Final" | "3rd Place Play-off" | "Final";
+    homeTeam: {
+        name: string;
+        shortCode: string;
+        logoUrl: string;
+    };
+    awayTeam: {
+        name: string;
+        shortCode: string;
+        logoUrl: string;
+    };
+    venueAddress: string;
+    gateOpensAt: string;
+    contactEmail: string;
 }
 
 const SeatsIOPage: React.FC = () => {
@@ -22,6 +47,35 @@ const SeatsIOPage: React.FC = () => {
     const { showError, toasts, removeToast } = useToast();
 
     const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const [matchData, setMatchData] = useState<MatchData | null>(null);
+    const [customTooltip, setCustomTooltip] = useState<{
+        visible: boolean;
+        seat: SeatsIOSeat | null;
+        position: { x: number; y: number };
+    }>({
+        visible: false,
+        seat: null,
+        position: { x: 0, y: 0 },
+    });
+
+    // Load match data from sessionStorage
+    useEffect(() => {
+        const storedMatchData = sessionStorage.getItem("selectedMatchData");
+        if (storedMatchData) {
+            try {
+                const parsedMatchData = JSON.parse(storedMatchData);
+                setMatchData(parsedMatchData);
+            } catch (error) {
+                console.error("Failed to parse stored match data:", error);
+                showError("Failed to load match information");
+            }
+        } else {
+            showError(
+                "No match selected. Please select a match from the tickets page."
+            );
+            navigate("/tickets-demo");
+        }
+    }, [showError, navigate]);
 
     // Validate eventKey
     useEffect(() => {
@@ -54,6 +108,11 @@ const SeatsIOPage: React.FC = () => {
             return;
         }
 
+        if (!matchData) {
+            showError("Match information is missing");
+            return;
+        }
+
         if (selectedSeats.length === 0) {
             showError("Please select at least one seat");
             return;
@@ -67,32 +126,17 @@ const SeatsIOPage: React.FC = () => {
                 0
             );
 
-            // Format selected date for display
-            const today = new Date();
-            const selectedDate = new Date(today);
-            selectedDate.setDate(today.getDate() + 7); // Demo event is next week
-
             const demoCheckoutData = {
                 selectedSeats: selectedSeats.map((seat) => ({
                     id: seat.id,
                     label: seat.label,
                     category: seat.category,
                     price: seat.price,
-                    ticketType: "adult", // Default ticket type for demo
+                    ticketType: seat.ticketType || "adult",
                 })),
                 totalPrice,
-                currency: "USD",
-                eventDetails: {
-                    name: "Unity Cup 2025 - Nigeria vs Jamaica",
-                    date: selectedDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                    }),
-                    time: "19:30 GMT",
-                    venue: "Fullham Stadium",
-                },
+                currency: "GBP",
+                match: matchData,
             };
 
             // Store checkout data for the demo checkout page
@@ -101,8 +145,8 @@ const SeatsIOPage: React.FC = () => {
                 JSON.stringify(demoCheckoutData)
             );
 
-            // Navigate to demo checkout
-            navigate("/demo-checkout");
+            // Navigate to cart
+            navigate("/cart");
         } catch (error) {
             console.error("Checkout failed:", error);
             const errorMessage =
@@ -120,70 +164,111 @@ const SeatsIOPage: React.FC = () => {
 
     if (!eventKey) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="text-center">
-                    <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-semibold text-white mb-2">
-                        Invalid Event
-                    </h2>
-                    <p className="text-gray-400 mb-4">
-                        Event key is required to display the seating chart
-                    </p>
-                    <button
-                        onClick={handleGoBack}
-                        className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2 mx-auto"
+            <div className="relative min-h-screen bg-blacko">
+                {/* Background Gradient */}
+                <div className="fixed inset-0 bg-gradient-radial from-black via-black/95 to-black pointer-events-none"></div>
+                <div className="fixed inset-0 bg-[url('/grid.svg')] opacity-20 pointer-events-none"></div>
+
+                {/* Content */}
+                <div className="relative min-h-screen flex items-center justify-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="text-center"
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Go Back
-                    </button>
+                        <AlertCircle className="w-16 h-16 text-blue-400 mx-auto mb-6" />
+                        <h2 className="text-2xl font-medium text-white mb-4">
+                            Invalid Event
+                        </h2>
+                        <p className="text-gray-400 mb-8 text-lg">
+                            Event key is required to display the seating chart
+                        </p>
+                        <button
+                            onClick={handleGoBack}
+                            className="bg-white text-black px-8 py-3 rounded-full font-medium hover:bg-gray-100 transition-colors flex items-center gap-2 mx-auto"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                            Go Back
+                        </button>
+                    </motion.div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black">
-            {/* Header */}
-            <div className="bg-gray-900 border-b border-gray-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-4">
+        <div className="relative min-h-screen bg-black">
+            {/* Background Gradient */}
+            <div className="fixed inset-0 bg-gradient-radial from-black via-black/95 to-black pointer-events-none"></div>
+            <div className="fixed inset-0 bg-[url('/grid.svg')] opacity-20 pointer-events-none"></div>
+
+            {/* Content */}
+            <div className="relative">
+                {/* Header */}
+                <div className="pt-24 sm:pt-32 pb-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="flex items-center gap-6 mb-12"
+                        >
                             <button
                                 onClick={handleGoBack}
-                                className="text-gray-400 hover:text-white transition-colors"
+                                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-white/10"
                             >
                                 <ArrowLeft className="w-6 h-6" />
                             </button>
                             <div>
-                                <h1 className="text-xl font-semibold text-white">
+                                <h1 className="text-3xl md:text-4xl font-medium text-white tracking-wide">
                                     Select Your Seats
                                 </h1>
-                                <p className="text-sm text-gray-400">
-                                    Event: {eventKey}
-                                </p>
+                                {matchData && (
+                                    <p className="text-gray-300 text-lg mt-2">
+                                        {matchData.name}
+                                    </p>
+                                )}
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
-            </div>
 
-            {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <SeatsIoChart
-                        eventKey={eventKey}
-                        onSelect={handleSeatSelect}
-                        onDeselect={handleSeatDeselect}
-                        onCheckout={handleCheckout}
-                        className="w-full"
-                        testMode={true}
-                        region="eu"
-                    />
-                </motion.div>
+                {/* Main Content */}
+                <div className="max-w-[1300px] min-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 pb-24 relative">
+                    <CustomSeatTooltip tooltip={customTooltip} />
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="relative overflow-hidden"
+                    >
+                        {/* Background blur effect with enhanced gradient */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
+
+                        {/* Enhanced ambient glow effects */}
+                        <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/5 rounded-full blur-[100px] mix-blend-soft-light" />
+                        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-white/5 rounded-full blur-[100px] mix-blend-soft-light" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-32 bg-white/5 blur-[100px] mix-blend-soft-light" />
+
+                        {/* Subtle geometric pattern */}
+                        <div className="absolute inset-0 bg-[linear-gradient(0deg,transparent_0%,rgba(255,255,255,0.02)_100%)] bg-[size:4px_4px] opacity-20" />
+
+                        {/* Content */}
+                        <div className="relative p-0">
+                            <SeatsIoChart
+                                eventKey={eventKey}
+                                onSelect={handleSeatSelect}
+                                onDeselect={handleSeatDeselect}
+                                onCheckout={handleCheckout}
+                                onTooltipChange={setCustomTooltip}
+                                className="w-full"
+                                testMode={true}
+                                region="eu"
+                            />
+                        </div>
+                    </motion.div>
+                </div>
 
                 {/* Checkout Status */}
                 {isCheckingOut && (
@@ -192,10 +277,10 @@ const SeatsIOPage: React.FC = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
                     >
-                        <div className="bg-gray-900 rounded-lg p-8 max-w-md w-full mx-4">
+                        <div className="bg-black/40 backdrop-blur-xl rounded-xl p-8 max-w-md w-full mx-4 border border-white/10">
                             <div className="text-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mx-auto mb-4"></div>
-                                <h3 className="text-lg font-semibold text-white mb-2">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                                <h3 className="text-lg font-medium text-white mb-2">
                                     Processing Checkout
                                 </h3>
                                 <p className="text-gray-400">
@@ -206,55 +291,6 @@ const SeatsIOPage: React.FC = () => {
                         </div>
                     </motion.div>
                 )}
-
-                {/* Instructions */}
-                <div className="mt-8 bg-gray-900 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-white mb-4">
-                        How to use the seating chart:
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                1
-                            </div>
-                            <div>
-                                <p className="text-white font-medium">
-                                    Select Seats
-                                </p>
-                                <p className="text-gray-400">
-                                    Click on available seats to select them
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                2
-                            </div>
-                            <div>
-                                <p className="text-white font-medium">
-                                    Review Selection
-                                </p>
-                                <p className="text-gray-400">
-                                    Check your selected seats in the sidebar
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                3
-                            </div>
-                            <div>
-                                <p className="text-white font-medium">
-                                    Proceed to Pay
-                                </p>
-                                <p className="text-gray-400">
-                                    Click the Pay button to complete your
-                                    purchase
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Toast Notifications */}
