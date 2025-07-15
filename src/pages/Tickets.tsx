@@ -386,12 +386,12 @@ const Tickets = () => {
 
             {/* Logo */}
             <div className="fixed top-8 left-8 z-50">
-                <motion.img 
+                <motion.img
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.8 }}
-                    src="/UnityAfrexim.png.avif" 
-                    alt="Unity Afrexim Logo" 
+                    src="/UnityAfrexim.png.avif"
+                    alt="Unity Afrexim Logo"
                     className="h-16 w-auto"
                 />
             </div>
@@ -436,21 +436,29 @@ const Tickets = () => {
                         <div className="lg:col-span-1">
                             <div className="bg-black/40 backdrop-blur-sm rounded-xl p-6 border border-white/10 sticky top-8">
                                 <TicketSummary
-                                    selectedSeats={seatSelections.map(selection => ({
-                                        ...selection.seat,
-                                        ticketType: selection.ticketType,
-                                        price: selection.price
-                                    }))}
+                                    selectedSeats={seatSelections.map(
+                                        (selection) => ({
+                                            ...selection.seat,
+                                            ticketType: selection.ticketType,
+                                            price: selection.price,
+                                        })
+                                    )}
                                     onRemoveSeat={handleSeatRemove}
-                                    onProceedToCheckout={handleProceedToCheckout}
-                                    translationPreference={translationPreference}
+                                    onProceedToCheckout={
+                                        handleProceedToCheckout
+                                    }
+                                    translationPreference={
+                                        translationPreference
+                                    }
                                     isTouristPricing={userType === "tourist"}
                                 />
-                                
+
                                 {seatSelections.length > 0 && (
                                     <div className="mt-6">
                                         <TranslationSelector
-                                            onTranslationChange={handleTranslationChange}
+                                            onTranslationChange={
+                                                handleTranslationChange
+                                            }
                                             occurrenceId={selectedOccurrenceId}
                                         />
                                     </div>
@@ -470,7 +478,7 @@ const Tickets = () => {
                 timeRemaining={quoteState.timeRemaining}
             />
             <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-            
+
             {quoteState.hasActiveQuote && (
                 <QuoteSidebar
                     quoteState={quoteState}

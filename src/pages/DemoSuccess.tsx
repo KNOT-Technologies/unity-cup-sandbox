@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
+import { formatSeatDisplay } from "../utils/seatParser";
 
 interface DemoOrderData {
     orderId: string;
@@ -139,38 +140,6 @@ const DemoSuccess = () => {
         `)}`;
     };
 
-    const handleResendEmail = async () => {
-        if (!orderData) return;
-
-        try {
-            // Simulate email resending
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            showSuccess(
-                `Tickets resent to ${orderData.ticketHolders[0].email}`
-            );
-        } catch {
-            showError("Failed to resend email. Please try again.");
-        }
-    };
-
-    const handleShareTickets = () => {
-        if (!orderData) return;
-
-        if (navigator.share) {
-            navigator.share({
-                title: `${orderData.eventDetails.name} Tickets`,
-                text: `I just booked tickets for ${orderData.eventDetails.name}! Order #${orderData.orderId}`,
-                url: window.location.href,
-            });
-        } else {
-            // Fallback for browsers without Web Share API
-            navigator.clipboard.writeText(
-                `🎫 Just booked tickets for ${orderData.eventDetails.name}! Order #${orderData.orderId}`
-            );
-            showSuccess("Ticket details copied to clipboard!");
-        }
-    };
-
     const handleGoHome = () => {
         // Clear any remaining session data
         sessionStorage.removeItem("demoOrderData");
@@ -186,356 +155,419 @@ const DemoSuccess = () => {
     if (!orderData) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black text-white pt-24 pb-16">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Success Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-12"
-                >
+        <div className="relative min-h-screen bg-black text-white mt-10">
+            {/* Background Gradient */}
+            <div className="fixed inset-0 bg-gradient-radial from-black via-black/95 to-black pointer-events-none"></div>
+            <div className="fixed inset-0 bg-[url('/grid.svg')] opacity-20 pointer-events-none"></div>
+
+            {/* Content */}
+            <div className="relative pt-24 pb-24">
+                <div className="max-w-fit mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Success Header */}
                     <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: "spring" }}
-                        className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center mb-12"
                     >
-                        <CheckCircle className="w-10 h-10 text-white" />
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.2, type: "spring" }}
+                            className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                        >
+                            <CheckCircle className="w-10 h-10 text-white" />
+                        </motion.div>
+
+                        <h1 className="text-4xl sm:text-5xl font-medium mb-4 text-blue-400 tracking-wide">
+                            Booking Confirmed!
+                        </h1>
+                        <p className="text-xl text-white/60 mb-2">
+                            Your tickets have been successfully booked
+                        </p>
+
+                        {/* Email Status */}
+                        <div
+                            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${
+                                emailSent
+                                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                    : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                            }`}
+                        >
+                            {emailSent ? (
+                                <>
+                                    <MailCheck className="w-5 h-5" />
+                                    <span>
+                                        Tickets sent to{" "}
+                                        {orderData.ticketHolders[0].email}
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+                                    <span>
+                                        Sending tickets to{" "}
+                                        {orderData.ticketHolders[0].email}...
+                                    </span>
+                                </>
+                            )}
+                        </div>
                     </motion.div>
 
-                    <h1 className="text-4xl sm:text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-                        Booking Confirmed!
-                    </h1>
-                    <p className="text-xl text-gray-300 mb-2">
-                        Your tickets have been successfully booked
-                    </p>
-                    <p className="text-lg text-amber-400 font-semibold mb-4">
-                        Order #{orderData.orderId}
-                    </p>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column - Event & Order Details */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="lg:col-span-2 space-y-6"
+                        >
+                            {/* Event Information */}
+                            <div className="relative overflow-hidden rounded-3xl">
+                                {/* Background blur effect with enhanced gradient */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl border border-white/10" />
 
-                    {/* Email Status */}
-                    <div
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${
-                            emailSent
-                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                        }`}
-                    >
-                        {emailSent ? (
-                            <>
-                                <MailCheck className="w-5 h-5" />
-                                <span>
-                                    Tickets sent to{" "}
-                                    {orderData.ticketHolders[0].email}
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
-                                <span>
-                                    Sending tickets to{" "}
-                                    {orderData.ticketHolders[0].email}...
-                                </span>
-                            </>
-                        )}
-                    </div>
-                </motion.div>
+                                {/* Enhanced ambient glow effects */}
+                                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+                                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column - Event & Order Details */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 }}
-                        className="lg:col-span-2 space-y-6"
-                    >
-                        {/* Event Information */}
-                        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700/50">
-                            <h2 className="text-2xl font-bold text-amber-400 mb-6">
-                                Event Details
-                            </h2>
+                                {/* Content */}
+                                <div className="relative p-8">
+                                    <h2 className="text-2xl font-medium text-white mb-6 tracking-wide">
+                                        Event Details
+                                    </h2>
 
-                            <h3 className="text-xl font-bold text-white mb-4">
-                                {orderData.eventDetails.name}
-                            </h3>
+                                    <h3 className="text-xl font-medium text-white mb-4">
+                                        {orderData.eventDetails.name}
+                                    </h3>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-gray-300">
-                                <div className="flex items-center gap-3">
-                                    <Calendar className="w-5 h-5 text-amber-400" />
-                                    <div>
-                                        <p className="text-sm text-gray-400">
-                                            Date
-                                        </p>
-                                        <p className="font-semibold">
-                                            {orderData.eventDetails.date}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <Clock className="w-5 h-5 text-amber-400" />
-                                    <div>
-                                        <p className="text-sm text-gray-400">
-                                            Time
-                                        </p>
-                                        <p className="font-semibold">
-                                            {orderData.eventDetails.time}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <MapPin className="w-5 h-5 text-amber-400" />
-                                    <div>
-                                        <p className="text-sm text-gray-400">
-                                            Venue
-                                        </p>
-                                        <p className="font-semibold">
-                                            {orderData.eventDetails.venue}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Ticket Details */}
-                        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700/50">
-                            <h2 className="text-2xl text-amber-400 mb-6 flex items-center gap-2">
-                                <Ticket className="w-6 h-6" />
-                                Your Tickets ({orderData.seats.length})
-                            </h2>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {orderData.seats.map((seat, index) => (
-                                    <motion.div
-                                        key={seat.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 * index }}
-                                        className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/50"
-                                    >
-                                        <div className="flex items-center justify-between mb-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-white/60">
+                                        <div className="flex items-center gap-3">
+                                            <Calendar className="w-5 h-5 text-blue-400" />
                                             <div>
-                                                <h4 className=" text-white">
-                                                    Seat {seat.label}
-                                                </h4>
                                                 <p className="text-sm text-gray-400">
-                                                    {seat.category} •{" "}
-                                                    {seat.ticketType}
+                                                    Date
+                                                </p>
+                                                <p className="font-semibold">
+                                                    {
+                                                        orderData.eventDetails.date.split(
+                                                            "T"
+                                                        )[0]
+                                                    }
                                                 </p>
                                             </div>
-                                            <span className="text-amber-400 ">
-                                                ${seat.price.toFixed(2)}
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <Clock className="w-5 h-5 text-blue-400" />
+                                            <div>
+                                                <p className="text-sm text-gray-400">
+                                                    Time
+                                                </p>
+                                                <p className="font-semibold">
+                                                    {
+                                                        orderData.eventDetails
+                                                            .time
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <MapPin className="w-5 h-5 text-blue-400" />
+                                            <div>
+                                                <p className="text-sm text-gray-400">
+                                                    Venue
+                                                </p>
+                                                <p className="font-semibold">
+                                                    {
+                                                        orderData.eventDetails
+                                                            .venue
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Ticket Details */}
+                            <div className="relative overflow-hidden rounded-3xl">
+                                {/* Background blur effect with enhanced gradient */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl border border-white/10" />
+
+                                {/* Enhanced ambient glow effects */}
+                                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+                                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+
+                                {/* Content */}
+                                <div className="relative p-8">
+                                    <h2 className="text-2xl text-white mb-6 flex items-center gap-2 font-medium tracking-wide">
+                                        <Ticket className="w-6 h-6" />
+                                        Your Tickets ({orderData.seats.length})
+                                    </h2>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {orderData.seats.map((seat, index) => (
+                                            <motion.div
+                                                key={seat.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{
+                                                    delay: 0.1 * index,
+                                                }}
+                                                className="bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-white/5"
+                                            >
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <div className="w-6 h-6 bg-blue-500/20 rounded flex items-center justify-center">
+                                                                <span className="text-blue-400 text-xs">
+                                                                    🪑
+                                                                </span>
+                                                            </div>
+                                                            <h4 className="text-white font-medium">
+                                                                {formatSeatDisplay(
+                                                                    seat.label
+                                                                )}
+                                                            </h4>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="bg-gray-700 px-2 py-0.5 rounded text-xs text-gray-300">
+                                                                {seat.category}
+                                                            </span>
+                                                            <span className="text-blue-400 text-xs">
+                                                                {
+                                                                    seat.ticketType
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-blue-400 ml-5">
+                                                        ${seat.price.toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Right Column - Order Summary & Customer Info */}
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="lg:col-span-1.5 space-y-6"
+                        >
+                            {/* Order Summary */}
+                            <div className="relative overflow-hidden rounded-3xl sticky top-24">
+                                {/* Background blur effect with enhanced gradient */}
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl border border-white/10" />
+
+                                {/* Enhanced ambient glow effects */}
+                                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+                                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
+
+                                {/* Content */}
+                                <div className="relative p-8">
+                                    <h3 className="text-xl font-bold text-white mb-4">
+                                        Order Summary
+                                    </h3>
+
+                                    <div className="space-y-3 mb-4">
+                                        {orderData.seats.map((seat, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex justify-between items-center py-2 border-b border-gray-700/30 last:border-b-0"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 bg-blue-500/20 rounded flex items-center justify-center">
+                                                        <span className="text-blue-400 text-xs">
+                                                            🪑
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-gray-300 text-sm">
+                                                        {formatSeatDisplay(
+                                                            seat.label
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <span className="text-white font-medium">
+                                                    ${seat.price.toFixed(2)}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="border-t border-gray-600 pt-3">
+                                        <div className="flex justify-between items-center text-lg">
+                                            <span className="text-white">
+                                                Total Paid
+                                            </span>
+                                            <span className="text-blue-400">
+                                                $
+                                                {orderData.totalAmount.toFixed(
+                                                    2
+                                                )}{" "}
+                                                {orderData.currency}
                                             </span>
                                         </div>
+                                    </div>
 
-                                        {/* QR Code */}
-                                        <div className="flex items-center justify-center bg-white p-3 rounded-lg">
-                                            <img
-                                                src={generateQRCode(
-                                                    seat.id,
-                                                    orderData.orderId,
-                                                    orderData.tickets?.find(
-                                                        (t) =>
-                                                            t.seatLabel ===
-                                                            seat.label
-                                                    )?.qrCode
-                                                )}
-                                                alt={`QR Code for seat ${seat.label}`}
-                                                className="w-24 h-24"
-                                            />
+                                    {/* Customer Information */}
+                                    <div className="mt-6 pt-6 border-t border-gray-600">
+                                        <h4 className="font-semibold mb-3 text-white">
+                                            Customer Details
+                                        </h4>
+                                        <div className="space-y-2 text-sm">
+                                            <div>
+                                                <span className="text-gray-400">
+                                                    Name:{" "}
+                                                </span>
+                                                <span className="text-white">
+                                                    {
+                                                        orderData
+                                                            .ticketHolders[0]
+                                                            .fullName
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-400">
+                                                    Email:{" "}
+                                                </span>
+                                                <span className="text-white">
+                                                    {
+                                                        orderData
+                                                            .ticketHolders[0]
+                                                            .email
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-400">
+                                                    Phone:{" "}
+                                                </span>
+                                                <span className="text-white">
+                                                    {
+                                                        orderData
+                                                            .ticketHolders[0]
+                                                            .phone
+                                                    }
+                                                </span>
+                                            </div>
                                         </div>
-
-                                        <div className="mt-3 text-center">
-                                            <p className="text-xs text-gray-400 flex items-center justify-center gap-1">
-                                                <QrCode className="w-3 h-3" />
-                                                Scan at venue entrance
-                                            </p>
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </motion.div>
+                    </div>
+
+                    {/* Email Instructions */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="mt-12 bg-blue-400/10 border border-blue-400/20 rounded-2xl p-6"
+                    >
+                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <Mail className="w-5 h-5" />
+                            Email Delivery Information
+                        </h3>
+                        <ul className="space-y-2 text-gray-300 text-sm">
+                            <li>
+                                • Your tickets have been sent to:{" "}
+                                <span className="text-white font-semibold">
+                                    {orderData.ticketHolders[0].email}
+                                </span>
+                            </li>
+                            <li>
+                                • Check your inbox and spam folder for the
+                                ticket email
+                            </li>
+                            <li>
+                                • The email contains QR codes for venue entry
+                            </li>
+                            <li>
+                                • Screenshots of QR codes are accepted at the
+                                gate
+                            </li>
+                            <li>
+                                • If you don't receive the email within 10
+                                minutes, use "Resend Email" button
+                            </li>
+                        </ul>
                     </motion.div>
 
-                    {/* Right Column - Order Summary & Customer Info */}
+                    {/* Important Information */}
                     <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 }}
-                        className="lg:col-span-1 space-y-6"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                        className="mt-6 bg-blue-400/10 border border-blue-400/20 rounded-2xl p-6"
                     >
-                        {/* Order Summary */}
-                        <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 border border-gray-700/50 sticky top-24">
-                            <h3 className="text-xl font-bold text-amber-400 mb-4">
-                                Order Summary
-                            </h3>
+                        <h3 className="text-lg font-bold text-white mb-4">
+                            Important Information
+                        </h3>
+                        <ul className="space-y-2 text-gray-300 text-sm">
+                            <li>
+                                • Please arrive at least 30 minutes before the
+                                event start time
+                            </li>
+                            <li>
+                                • Bring a valid ID matching the name on your
+                                ticket
+                            </li>
+                            <li>
+                                • Present QR codes from your email at the venue
+                                entrance
+                            </li>
+                            <li>
+                                • Tickets are non-refundable and
+                                non-transferable
+                            </li>
+                            <li>
+                                • For assistance, contact support at
+                                tickets@unitycup.com
+                            </li>
+                        </ul>
+                    </motion.div>
 
-                            <div className="space-y-3 mb-4">
-                                {orderData.seats.map((seat, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex justify-between text-sm"
-                                    >
-                                        <span className="text-gray-300">
-                                            Seat {seat.label}
-                                        </span>
-                                        <span className="text-white">
-                                            ${seat.price.toFixed(2)}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* Action Buttons */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 }}
+                        className="flex flex-col sm:flex-row gap-4 justify-center mt-12"
+                    >
+                        <button
+                            onClick={handleBookMore}
+                            className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition-all"
+                        >
+                            <Users className="w-5 h-5" />
+                            Book More Tickets
+                        </button>
 
-                            <div className="border-t border-gray-600 pt-3">
-                                <div className="flex justify-between items-center text-lg">
-                                    <span className="text-white">
-                                        Total Paid
-                                    </span>
-                                    <span className="text-green-400">
-                                        ${orderData.totalAmount.toFixed(2)}{" "}
-                                        {orderData.currency}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Customer Information */}
-                            <div className="mt-6 pt-6 border-t border-gray-600">
-                                <h4 className="font-semibold mb-3 text-white">
-                                    Customer Details
-                                </h4>
-                                <div className="space-y-2 text-sm">
-                                    <div>
-                                        <span className="text-gray-400">
-                                            Name:{" "}
-                                        </span>
-                                        <span className="text-white">
-                                            {
-                                                orderData.ticketHolders[0]
-                                                    .fullName
-                                            }
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-400">
-                                            Email:{" "}
-                                        </span>
-                                        <span className="text-white">
-                                            {orderData.ticketHolders[0].email}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-gray-400">
-                                            Phone:{" "}
-                                        </span>
-                                        <span className="text-white">
-                                            {orderData.ticketHolders[0].phone}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <button
+                            onClick={handleGoHome}
+                            className="flex items-center justify-center gap-2 px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-xl transition-all"
+                        >
+                            <Home className="w-5 h-5" />
+                            Back to Home
+                        </button>
                     </motion.div>
                 </div>
 
-                {/* Email Instructions */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="mt-12 bg-blue-400/10 border border-blue-400/20 rounded-2xl p-6"
-                >
-                    <h3 className="text-lg font-bold text-blue-400 mb-4 flex items-center gap-2">
-                        <Mail className="w-5 h-5" />
-                        Email Delivery Information
-                    </h3>
-                    <ul className="space-y-2 text-gray-300 text-sm">
-                        <li>
-                            • Your tickets have been sent to:{" "}
-                            <span className="text-white font-semibold">
-                                {orderData.ticketHolders[0].email}
-                            </span>
-                        </li>
-                        <li>
-                            • Check your inbox and spam folder for the ticket
-                            email
-                        </li>
-                        <li>• The email contains QR codes for venue entry</li>
-                        <li>
-                            • Screenshots of QR codes are accepted at the gate
-                        </li>
-                        <li>
-                            • If you don't receive the email within 10 minutes,
-                            use "Resend Email" button
-                        </li>
-                    </ul>
-                </motion.div>
-
-                {/* Important Information */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="mt-6 bg-amber-400/10 border border-amber-400/20 rounded-2xl p-6"
-                >
-                    <h3 className="text-lg font-bold text-amber-400 mb-4">
-                        Important Information
-                    </h3>
-                    <ul className="space-y-2 text-gray-300 text-sm">
-                        <li>
-                            • Please arrive at least 30 minutes before the event
-                            start time
-                        </li>
-                        <li>
-                            • Bring a valid ID matching the name on your ticket
-                        </li>
-                        <li>
-                            • Present QR codes from your email at the venue
-                            entrance
-                        </li>
-                        <li>
-                            • Tickets are non-refundable and non-transferable
-                        </li>
-                        <li>
-                            • For assistance, contact support at
-                            tickets@unitycup.com
-                        </li>
-                    </ul>
-                </motion.div>
-
-                {/* Action Buttons */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center mt-12"
-                >
-                    <button
-                        onClick={handleBookMore}
-                        className="flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-black font-bold rounded-xl hover:from-amber-400 hover:to-orange-500 transition-all"
-                    >
-                        <Users className="w-5 h-5" />
-                        Book More Tickets
-                    </button>
-
-                    <button
-                        onClick={handleGoHome}
-                        className="flex items-center justify-center gap-2 px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-xl transition-all"
-                    >
-                        <Home className="w-5 h-5" />
-                        Back to Home
-                    </button>
-                </motion.div>
+                {/* Toast Notifications */}
+                <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
             </div>
-
-            {/* Toast Notifications */}
-            <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
         </div>
     );
 };

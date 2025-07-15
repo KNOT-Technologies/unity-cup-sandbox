@@ -884,19 +884,39 @@ export interface DemoTicketHolder {
   email?: string; // Optional - only required for first ticket holder
   phone: string;
   dateOfBirth: string;
+  nationality: string;
+}
+
+export interface MatchDetails {
+  eventId: string;
+  name: string;
+  date: string; // ISO string
+  time: string; // HH:mm
+  venue: string;
+  stage: "Group" | "Quarter-Final" | "Semi-Final" | "Final";
+  homeTeam: {
+    name: string;
+    shortCode: string;
+    logoUrl: string;
+    score?: number;
+  };
+  awayTeam: {
+    name: string;
+    shortCode: string;
+    logoUrl: string;
+    score?: number;
+  };
+  venueAddress: string;
+  gateOpensAt: string; // ISO-8601
+  contactEmail: string;
 }
 
 export interface DemoCheckoutRequest {
   selectedSeats: DemoSeat[];
-  ticketHolders: DemoTicketHolder[]; // Array of ticket holders
+  ticketHolders: DemoTicketHolder[];
   totalAmount: number;
   currency: string;
-  eventDetails: {
-    name: string;
-    date: string;
-    time: string;
-    venue: string;
-  };
+  match: MatchDetails;
 }
 
 export interface DemoCheckoutResponse {
