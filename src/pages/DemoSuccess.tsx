@@ -10,7 +10,6 @@ import {
     Users,
     Ticket,
     Home,
-    QrCode,
     MailCheck,
 } from "lucide-react";
 import { useToast } from "../hooks/useToast";
@@ -51,7 +50,7 @@ interface DemoOrderData {
 
 const DemoSuccess = () => {
     const navigate = useNavigate();
-    const { showSuccess, showError, toasts, removeToast } = useToast();
+    const { showInfo, showError, toasts, removeToast } = useToast();
     const [orderData, setOrderData] = useState<DemoOrderData | null>(null);
     const [emailSent, setEmailSent] = useState(false);
     const toastShownRef = useRef(false);
@@ -69,7 +68,7 @@ const DemoSuccess = () => {
                     setEmailSent(true);
                     if (!toastShownRef.current) {
                         console.log("Showing success toast for email sent");
-                        showSuccess(
+                        showInfo(
                             `Tickets sent to ${data.ticketHolders[0].email}`
                         );
                         toastShownRef.current = true;
@@ -94,51 +93,6 @@ const DemoSuccess = () => {
             navigate("/tickets");
         }
     }, [navigate, showError]);
-
-    // Generate QR code (base64 SVG) - use real QR codes from API if available
-    const generateQRCode = (
-        seatId: string,
-        orderId: string,
-        apiQRCode?: string
-    ) => {
-        // Use API QR code if available, otherwise generate demo QR
-        const qrContent = apiQRCode || `${orderId}-${seatId}`;
-        return `data:image/svg+xml;base64,${btoa(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
-                <rect width="120" height="120" fill="white"/>
-                <g fill="black">
-                    <rect x="10" y="10" width="10" height="10"/>
-                    <rect x="30" y="10" width="10" height="10"/>
-                    <rect x="50" y="10" width="10" height="10"/>
-                    <rect x="70" y="10" width="10" height="10"/>
-                    <rect x="90" y="10" width="10" height="10"/>
-                    <rect x="110" y="10" width="10" height="10"/>
-                    <rect x="10" y="30" width="10" height="10"/>
-                    <rect x="30" y="30" width="10" height="10"/>
-                    <rect x="70" y="30" width="10" height="10"/>
-                    <rect x="90" y="30" width="10" height="10"/>
-                    <rect x="10" y="50" width="10" height="10"/>
-                    <rect x="50" y="50" width="10" height="10"/>
-                    <rect x="70" y="50" width="10" height="10"/>
-                    <rect x="110" y="50" width="10" height="10"/>
-                    <rect x="30" y="70" width="10" height="10"/>
-                    <rect x="50" y="70" width="10" height="10"/>
-                    <rect x="90" y="70" width="10" height="10"/>
-                    <rect x="110" y="70" width="10" height="10"/>
-                    <rect x="10" y="90" width="10" height="10"/>
-                    <rect x="30" y="90" width="10" height="10"/>
-                    <rect x="70" y="90" width="10" height="10"/>
-                    <rect x="90" y="90" width="10" height="10"/>
-                    <rect x="110" y="90" width="10" height="10"/>
-                    <rect x="10" y="110" width="10" height="10"/>
-                    <rect x="50" y="110" width="10" height="10"/>
-                    <rect x="70" y="110" width="10" height="10"/>
-                    <rect x="90" y="110" width="10" height="10"/>
-                </g>
-                <text x="60" y="135" text-anchor="middle" font-family="monospace" font-size="8" fill="black">${qrContent}</text>
-            </svg>
-        `)}`;
-    };
 
     const handleGoHome = () => {
         // Clear any remaining session data
@@ -326,11 +280,6 @@ const DemoSuccess = () => {
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-2">
-                                                            <div className="w-6 h-6 bg-blue-500/20 rounded flex items-center justify-center">
-                                                                <span className="text-blue-400 text-xs">
-                                                                    🪑
-                                                                </span>
-                                                            </div>
                                                             <h4 className="text-white font-medium">
                                                                 {formatSeatDisplay(
                                                                     seat.label
@@ -388,11 +337,6 @@ const DemoSuccess = () => {
                                                 className="flex justify-between items-center py-2 border-b border-gray-700/30 last:border-b-0"
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 bg-blue-500/20 rounded flex items-center justify-center">
-                                                        <span className="text-blue-400 text-xs">
-                                                            🪑
-                                                        </span>
-                                                    </div>
                                                     <span className="text-gray-300 text-sm">
                                                         {formatSeatDisplay(
                                                             seat.label
@@ -469,76 +413,78 @@ const DemoSuccess = () => {
                             </div>
                         </motion.div>
                     </div>
+                    <div className="flex flex-row gap-4 mt-12">
+                        {/* Email Instructions */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                            className="mt-6 rounded-2xl p-6 w-1/2 relative"
+                        >
+                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <Mail className="w-5 h-5" />
+                                Email Delivery Information
+                            </h3>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li>
+                                    • Your tickets have been sent to:{" "}
+                                    <span className="text-white font-semibold">
+                                        {orderData.ticketHolders[0].email}
+                                    </span>
+                                </li>
+                                <li>
+                                    • Check your inbox and spam folder for the
+                                    ticket email
+                                </li>
+                                <li>
+                                    • The email contains QR codes for venue
+                                    entry
+                                </li>
+                                <li>
+                                    • Screenshots of QR codes are accepted at
+                                    the gate
+                                </li>
+                                <li>
+                                    • If you don't receive the email within 10
+                                    minutes, use "Resend Email" button
+                                </li>
+                            </ul>
+                        </motion.div>
 
-                    {/* Email Instructions */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 }}
-                        className="mt-12 bg-blue-400/10 border border-blue-400/20 rounded-2xl p-6"
-                    >
-                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <Mail className="w-5 h-5" />
-                            Email Delivery Information
-                        </h3>
-                        <ul className="space-y-2 text-gray-300 text-sm">
-                            <li>
-                                • Your tickets have been sent to:{" "}
-                                <span className="text-white font-semibold">
-                                    {orderData.ticketHolders[0].email}
-                                </span>
-                            </li>
-                            <li>
-                                • Check your inbox and spam folder for the
-                                ticket email
-                            </li>
-                            <li>
-                                • The email contains QR codes for venue entry
-                            </li>
-                            <li>
-                                • Screenshots of QR codes are accepted at the
-                                gate
-                            </li>
-                            <li>
-                                • If you don't receive the email within 10
-                                minutes, use "Resend Email" button
-                            </li>
-                        </ul>
-                    </motion.div>
-
-                    {/* Important Information */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7 }}
-                        className="mt-6 bg-blue-400/10 border border-blue-400/20 rounded-2xl p-6"
-                    >
-                        <h3 className="text-lg font-bold text-white mb-4">
-                            Important Information
-                        </h3>
-                        <ul className="space-y-2 text-gray-300 text-sm">
-                            <li>
-                                • Please arrive at least 30 minutes before the
-                                event start time
-                            </li>
-                            <li>
-                                • Bring a valid ID matching the name on your
-                                ticket
-                            </li>
-                            <li>
-                                • Present QR codes from your email at the venue
-                                entrance
-                            </li>
-                            <li>
-                                • Tickets are non-refundable and
-                                non-transferable
-                            </li>
-                            <li>
-                                • For assistance, contact support at
-                                tickets@unitycup.com
-                            </li>
-                        </ul>
-                    </motion.div>
+                        {/* Important Information */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7 }}
+                            className="mt-6 rounded-2xl p-6 w-1/2 relative"
+                        >
+                            <h3 className="text-lg font-bold text-white mb-4">
+                                Important Information
+                            </h3>
+                            <ul className="space-y-2 text-gray-300 text-sm">
+                                <li>
+                                    • Please arrive at least 30 minutes before
+                                    the event start time
+                                </li>
+                                <li>
+                                    • Bring a valid ID matching the name on your
+                                    ticket
+                                </li>
+                                <li>
+                                    • Present QR codes from your email at the
+                                    venue entrance
+                                </li>
+                                <li>
+                                    • Tickets are non-refundable and
+                                    non-transferable
+                                </li>
+                                <li>
+                                    • For assistance, contact support at
+                                    tickets@unitycup.com
+                                </li>
+                            </ul>
+                        </motion.div>
+                    </div>
 
                     {/* Action Buttons */}
                     <motion.div

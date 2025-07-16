@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, Users, Baby } from "lucide-react";
+import { X } from "lucide-react";
 import { TICKET_TYPES, calculatePrice } from "../../types/ticketTypes";
 import { formatSeatDisplay } from "../../utils/seatParser";
 

@@ -1,4 +1,5 @@
-import { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import type { ReactNode } from 'react';
 
 // Basic types (without imports to avoid dependency issues)
 export interface SeatsIOSeat {
@@ -255,11 +256,7 @@ export function SeatsIOProvider({ children, initialCurrency = 'USD' }: SeatsIOPr
     },
   };
 
-  return (
-    <SeatsIOContext.Provider value={contextValue}>
-      {children}
-    </SeatsIOContext.Provider>
-  );
+  return React.createElement(SeatsIOContext.Provider, { value: contextValue }, children);
 }
 
 // Hook to use the context
@@ -353,5 +350,4 @@ export const seatsIOUtils = {
   },
 };
 
-// Export types for use in other files
-export type { SeatsIOContextValue, SeatsIOProviderProps }; 
+ 

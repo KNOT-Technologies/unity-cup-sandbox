@@ -67,19 +67,15 @@ function App() {
                                 />
                                 <Route
                                     path="history"
-                                    element={<ComingSoon pageName="History" />}
+                                    element={<ComingSoon />}
                                 />
                                 <Route
                                     path="hospitality"
-                                    element={
-                                        <ComingSoon pageName="Hospitality" />
-                                    }
+                                    element={<ComingSoon />}
                                 />
                                 <Route
                                     path="information"
-                                    element={
-                                        <ComingSoon pageName="Information" />
-                                    }
+                                    element={<ComingSoon />}
                                 />
                             </Route>
 
