@@ -110,15 +110,8 @@ const SeatsIOBasket: React.FC<{
     if (basket.items.length === 0) {
         return (
             <div className="relative overflow-hidden">
-                {/* Background blur effect with enhanced gradient */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
-
-                {/* Enhanced ambient glow effects */}
-                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-
                 {/* Content */}
-                <div className="relative p-1 rounded-3xl text-center">
+                <div className="relative p-5 rounded-3xl text-center">
                     <ShoppingCart className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                     <p className="text-gray-400 text-lg font-medium">
                         No seats selected
@@ -133,15 +126,8 @@ const SeatsIOBasket: React.FC<{
 
     return (
         <div className="relative overflow-hidden">
-            {/* Background blur effect with enhanced gradient */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
-
-            {/* Enhanced ambient glow effects */}
-            <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-            <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-
             {/* Content */}
-            <div className="relative p-1.5 rounded-3xl">
+            <div className="relative pt-5 pr-5 rounded-3xl">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-xl font-medium text-white tracking-wide">
@@ -160,7 +146,7 @@ const SeatsIOBasket: React.FC<{
                     </button>
                 </div>
 
-                <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                <div className="space-y-4 mb-6 max-h-[600px] overflow-y-auto">
                     {basket.items.map((item) => {
                         const itemPrice = formatPrice(item.price);
                         const seatInfo = parseSeatInfo(item.seatLabel);
@@ -172,15 +158,11 @@ const SeatsIOBasket: React.FC<{
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex-1">
-                                        <div className="text-white font-medium text-lg">
-                                            {item.category}
-                                        </div>
                                         <div className="text-sm text-gray-400">
                                             {item.ticketType
                                                 .charAt(0)
                                                 .toUpperCase() +
                                                 item.ticketType.slice(1)}{" "}
-                                            ticket
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -199,11 +181,17 @@ const SeatsIOBasket: React.FC<{
                                             disabled={disabled}
                                             className="text-blue-400 hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-full hover:bg-blue-400/10 transition-all"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X
+                                                className="w-5 h-5 text-gray-400 hover:text-white"
+                                                style={{
+                                                    position: "absolute",
+                                                    top: "10px",
+                                                    right: "10px",
+                                                }}
+                                            />
                                         </button>
                                     </div>
                                 </div>
-                                {/* Seat information at bottom */}
                                 <div className="pt-3 border-t border-white/10">
                                     <div className="flex items-center gap-2 text-sm text-gray-500">
                                         {seatInfo.section && (
@@ -323,13 +311,6 @@ export const CustomSeatTooltip: React.FC<{
             }}
         >
             <div className="relative overflow-hidden">
-                {/* Background blur effect with enhanced gradient */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
-
-                {/* Enhanced ambient glow effects */}
-                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-
                 {/* Content */}
                 <div className="relative rounded-3xl p-6">
                     {tooltip.visible && tooltip.seat ? (
@@ -350,22 +331,6 @@ export const CustomSeatTooltip: React.FC<{
                                     <div className="flex items-center gap-8">
                                         {/* Left: Seat Icon and Basic Info */}
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-blue-400/10 rounded-xl flex items-center justify-center">
-                                                <span className="text-blue-400 text-xl">
-                                                    {tooltip.seat.seatType ===
-                                                    "seat"
-                                                        ? "🪑"
-                                                        : tooltip.seat
-                                                              .seatType ===
-                                                          "table"
-                                                        ? "🪑"
-                                                        : tooltip.seat
-                                                              .seatType ===
-                                                          "booth"
-                                                        ? "🛋️"
-                                                        : "🎫"}
-                                                </span>
-                                            </div>
                                             <div>
                                                 <h3 className="text-white font-medium text-lg tracking-wide mb-1">
                                                     Seat Information
@@ -444,7 +409,7 @@ export const CustomSeatTooltip: React.FC<{
                     ) : (
                         <>
                             {/* Empty state - Horizontal layout */}
-                            <div className="flex items-center justify-center gap-6 py-4">
+                            <div className="flex items-center justify-center gap-8 py-1">
                                 <div className="text-center">
                                     <h3 className="text-white font-medium text-lg tracking-wide mb-1">
                                         Seat Information
@@ -494,19 +459,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
 
     const chartRef = useRef<SeatsIOChartWithZoom | null>(null);
     const { showError } = useToast();
-
-    // Custom styling hook for SeatsIO
-    const containerRef = useSeatsIOStyling({
-        height: "580px",
-        width: "752px",
-        left: "-59px",
-        top: "-20px",
-        perspectiveXCenter: "50.0000%",
-        touchAction: "auto",
-        userSelect: "none",
-        cursor: "pointer",
-        clipPath: "inset(20px 20px 20px 20px)",
-    });
 
     // Environment validation
     const environment = getSeatsIOEnvironment();
@@ -1098,13 +1050,6 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 className="order-2 lg:order-1 flex-1 relative overflow-hidden"
                 style={{ isolation: "isolate" }}
             >
-                {/* Background blur effect with enhanced gradient */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
-
-                {/* Enhanced ambient glow effects */}
-                <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-                <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-
                 {/* Zoom Controls */}
                 <div className="absolute top-6 right-6 z-10 flex flex-col gap-2">
                     <button
@@ -1118,10 +1063,9 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 </div>
 
                 <div
-                    ref={containerRef}
                     className="h-[500px] sm:h-[600px] lg:h-[650px] relative rounded-3xl overflow-hidden min-w-[900px] max-w-[900px]"
                     style={{
-                        clipPath: "inset(18px 60px 18px 60px)",
+                        clipPath: "inset(19px 60px 18px 60px)",
                         backgroundImage:
                             "url(https://upload.wikimedia.org/wikipedia/commons/5/50/Black_colour.jpg) repeat",
                         isolation: "isolate",
@@ -1164,13 +1108,22 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                         onObjectMouseOver={handleObjectMouseOver}
                         onObjectMouseOut={handleObjectMouseOut}
                         colorScheme="dark"
+                        colors={{
+                            selectedObjectColor: "#60A5FA",
+                        }}
+                        sectionColor={(section, defaultColor, extraConfig) => {
+                            console.log("section", section);
+                            console.log("defaultColor", defaultColor);
+                            console.log("extraConfig", extraConfig);
+                            return defaultColor;
+                        }}
                     />
                 </div>
             </div>
 
             {/* Sidebar with Basket */}
             <div
-                className="order-3 lg:order-3 w-full lg:w-72 flex-shrink-0"
+                className="order-3 lg:order-3 w-full lg:w-96 flex-shrink-0"
                 style={{ isolation: "isolate", zIndex: 10 }}
             >
                 <SeatsIOBasket

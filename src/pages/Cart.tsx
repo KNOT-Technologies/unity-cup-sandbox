@@ -236,7 +236,7 @@ const Cart = () => {
 
                                 {/* Content */}
                                 <div className="relative p-8">
-                                    <h2 className="text-2xl font-bold text-white mb-6 tracking-wide flex items-center gap-2">
+                                    <h2 className="text-2xl font-medium text-white mb-6 tracking-wide flex items-center gap-2">
                                         <Users className="w-6 h-6" />
                                         Selected Seats (
                                         {cartData.selectedSeats.length})
@@ -279,16 +279,21 @@ const Cart = () => {
                                                                         seat.category
                                                                     }
                                                                 </span>
-                                                                <span className="text-blue-400 text-sm">
-                                                                    {
-                                                                        seat.ticketType
-                                                                    }
+                                                                <span className="text-white text-sm">
+                                                                    {seat.ticketType
+                                                                        .charAt(
+                                                                            0
+                                                                        )
+                                                                        .toUpperCase() +
+                                                                        seat.ticketType.slice(
+                                                                            1
+                                                                        )}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-4">
-                                                        <span className="text-blue-400 font-medium text-lg">
+                                                        <span className="text-white font-medium text-lg">
                                                             £
                                                             {seat.price.toFixed(
                                                                 2
@@ -300,7 +305,7 @@ const Cart = () => {
                                                                     seat.id
                                                                 )
                                                             }
-                                                            className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                                                            className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-500/10 transition-colors"
                                                             title="Remove seat"
                                                         >
                                                             <Trash2 className="w-4 h-4" />
