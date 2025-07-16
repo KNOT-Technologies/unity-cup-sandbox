@@ -13,7 +13,6 @@ import { getHoldToken } from "../../api/knot";
 import { useToast } from "../../hooks/useToast";
 import { calculatePrice } from "../../types/ticketTypes";
 import SeatTicketTypeModal from "./SeatTicketTypeModal";
-import useSeatsIOStyling from "../../hooks/useSeatsIOStyling";
 import { parseSeatInfo } from "../../utils/seatParser";
 
 // Types - SeatsIO Chart with zoom methods

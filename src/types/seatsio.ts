@@ -51,7 +51,7 @@ export interface SeatsIOConfig {
   region?: 'eu' | 'na' | 'sa' | 'oc';
   language?: string;
   currency?: string;
-  pricing?: Pricing;
+  pricing?: any;
   callbacks?: SeatsIOCallbacks;
 }
 
@@ -70,7 +70,7 @@ export interface SeatsIOState {
   holdToken: string | null;
   selectedSeats: SeatsIOSeat[];
   basket: SeatsIOBasket;
-  chartInstance: SeatingChart | null;
+  chartInstance: any;
 }
 
 export interface SeatsIOActions {
@@ -79,7 +79,7 @@ export interface SeatsIOActions {
   setHoldToken: (token: string | null) => void;
   setSelectedSeats: (seats: SeatsIOSeat[]) => void;
   updateBasket: (basket: SeatsIOBasket) => void;
-  setChartInstance: (chart: SeatingChart | null) => void;
+  setChartInstance: (chart: any) => void;
   clearSelection: () => void;
   reset: () => void;
 }
@@ -118,7 +118,7 @@ export interface SeatsIOError {
 declare global {
   interface Window {
     seatsio?: {
-      SeatingChart: new (config: SeatsIOConfig) => SeatingChart;
+      SeatingChart: new (config: SeatsIOConfig) => any;
       chartJsVersion: string;
     };
   }
@@ -147,12 +147,12 @@ export interface SeatsIOLazyLoadConfig {
 export interface SeatsIOLazyLoadResult {
   success: boolean;
   error?: Error;
-  chartConstructor?: typeof SeatingChart;
+  chartConstructor?: any;
 }
 
 // Chart integration types
 export interface SeatsIOChartIntegration {
-  initialize: (config: SeatsIOConfig) => Promise<SeatingChart>;
+  initialize: (config: SeatsIOConfig) => Promise<any>;
   destroy: () => void;
   updateConfig: (config: Partial<SeatsIOConfig>) => void;
   selectSeats: (seatIds: string[]) => void;
@@ -200,7 +200,7 @@ export interface SeatsIOStoreConfig {
 
 // Component ref types
 export interface SeatsIOChartRef {
-  chart: SeatingChart | null;
+  chart: any;
   selectSeats: (seatIds: string[]) => void;
   deselectSeats: (seatIds: string[]) => void;
   clearSelection: () => void;
@@ -274,37 +274,37 @@ export interface SeatsIOEvent {
 export interface SeatsIOObjectSelectedEvent extends SeatsIOEvent {
   type: 'objectSelected';
   data: {
-    object: SelectableObject;
-    selectedObjects: SelectableObject[];
+    object: any;
+    selectedObjects: any[];
   };
 }
 
 export interface SeatsIOObjectDeselectedEvent extends SeatsIOEvent {
   type: 'objectDeselected';
   data: {
-    object: SelectableObject;
-    selectedObjects: SelectableObject[];
+    object: any;
+    selectedObjects: any[];
   };
 }
 
 export interface SeatsIOChartRenderedEvent extends SeatsIOEvent {
   type: 'chartRendered';
   data: {
-    chart: SeatingChart;
+    chart: any;
   };
 }
 
 export interface SeatsIOSessionInitializedEvent extends SeatsIOEvent {
   type: 'sessionInitialized';
   data: {
-    holdToken: HoldToken;
+    holdToken: any;
   };
 }
 
 export interface SeatsIOHoldTokenExpiredEvent extends SeatsIOEvent {
   type: 'holdTokenExpired';
   data: {
-    holdToken: HoldToken;
+    holdToken: any;
   };
 }
 

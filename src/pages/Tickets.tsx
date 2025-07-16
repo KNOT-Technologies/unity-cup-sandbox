@@ -42,11 +42,7 @@ const Tickets = () => {
 
     // Use a fixed eventId for the Unity Cup matches
     const eventId = "68739fa044dbbfd4cc3a025a";
-    const {
-        occurrences,
-        isLoading: isLoadingSchedule,
-        error: scheduleError,
-    } = useSchedule(eventId);
+    const { occurrences } = useSchedule(eventId);
 
     // Fetch prices for the selected occurrence
     const { pricingData } = usePrices(selectedOccurrenceId || null);
