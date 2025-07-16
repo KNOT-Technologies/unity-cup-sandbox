@@ -18,7 +18,7 @@ import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 import { processDemoCheckout } from "../api/knot";
 import { formatSeatDisplay } from "../utils/seatParser";
-import { useUserAuth } from "../contexts/UserAuthContext";
+import { useUserAuth } from "../hooks/useUserAuth";
 
 // Types for selected seats (coming from SeatsIO)
 interface DemoSeat {
@@ -345,7 +345,7 @@ const DemoCheckout = () => {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="lg:col-span-1"
+                            className="lg:col-span-1 rounded-3xl"
                         >
                             <div className="relative overflow-hidden rounded-3xl sticky top-24">
                                 {/* Background blur effect with enhanced gradient */}
@@ -365,7 +365,7 @@ const DemoCheckout = () => {
                                         <h3 className="font-medium mb-3 text-white text-xl">
                                             {checkoutData.match.name}
                                         </h3>
-                                        <div className="mb-3 p-3 bg-black/30 rounded-xl">
+                                        <div className="mb-3 p-3 rounded-xl">
                                             <div className="text-xs text-blue-400 mb-2 font-medium">
                                                 {checkoutData.match.stage}
                                             </div>
@@ -440,7 +440,7 @@ const DemoCheckout = () => {
                                         </div>
                                     </div>
                                     {/* Selected Seats */}
-                                    <div className="mb-6">
+                                    <div>
                                         <h4 className="font-medium mb-3 text-white flex items-center gap-2">
                                             <Users className="w-4 h-4" />
                                             Selected Seats (
@@ -468,9 +468,14 @@ const DemoCheckout = () => {
                                                                     }
                                                                 </span>
                                                                 <span className="text-blue-400 text-xs">
-                                                                    {
-                                                                        seat.ticketType
-                                                                    }
+                                                                    {seat.ticketType
+                                                                        .charAt(
+                                                                            0
+                                                                        )
+                                                                        .toUpperCase() +
+                                                                        seat.ticketType.slice(
+                                                                            1
+                                                                        )}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -496,7 +501,7 @@ const DemoCheckout = () => {
                                                 {checkoutData.totalPrice.toFixed(
                                                     2
                                                 )}{" "}
-                                                {checkoutData.currency}
+                                                {/* {checkoutData.currency} */}
                                             </span>
                                         </div>
                                     </div>
@@ -523,17 +528,13 @@ const DemoCheckout = () => {
                                 >
                                     {/* Background blur effect with enhanced gradient */}
                                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl border border-white/10" />
-
                                     {/* Enhanced ambient glow effects */}
                                     <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
                                     <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-white/5 rounded-full blur-[60px] mix-blend-soft-light" />
-
                                     {/* Content */}
                                     <div className="relative p-8">
                                         <h3 className="text-xl font-medium text-white mb-6 flex items-center gap-3 tracking-wide">
-                                            <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                                                <User className="w-4 h-4 text-blue-400" />
-                                            </div>
+                                            <User className="w-4 h-4 text-white" />
                                             <div className="flex-1">
                                                 Ticket Holder Information
                                             </div>
@@ -555,7 +556,7 @@ const DemoCheckout = () => {
                                                             e.target.value
                                                         )
                                                     }
-                                                    className={`w-full px-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
+                                                    className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
                                                         validationErrors.fullName
                                                             ? "border-blue-500"
                                                             : "border-gray-600"
@@ -586,7 +587,7 @@ const DemoCheckout = () => {
                                                             e.target.value
                                                         )
                                                     }
-                                                    className={`w-full px-4 py-3 bg-gray-800 border rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
+                                                    className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
                                                         validationErrors.dateOfBirth
                                                             ? "border-blue-500"
                                                             : "border-gray-600"
@@ -614,7 +615,7 @@ const DemoCheckout = () => {
                                                             e.target.value
                                                         )
                                                     }
-                                                    className={`w-full px-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
+                                                    className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
                                                         validationErrors.email
                                                             ? "border-blue-500"
                                                             : "border-gray-600"
@@ -641,7 +642,7 @@ const DemoCheckout = () => {
                                                             e.target.value
                                                         )
                                                     }
-                                                    className={`w-full px-4 py-3 bg-gray-800 border rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
+                                                    className={`w-full px-4 py-3 bg-black/40 border rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-colors ${
                                                         validationErrors.phone
                                                             ? "border-blue-500"
                                                             : "border-gray-600"
@@ -781,7 +782,7 @@ const DemoCheckout = () => {
                                                             <input
                                                                 type="text"
                                                                 placeholder="1234 5678 9012 3456"
-                                                                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400"
+                                                                className="w-full px-4 py-3 bg-black/40 border border-gray-600 rounded-xl text-white placeholder-gray-400"
                                                                 disabled
                                                             />
                                                         </div>
@@ -792,7 +793,7 @@ const DemoCheckout = () => {
                                                             <input
                                                                 type="text"
                                                                 placeholder="MM/YY"
-                                                                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400"
+                                                                className="w-full px-4 py-3 bg-black/40 border border-gray-600 rounded-xl text-white placeholder-gray-400"
                                                                 disabled
                                                             />
                                                         </div>
@@ -803,7 +804,7 @@ const DemoCheckout = () => {
                                                             <input
                                                                 type="text"
                                                                 placeholder="123"
-                                                                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400"
+                                                                className="w-full px-4 py-3 bg-black/40 border border-gray-600 rounded-xl text-white placeholder-gray-400"
                                                                 disabled
                                                             />
                                                         </div>
@@ -814,7 +815,7 @@ const DemoCheckout = () => {
                                                             <input
                                                                 type="text"
                                                                 placeholder="John Doe"
-                                                                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400"
+                                                                className="w-full px-4 py-3 bg-black/40 border border-gray-600 rounded-xl text-white placeholder-gray-400"
                                                                 disabled
                                                             />
                                                         </div>

@@ -235,7 +235,7 @@ const SeatsIOPage: React.FC = () => {
                 </div>
 
                 {/* Main Content */}
-                <div className="max-w-[1300px] min-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 pb-24 relative">
+                <div className="max-w-[1350px] min-w-[900px] mx-auto px-4 sm:px-6 lg:px-8 pb-24 relative">
                     <CustomSeatTooltip tooltip={customTooltip} />
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -244,7 +244,7 @@ const SeatsIOPage: React.FC = () => {
                         className="relative overflow-hidden"
                     >
                         {/* Background blur effect with enhanced gradient */}
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,rgba(0,0,0,0.95)_100%)] backdrop-blur-xl rounded-3xl border border-white/10" />
+                        <div className="absolute inset-0  backdrop-blur-xl rounded-3xl border border-white/10" />
 
                         {/* Enhanced ambient glow effects */}
                         <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/5 rounded-full blur-[100px] mix-blend-soft-light" />

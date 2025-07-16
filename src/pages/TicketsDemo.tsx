@@ -103,14 +103,27 @@ const TicketsDemo = () => {
 
     const handleTicketClick = (match: (typeof matchData)[0]) => {
         // Calculate the actual date for the match (for demo purposes, we'll use future dates)
-        const today = new Date();
-        const baseDate = new Date(today);
-        baseDate.setDate(today.getDate() + 7); // Start from next week
+        const monthIndex = {
+            JAN: 0,
+            FEB: 1,
+            MAR: 2,
+            APR: 3,
+            MAY: 4,
+            JUN: 5,
+            JUL: 6,
+            AUG: 7,
+            SEP: 8,
+            OCT: 9,
+            NOV: 10,
+            DEC: 11,
+        };
 
-        // Add days based on the day of month
-        const matchDay = parseInt(match.date.day);
-        const selectedDate = new Date(baseDate);
-        selectedDate.setDate(baseDate.getDate() + (matchDay - 27)); // 27 is the first match day
+        const selectedDate = new Date();
+        selectedDate.setDate(Number(match.date.day));
+        selectedDate.setMonth(
+            monthIndex[match.date.month as keyof typeof monthIndex]
+        );
+        selectedDate.setFullYear(2026);
 
         // Store the selected match data in sessionStorage
         const selectedMatchData = {

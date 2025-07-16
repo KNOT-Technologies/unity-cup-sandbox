@@ -21,19 +21,6 @@ interface SeatTicketTypeModalProps {
     ) => void;
 }
 
-const getIcon = (iconName: string) => {
-    const iconMap = {
-        User: <User className="w-5 h-5" />,
-        Users: <Users className="w-5 h-5" />,
-        Baby: <Baby className="w-5 h-5" />,
-    };
-    return (
-        iconMap[iconName as keyof typeof iconMap] || (
-            <User className="w-5 h-5" />
-        )
-    );
-};
-
 const SeatTicketTypeModal: React.FC<SeatTicketTypeModalProps> = ({
     seat,
     isOpen,
@@ -60,7 +47,7 @@ const SeatTicketTypeModal: React.FC<SeatTicketTypeModalProps> = ({
                     {/* Close button */}
                     <button
                         onClick={onClose}
-                        className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"
+                        className="absolute top-0 right-0 text-gray-400 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -72,11 +59,6 @@ const SeatTicketTypeModal: React.FC<SeatTicketTypeModalProps> = ({
                         </h3>
                         <div className="bg-black/30 backdrop-blur-sm rounded-xl p-5 border border-white/5">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-400/10 rounded-lg flex items-center justify-center">
-                                    <span className="text-blue-400 text-lg">
-                                        🪑
-                                    </span>
-                                </div>
                                 <div className="flex-1">
                                     <div className="font-medium text-white text-lg">
                                         {formatSeatDisplay(seat.label)}
@@ -101,12 +83,6 @@ const SeatTicketTypeModal: React.FC<SeatTicketTypeModalProps> = ({
                                 seat.basePrice,
                                 type.id
                             );
-                            const discount =
-                                type.multiplier < 1
-                                    ? `${Math.round(
-                                          (1 - type.multiplier) * 100
-                                      )}% off`
-                                    : null;
 
                             return (
                                 <button
@@ -116,31 +92,18 @@ const SeatTicketTypeModal: React.FC<SeatTicketTypeModalProps> = ({
                                     }
                                     className="w-full bg-black/30 hover:bg-black/50 rounded-xl p-5 flex items-center gap-4 transition-all border border-white/5 hover:border-blue-400/30"
                                 >
-                                    <div className="text-blue-400">
-                                        {getIcon(type.iconName)}
-                                    </div>
                                     <div className="flex-1 text-left">
                                         <div className="text-white font-medium">
                                             {type.label}
                                         </div>
                                         <div className="text-sm text-gray-400 mt-1">
                                             {type.description}
-                                            {discount && (
-                                                <span className="ml-2 text-blue-400">
-                                                    ({discount})
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <div className="text-lg text-blue-400">
                                             £{finalPrice.toFixed(0)}
                                         </div>
-                                        {type.multiplier < 1 && (
-                                            <div className="text-xs text-white/40 line-through">
-                                                £{seat.basePrice}
-                                            </div>
-                                        )}
                                     </div>
                                 </button>
                             );
