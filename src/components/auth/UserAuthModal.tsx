@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, EyeOff, User, Mail, Phone, Calendar } from "lucide-react";
-import { useUserAuth } from "../../contexts/UserAuthContext";
+import { useUserAuth } from "../../hooks/useUserAuth";
 import type { UserLoginData, UserRegistrationData } from "../../types/user";
 
 interface UserAuthModalProps {

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import type {
     User,
@@ -14,17 +14,9 @@ interface UserAuthContextType extends AuthState {
     updateProfile: (userData: Partial<User>) => Promise<void>;
 }
 
-const UserAuthContext = createContext<UserAuthContextType | undefined>(
+export const UserAuthContext = createContext<UserAuthContextType | undefined>(
     undefined
 );
-
-export const useUserAuth = () => {
-    const context = useContext(UserAuthContext);
-    if (context === undefined) {
-        throw new Error("useUserAuth must be used within a UserAuthProvider");
-    }
-    return context;
-};
 
 interface UserAuthProviderProps {
     children: ReactNode;

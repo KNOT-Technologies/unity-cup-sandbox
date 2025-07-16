@@ -18,7 +18,7 @@ import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 import { processDemoCheckout } from "../api/knot";
 import { formatSeatDisplay } from "../utils/seatParser";
-import { useUserAuth } from "../contexts/UserAuthContext";
+import { useUserAuth } from "../hooks/useUserAuth";
 
 // Types for selected seats (coming from SeatsIO)
 interface DemoSeat {
@@ -501,7 +501,7 @@ const DemoCheckout = () => {
                                                 {checkoutData.totalPrice.toFixed(
                                                     2
                                                 )}{" "}
-                                                {checkoutData.currency}
+                                                {/* {checkoutData.currency} */}
                                             </span>
                                         </div>
                                     </div>

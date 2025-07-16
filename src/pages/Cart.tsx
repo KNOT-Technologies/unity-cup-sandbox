@@ -14,7 +14,7 @@ import {
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 import { formatSeatDisplay } from "../utils/seatParser";
-import { useUserAuth } from "../contexts/UserAuthContext";
+import { useUserAuth } from "../hooks/useUserAuth";
 import UserAuthModal from "../components/auth/UserAuthModal";
 
 // Types for selected seats (coming from SeatsIO)
