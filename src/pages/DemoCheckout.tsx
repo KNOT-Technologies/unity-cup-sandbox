@@ -93,7 +93,7 @@ const DemoCheckout = () => {
         {
             id: "card1",
             number: "**** **** **** 4242",
-            holder: "Ahmed Abdallah",
+            holder: user?.fullName,
             expiry: "12/28",
             type: "Visa",
             isDefault: true,
