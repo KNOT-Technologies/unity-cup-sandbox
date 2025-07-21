@@ -11,7 +11,6 @@ import {
 import { SeatsioSeatingChart } from "@seatsio/seatsio-react";
 import { getHoldToken } from "../../api/knot";
 import { useToast } from "../../hooks/useToast";
-import { calculatePrice } from "../../types/ticketTypes";
 import SeatTicketTypeModal from "./SeatTicketTypeModal";
 import { parseSeatInfo } from "../../utils/seatParser";
 
@@ -586,13 +585,13 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
     useEffect(() => {
         const items = selectedSeats.map((seat) => {
             const ticketType = seat.ticketType || "adult"; // Default to adult
-            const adjustedPrice = calculatePrice(seat.price, ticketType);
+            // seat.price now already contains the calculated price, so use it directly
             return {
                 seatId: seat.id,
                 seatLabel: seat.label,
                 category: seat.category,
-                price: adjustedPrice,
-                basePrice: seat.price,
+                price: seat.price, // Use the already calculated price
+                basePrice: getCategoryBasePrice(seat.category), // Calculate base price for display if needed
                 ticketType: ticketType,
             };
         });
@@ -843,7 +842,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                 id: seatId,
                 label: modalSeat.label,
                 category: modalSeat.category,
-                price: modalSeat.basePrice,
+                price: finalPrice, // Use the calculated final price instead of base price
                 status: "selected",
                 seatType: "seat",
                 ticketType: ticketType,
