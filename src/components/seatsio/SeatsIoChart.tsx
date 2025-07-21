@@ -13,6 +13,7 @@ import { getHoldToken } from "../../api/knot";
 import { useToast } from "../../hooks/useToast";
 import SeatTicketTypeModal from "./SeatTicketTypeModal";
 import { parseSeatInfo } from "../../utils/seatParser";
+import { formatPrice } from "../../utils/priceFormatter";
 
 // Types - SeatsIO Chart with zoom methods
 interface SeatsIOChartWithZoom {
@@ -95,15 +96,15 @@ const SeatsIOBasket: React.FC<{
     onCheckout: () => void;
     disabled?: boolean;
 }> = ({ basket, onRemoveSeat, onClearAll, onCheckout, disabled = false }) => {
-    const formatPrice = (price: number) => {
+    const formatPriceObject = (price: number) => {
         return {
             symbol: "£",
-            amount: price.toFixed(2),
-            full: `£${price.toFixed(2)}`,
+            amount: formatPrice(price),
+            full: `£${formatPrice(price)}`,
         };
     };
 
-    const totalPrice = formatPrice(basket.totalPrice);
+    const totalPrice = formatPriceObject(basket.totalPrice);
 
     if (basket.items.length === 0) {
         return (
@@ -146,7 +147,7 @@ const SeatsIOBasket: React.FC<{
 
                 <div className="space-y-4 mb-6 max-h-[600px] overflow-y-auto">
                     {basket.items.map((item) => {
-                        const itemPrice = formatPrice(item.price);
+                        const itemPrice = formatPriceObject(item.price);
                         const seatInfo = parseSeatInfo(item.seatLabel);
 
                         return (
@@ -259,11 +260,11 @@ export const CustomSeatTooltip: React.FC<{
         position: { x: number; y: number };
     };
 }> = ({ tooltip }) => {
-    const formatPrice = (price: number) => {
+    const formatPriceObject = (price: number) => {
         return {
             symbol: "£",
-            amount: price.toFixed(2),
-            full: `£${price.toFixed(2)}`,
+            amount: formatPrice(price),
+            full: `£${formatPrice(price)}`,
         };
     };
 
@@ -318,7 +319,7 @@ export const CustomSeatTooltip: React.FC<{
                                 const seatInfo = parseSeatInfo(
                                     tooltip.seat.label
                                 );
-                                const priceInfo = formatPrice(
+                                const priceInfo = formatPriceObject(
                                     tooltip.seat.price
                                 );
                                 const statusInfo = getStatusInfo(
@@ -1079,7 +1080,7 @@ const SeatsIoChart: React.FC<SeatsIoChartProps> = ({
                                 { category: "Regular", price: 25 },
                                 { category: "VIP", price: 50 },
                             ],
-                            priceFormatter: (price) => `$${price.toFixed(2)}`,
+                            priceFormatter: (price) => `$${formatPrice(price)}`,
                             showSectionPricingOverlay: false,
                         }}
                         // Disable default popover/tooltip completely

@@ -19,6 +19,7 @@ import { ToastContainer } from "../components/common/Toast";
 import { processDemoCheckout } from "../api/knot";
 import { formatSeatDisplay } from "../utils/seatParser";
 import { useUserAuth } from "../hooks/useUserAuth";
+import { formatPrice } from "../utils/priceFormatter";
 
 // Types for selected seats (coming from SeatsIO)
 interface DemoSeat {
@@ -481,8 +482,8 @@ const DemoCheckout = () => {
                                                         </div>
                                                         <span className="text-blue-400 font-medium">
                                                             £
-                                                            {seat.price.toFixed(
-                                                                2
+                                                            {formatPrice(
+                                                                seat.price
                                                             )}
                                                         </span>
                                                     </div>
@@ -498,9 +499,9 @@ const DemoCheckout = () => {
                                             </span>
                                             <span className="text-blue-400">
                                                 £
-                                                {checkoutData.totalPrice.toFixed(
-                                                    2
-                                                )}{" "}
+                                                {formatPrice(
+                                                    checkoutData.totalPrice
+                                                )}
                                                 {/* {checkoutData.currency} */}
                                             </span>
                                         </div>
@@ -864,7 +865,9 @@ const DemoCheckout = () => {
                                         <>
                                             <CheckCircle className="w-6 h-6" />
                                             Complete Booking - £
-                                            {checkoutData.totalPrice.toFixed(2)}
+                                            {formatPrice(
+                                                checkoutData.totalPrice
+                                            )}
                                         </>
                                     )}
                                 </motion.button>

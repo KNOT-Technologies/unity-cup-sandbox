@@ -16,6 +16,7 @@ import { ToastContainer } from "../components/common/Toast";
 import { formatSeatDisplay } from "../utils/seatParser";
 import { useUserAuth } from "../hooks/useUserAuth";
 import UserAuthModal from "../components/auth/UserAuthModal";
+import { formatPrice } from "../utils/priceFormatter";
 
 // Types for selected seats (coming from SeatsIO)
 interface CartSeat {
@@ -295,8 +296,8 @@ const Cart = () => {
                                                     <div className="flex items-center gap-4">
                                                         <span className="text-white font-medium text-lg">
                                                             £
-                                                            {seat.price.toFixed(
-                                                                2
+                                                            {formatPrice(
+                                                                seat.price
                                                             )}
                                                         </span>
                                                         <button
@@ -433,8 +434,8 @@ const Cart = () => {
                                                 </span>
                                                 <span className="text-white">
                                                     £
-                                                    {cartData.totalPrice.toFixed(
-                                                        2
+                                                    {formatPrice(
+                                                        cartData.totalPrice
                                                     )}
                                                 </span>
                                             </div>
@@ -444,10 +445,9 @@ const Cart = () => {
                                                 </span>
                                                 <span className="text-blue-400">
                                                     £
-                                                    {cartData.totalPrice.toFixed(
-                                                        2
+                                                    {formatPrice(
+                                                        cartData.totalPrice
                                                     )}{" "}
-                                                    {cartData.currency}
                                                 </span>
                                             </div>
                                         </div>

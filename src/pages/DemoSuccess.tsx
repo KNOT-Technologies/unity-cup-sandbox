@@ -14,6 +14,7 @@ import {
 import { useToast } from "../hooks/useToast";
 import { ToastContainer } from "../components/common/Toast";
 import { formatSeatDisplay } from "../utils/seatParser";
+import { formatPrice } from "../utils/priceFormatter";
 
 interface DemoOrderData {
     orderId: string;
@@ -297,7 +298,10 @@ const DemoSuccess = () => {
                                                         </div>
                                                     </div>
                                                     <span className="text-blue-400 ml-5">
-                                                        ${seat.price.toFixed(2)}
+                                                        £
+                                                        {formatPrice(
+                                                            seat.price
+                                                        )}
                                                     </span>
                                                 </div>
                                             </motion.div>
@@ -343,7 +347,7 @@ const DemoSuccess = () => {
                                                     </span>
                                                 </div>
                                                 <span className="text-white font-medium">
-                                                    ${seat.price.toFixed(2)}
+                                                    £{formatPrice(seat.price)}
                                                 </span>
                                             </div>
                                         ))}
@@ -355,11 +359,10 @@ const DemoSuccess = () => {
                                                 Total Paid
                                             </span>
                                             <span className="text-blue-400">
-                                                $
-                                                {orderData.totalAmount.toFixed(
-                                                    2
+                                                £
+                                                {formatPrice(
+                                                    orderData.totalAmount
                                                 )}{" "}
-                                                {orderData.currency}
                                             </span>
                                         </div>
                                     </div>
